@@ -3,36 +3,65 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>نظام إدارة الزفاف</title>
+    <title>نظام إدارة حجوزات الزفاف</title>
     <style>
-        :root { --primary: #e94560; --bg: #0a0a12; --card: #16213e; }
-        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: white; padding: 20px; text-align: center; }
-        .box { background: var(--card); padding: 20px; border-radius: 12px; margin: 20px auto; max-width: 500px; border: 1px solid #0f3460; }
-        input { padding: 12px; border-radius: 8px; border: none; width: 80%; margin-bottom: 10px; font-size: 16px; }
-        button { cursor: pointer; padding: 12px 25px; border-radius: 8px; border: none; background: var(--primary); color: white; font-weight: bold; width: 85%; }
-        .client-card { background: #1a1a2e; padding: 15px; margin-top: 10px; border-radius: 8px; border-right: 4px solid var(--primary); text-align: right; }
+        :root { --primary: #e94560; --bg: #1a1a2e; --card: #16213e; --text: #ffffff; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 0; }
+        .navbar { background: var(--card); padding: 15px; text-align: center; border-bottom: 2px solid var(--primary); }
+        .navbar button { background: none; border: 1px solid var(--primary); color: white; padding: 8px 15px; cursor: pointer; border-radius: 5px; margin: 0 5px; }
+        .navbar button.active { background: var(--primary); }
+        .container { max-width: 600px; margin: 20px auto; padding: 20px; }
+        .section { display: none; }
+        .section.active { display: block; }
+        .box { background: var(--card); padding: 20px; border-radius: 12px; border: 1px solid #0f3460; margin-bottom: 20px; }
+        input, select { padding: 12px; border-radius: 8px; border: 1px solid #0f3460; width: 100%; margin-bottom: 15px; background: #1a1a2e; color: white; box-sizing: border-box; }
+        button.main-btn { cursor: pointer; padding: 12px; border-radius: 8px; border: none; background: var(--primary); color: white; font-weight: bold; width: 100%; transition: 0.3s; }
+        button.main-btn:hover { opacity: 0.8; }
+        .client-card { background: #0f3460; padding: 15px; margin-top: 10px; border-radius: 8px; border-right: 5px solid var(--primary); position: relative; }
+        .delete-btn { position: absolute; left: 10px; top: 10px; background: #ff4d4d; border: none; color: white; border-radius: 5px; cursor: pointer; padding: 5px 10px; }
+        .status { font-size: 0.9em; color: #aaa; margin-top: 5px; }
     </style>
 </head>
 <body>
 
-    <h1>لوحة تحكم العرس 💍</h1>
-
-    <div class="box">
-        <h3>إضافة عميل جديد</h3>
-        <input id="cName" type="text" placeholder="اسم القاعة أو العميل">
-        <button id="addBtn">إضافة للـ Firebase</button>
+    <div class="navbar">
+        <button id="nav-admin" class="active" onclick="showSection('admin')">لوحة الإدارة</button>
+        <button id="nav-client" onclick="showSection('client')">صفحة العميل</button>
     </div>
 
-    <div class="box">
-        <h3>العملاء الحاليين</h3>
-        <div id="display">جاري التحميل...</div>
+    <div class="container">
+        <div id="admin" class="section active">
+            <div class="box">
+                <h2>إضافة حجز جديد 📝</h2>
+                <input id="cName" type="text" placeholder="اسم العميل أو القاعة">
+                <input id="cPhone" type="tel" placeholder="رقم الجوال">
+                <input id="cDate" type="date">
+                <select id="cStatus">
+                    <option value="مؤكد">مؤكد ✅</option>
+                    <option value="قيد الانتظار">قيد الانتظار ⏳</option>
+                </select>
+                <button class="main-btn" onclick="addBooking()">إضافة الحجز</button>
+            </div>
+
+            <h3>قائمة الحجوزات الحالية</h3>
+            <div id="admin-display">جاري التحميل...</div>
+        </div>
+
+        <div id="client" class="section">
+            <div class="box">
+                <h2>استعلام عن حجز 🔍</h2>
+                <p>أدخل اسمك للتأكد من حالة الحجز:</p>
+                <input id="searchName" type="text" placeholder="اكتب اسمك هنا...">
+                <button class="main-btn" onclick="searchBooking()">بحث</button>
+            </div>
+            <div id="client-result"></div>
+        </div>
     </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getFirestore, collection, addDoc, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, query, where } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-        // الـ Config الخاص بك من صورتك الأخيرة
         const firebaseConfig = {
             apiKey: "AIzaSyBycODn3kTe7uRIBYifDogSPmv2towU6lA",
             authDomain: "wedding-system-6fadd.firebaseapp.com",
@@ -46,29 +75,79 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        window.addClient = async () => {
+        // التنقل بين الصفحات
+        window.showSection = (sectionId) => {
+            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+            document.querySelectorAll('.navbar button').forEach(b => b.classList.remove('active'));
+            document.getElementById(sectionId).classList.add('active');
+            document.getElementById('nav-' + sectionId).classList.add('active');
+        };
+
+        // إضافة حجز
+        window.addBooking = async () => {
             const name = document.getElementById("cName").value;
-            if(!name) return alert("اكتب الاسم أولاً");
+            const phone = document.getElementById("cPhone").value;
+            const date = document.getElementById("cDate").value;
+            const status = document.getElementById("cStatus").value;
+
+            if(!name || !date) return alert("يرجى إكمال البيانات الأساسية");
+
             try {
-                await addDoc(collection(db, "clients"), { name: name, timestamp: new Date() });
-                document.getElementById("cName").value = "";
-                alert("تم الحفظ بنجاح!");
-                loadClients();
+                await addDoc(collection(db, "bookings"), { name, phone, date, status, createdAt: new Date() });
+                alert("تمت الإضافة بنجاح!");
+                location.reload();
             } catch (e) { alert("خطأ: " + e.message); }
         };
 
-        window.loadClients = async () => {
-            const display = document.getElementById("display");
-            const querySnapshot = await getDocs(collection(db, "clients"));
+        // عرض الحجوزات للإدارة مع خيار الحذف
+        window.loadAdminData = async () => {
+            const display = document.getElementById("admin-display");
+            const querySnapshot = await getDocs(collection(db, "bookings"));
             display.innerHTML = "";
-            querySnapshot.forEach((doc) => {
-                display.innerHTML += `<div class="client-card">👤 العميل: ${doc.data().name}</div>`;
+            querySnapshot.forEach((docSnap) => {
+                const data = docSnap.data();
+                display.innerHTML += `
+                    <div class="client-card">
+                        <button class="delete-btn" onclick="deleteBooking('${docSnap.id}')">حذف</button>
+                        <strong>👤 ${data.name}</strong><br>
+                        <span>📅 ${data.date}</span> | <span>📞 ${data.phone || 'بدون رقم'}</span>
+                        <div class="status">الحالة: ${data.status}</div>
+                    </div>`;
             });
-            if(display.innerHTML === "") display.innerHTML = "لا يوجد عملاء";
+            if(display.innerHTML === "") display.innerHTML = "لا توجد حجوزات حالياً";
         };
 
-        document.getElementById("addBtn").onclick = addClient;
-        loadClients();
+        // حذف حجز
+        window.deleteBooking = async (id) => {
+            if(confirm("هل أنت متأكد من حذف هذا الحجز؟")) {
+                await deleteDoc(doc(db, "bookings", id));
+                loadAdminData();
+            }
+        };
+
+        // بحث العميل
+        window.searchBooking = async () => {
+            const sName = document.getElementById("searchName").value;
+            const resultDiv = document.getElementById("client-result");
+            resultDiv.innerHTML = "جاري البحث...";
+
+            const q = query(collection(db, "bookings"), where("name", "==", sName));
+            const querySnapshot = await getDocs(q);
+            
+            resultDiv.innerHTML = "";
+            querySnapshot.forEach((doc) => {
+                const data = doc.data();
+                resultDiv.innerHTML = `
+                    <div class="box" style="border-color: #2ecc71">
+                        <h3>مرحباً ${data.name} 👋</h3>
+                        <p>حالة حجزك هي: <strong>${data.status}</strong></p>
+                        <p>التاريخ المحجوز: ${data.date}</p>
+                    </div>`;
+            });
+            if(resultDiv.innerHTML === "") resultDiv.innerHTML = "<p style='color:#ff4d4d'>عذراً، لم يتم العثور على اسمك في قائمة الحجوزات.</p>";
+        };
+
+        loadAdminData();
     </script>
 </body>
 </html>
