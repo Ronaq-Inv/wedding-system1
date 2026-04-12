@@ -3,74 +3,88 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>نظام إدارة مناسبات الزفاف الملكي</title>
+    <title>نظام إدارة المناسبات - الإدارة المركزية</title>
     <style>
-        :root { --primary: #e94560; --bg: #1a1a2e; --card: #16213e; --accent: #0f3460; --success: #2ecc71; }
-        body { font-family: 'Segoe UI', Tahoma, sans-serif; background: var(--bg); color: white; margin: 0; min-height: 100vh; }
+        :root { --primary: #e94560; --bg: #0a0a12; --card: #16213e; --accent: #4e4eef; --success: #2ecc71; --danger: #ff4d4d; }
+        body { font-family: 'Segoe UI', Tahoma, sans-serif; background: var(--bg); color: white; margin: 0; padding: 0; }
         .container { width: 95%; max-width: 1400px; margin: 20px auto; }
         .hidden { display: none !important; }
         
-        /* تصميم الدخول */
-        .login-screen { max-width: 450px; margin: 100px auto; background: var(--card); padding: 40px; border-radius: 20px; text-align: center; border: 1px solid var(--primary); }
+        /* الهيدر */
+        .header { background: var(--card); padding: 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 3px solid var(--primary); }
         
-        /* الأزرار والقوائم */
-        .nav-header { display: flex; justify-content: space-between; align-items: center; background: var(--card); padding: 15px 30px; border-radius: 12px; margin-bottom: 25px; }
-        input, select, textarea { width: 100%; padding: 12px; margin: 8px 0; border-radius: 8px; border: 1px solid var(--accent); background: #0a0a1a; color: white; box-sizing: border-box; }
-        button { cursor: pointer; padding: 12px 20px; border-radius: 8px; border: none; background: var(--primary); color: white; font-weight: bold; transition: 0.2s; }
-        button:hover { opacity: 0.8; transform: translateY(-2px); }
+        /* التنسيق العام */
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; }
+        .card { background: var(--card); padding: 25px; border-radius: 15px; box-shadow: 0 10px 20px rgba(0,0,0,0.3); }
+        input, select, textarea { width: 100%; padding: 12px; margin: 10px 0; border-radius: 8px; border: 1px solid #333; background: #050510; color: white; box-sizing: border-box; }
+        button { cursor: pointer; padding: 12px 25px; border-radius: 8px; border: none; background: var(--primary); color: white; font-weight: bold; transition: 0.3s; }
+        button:hover { opacity: 0.8; }
+
+        /* إحصائيات العميل */
+        .stats-bar { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 30px; }
+        .stat-item { padding: 20px; border-radius: 12px; text-align: center; font-size: 1.2em; font-weight: bold; }
         
-        /* الجداول والكروت */
-        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 20px; }
-        .card { background: var(--card); padding: 25px; border-radius: 15px; border-right: 5px solid var(--primary); position: relative; }
-        .guest-row { background: #0a0a1a; padding: 15px; border-radius: 10px; margin-top: 10px; display: flex; justify-content: space-between; align-items: center; border-left: 3px solid #555; }
-        .status-btn { padding: 5px 10px; font-size: 0.8em; border-radius: 5px; margin-right: 5px; }
-        .wa-btn { background: #25d366; } /* لون واتساب */
-        .del-btn { background: #ff4d4d; }
+        /* جدول الضيوف */
+        table { width: 100%; border-collapse: collapse; background: var(--card); border-radius: 10px; overflow: hidden; margin-top: 20px; }
+        th, td { padding: 15px; text-align: right; border-bottom: 1px solid #222; }
+        th { background: #1a1a3c; color: var(--primary); }
+        .wa-link { color: var(--success); text-decoration: none; font-weight: bold; }
     </style>
 </head>
 <body>
 
-    <div id="login-page" class="login-screen">
-        <h2 style="color: var(--primary)">👑 دخول النظام</h2>
+    <div id="login-page" style="max-width: 400px; margin: 100px auto; text-align: center;" class="card">
+        <h2 style="color: var(--primary)">تسجيل الدخول</h2>
         <input id="user-input" type="text" placeholder="اسم المستخدم">
         <input id="pass-input" type="password" placeholder="كلمة المرور (للأدمن)">
-        <button style="width: 100%" onclick="handleLogin()">تسجيل الدخول</button>
+        <button style="width: 100%" onclick="handleLogin()">دخول</button>
     </div>
 
     <div id="main-content" class="container hidden">
-        <div class="nav-header">
-            <h2 id="user-title">لوحة التحكم</h2>
-            <button onclick="location.reload()" style="background: #444;">تسجيل خروج</button>
+        <div class="header card" style="margin-bottom: 20px; padding: 15px;">
+            <h2 id="view-title">النظام المركزي</h2>
+            <button onclick="location.reload()" style="background: #444;">خروج</button>
         </div>
 
-        <div id="admin-section" class="hidden">
-            <div class="card" style="margin-bottom: 30px;">
-                <h3>✨ إضافة عميل جديد (صاحب مناسبة)</h3>
-                <div class="grid">
+        <div id="admin-view" class="hidden">
+            <div class="grid">
+                <div class="card">
+                    <h3>1. إضافة عميل (صاحب الحفل)</h3>
                     <input id="new-client-name" type="text" placeholder="اسم العميل">
-                    <input id="new-client-event" type="text" placeholder="نوع المناسبة (مثلاً: زفاف آل فلان)">
-                    <textarea id="new-client-msg" placeholder="نص رسالة الواتساب الترحيبية للضيوف"></textarea>
-                    <input id="new-client-file" type="text" placeholder="رابط الملف المرفق (صورة الدعوة)">
+                    <input id="new-client-event" type="text" placeholder="اسم المناسبة">
+                    <textarea id="new-client-msg" placeholder="نص رسالة الواتساب"></textarea>
+                    <input id="new-client-file" type="text" placeholder="رابط صورة الدعوة">
+                    <button onclick="addClient()">تأسيس حساب العميل</button>
                 </div>
-                <button onclick="createNewClient()">تأسيس حساب العميل</button>
+
+                <div class="card">
+                    <h3>2. إضافة ضيف لعميل</h3>
+                    <select id="select-client-for-guest"><option>اختر العميل أولاً...</option></select>
+                    <input id="guest-name" type="text" placeholder="اسم الضيف">
+                    <input id="guest-phone" type="tel" placeholder="رقم الجوال">
+                    <button style="background: var(--success)" onclick="addGuest()">إضافة الضيف للحفل</button>
+                </div>
             </div>
-            <h3>👥 قائمة العملاء الحاليين</h3>
-            <div id="clients-list" class="grid"></div>
+
+            <h3 style="margin-top: 40px;">إدارة الضيوف والرسائل (الأدمن)</h3>
+            <div id="admin-master-list"></div>
         </div>
 
-        <div id="client-section" class="hidden">
-            <div class="card">
-                <h3>➕ إضافة ضيف لقائمتك</h3>
-                <div style="display: flex; gap: 10px;">
-                    <input id="guest-name" type="text" placeholder="اسم الضيف">
-                    <input id="guest-phone" type="tel" placeholder="رقم واتساب الضيف (966...)">
-                    <button onclick="addGuest()">إضافة ضيف</button>
-                </div>
+        <div id="client-view" class="hidden">
+            <div class="stats-bar">
+                <div class="stat-item" style="background: var(--success)">حضور: <span id="count-yes">0</span></div>
+                <div class="stat-item" style="background: var(--danger)">اعتذار: <span id="count-no">0</span></div>
+                <div class="stat-item" style="background: #555">لم يحدد: <span id="count-wait">0</span></div>
             </div>
-            <br>
-            <div id="guests-list">
-                <h3>📋 قائمة ضيوفك</h3>
-                <div id="guests-container"></div>
+            
+            <div class="card">
+                <h3>قائمة المدعوين الخاصة بك</h3>
+                <table id="client-table">
+                    <thead>
+                        <tr><th>الاسم</th><th>الحالة</th><th>الجوال</th></tr>
+                    </thead>
+                    <tbody id="client-table-body"></tbody>
+                </table>
             </div>
         </div>
     </div>
@@ -91,124 +105,110 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        let currentSessionUser = "";
-        let currentClientData = null;
-
         window.handleLogin = async () => {
             const user = document.getElementById("user-input").value;
             const pass = document.getElementById("pass-input").value;
 
-            if (user === "admin" && pass === "123456") {
-                startAdmin();
+            if(user === "admin" && pass === "123456") {
+                document.getElementById("login-page").className = "hidden";
+                document.getElementById("main-content").className = "container";
+                document.getElementById("admin-view").className = "";
+                loadClientsList();
             } else {
-                checkClientLogin(user);
+                checkClient(user);
             }
         };
 
         // وظائف الأدمن
-        function startAdmin() {
-            document.getElementById("login-page").classList.add("hidden");
-            document.getElementById("main-content").classList.remove("hidden");
-            document.getElementById("admin-section").classList.remove("hidden");
-            document.getElementById("user-title").innerText = "لوحة تحكم المدير العام";
-            loadClients();
-        }
-
-        window.createNewClient = async () => {
+        window.addClient = async () => {
             const name = document.getElementById("new-client-name").value;
             const event = document.getElementById("new-client-event").value;
             const msg = document.getElementById("new-client-msg").value;
             const file = document.getElementById("new-client-file").value;
-
-            if(!name) return alert("اكتب اسم العميل");
-            await addDoc(collection(db, "users_list"), { name, event, msg, file });
-            alert("تم إنشاء حساب العميل بنجاح");
-            loadClients();
+            await addDoc(collection(db, "v2_clients"), { name, event, msg, file });
+            alert("تم التأسيس");
+            loadClientsList();
         };
 
-        async function loadClients() {
-            const list = document.getElementById("clients-list");
-            const snap = await getDocs(collection(db, "users_list"));
-            list.innerHTML = "";
-            snap.forEach(d => {
-                const data = d.data();
-                list.innerHTML += `<div class="card">
-                    <strong>👤 ${data.name}</strong><br>
-                    <small>📌 ${data.event}</small><br>
-                    <button class="del-btn" onclick="deleteClient('${d.id}')">حذف العميل</button>
-                </div>`;
-            });
-        }
-
-        // وظائف العميل
-        async function checkClientLogin(userName) {
-            const q = query(collection(db, "users_list"), where("name", "==", userName));
-            const snap = await getDocs(q);
-            if(snap.empty) return alert("عذراً، اسم المستخدم غير مسجل");
-            
-            snap.forEach(d => {
-                currentClientData = { id: d.id, ...d.data() };
-                currentSessionUser = d.data().name;
-            });
-
-            document.getElementById("login-page").classList.add("hidden");
-            document.getElementById("main-content").classList.remove("hidden");
-            document.getElementById("client-section").classList.remove("hidden");
-            document.getElementById("user-title").innerText = "لوحة " + currentClientData.event;
-            loadGuests();
+        async function loadClientsList() {
+            const sel = document.getElementById("select-client-for-guest");
+            const snap = await getDocs(collection(db, "v2_clients"));
+            sel.innerHTML = "<option>اختر العميل...</option>";
+            snap.forEach(d => sel.innerHTML += `<option value="${d.data().name}">${d.data().name}</option>`);
+            loadAdminMasterTable();
         }
 
         window.addGuest = async () => {
-            const gName = document.getElementById("guest-name").value;
-            const gPhone = document.getElementById("guest-phone").value;
-            if(!gName || !gPhone) return alert("اكمل بيانات الضيف");
-            
-            await addDoc(collection(db, "guests_list"), {
-                belongsTo: currentSessionUser,
-                name: gName,
-                phone: gPhone,
-                status: "لم يحدد"
-            });
-            loadGuests();
+            const belongsTo = document.getElementById("select-client-for-guest").value;
+            const name = document.getElementById("guest-name").value;
+            const phone = document.getElementById("guest-phone").value;
+            await addDoc(collection(db, "v2_guests"), { belongsTo, name, phone, status: "لم يحدد" });
+            alert("تمت إضافة الضيف");
+            loadAdminMasterTable();
         };
 
-        async function loadGuests() {
-            const container = document.getElementById("guests-container");
-            const q = query(collection(db, "guests_list"), where("belongsTo", "==", currentSessionUser));
-            const snap = await getDocs(q);
-            container.innerHTML = "";
+        async function loadAdminMasterTable() {
+            const div = document.getElementById("admin-master-list");
+            const snap = await getDocs(collection(db, "v2_guests"));
+            div.innerHTML = `<table><thead><tr><th>الضيف</th><th>يتبع للعميل</th><th>الحالة</th><th>إجراء</th></tr></thead><tbody id="master-body"></tbody></table>`;
+            const body = document.getElementById("master-body");
             snap.forEach(d => {
                 const g = d.data();
-                container.innerHTML += `
-                <div class="guest-row">
-                    <div>
-                        <strong>${g.name}</strong> (${g.phone}) <br>
-                        <span style="color: ${g.status === 'حضور' ? '#2ecc71' : (g.status === 'اعتذار' ? '#ff4d4d' : '#aaa')}">الحالة: ${g.status}</span>
-                    </div>
-                    <div>
-                        <button class="status-btn" style="background:#2ecc71" onclick="updateStatus('${d.id}', 'حضور')">حضور</button>
-                        <button class="status-btn" style="background:#ff4d4d" onclick="updateStatus('${d.id}', 'اعتذار')">اعتذار</button>
-                        <button class="wa-btn" onclick="sendWA('${g.phone}', '${g.name}')">واتساب 📱</button>
-                        <button class="del-btn" style="padding:5px" onclick="deleteGuest('${d.id}')">X</button>
-                    </div>
-                </div>`;
+                body.innerHTML += `<tr>
+                    <td>${g.name}</td>
+                    <td>${g.belongsTo}</td>
+                    <td>
+                        <select onchange="updateGuestStatus('${d.id}', this.value)">
+                            <option ${g.status==='لم يحدد'?'selected':''}>لم يحدد</option>
+                            <option ${g.status==='حضور'?'selected':''}>حضور</option>
+                            <option ${g.status==='اعتذار'?'selected':''}>اعتذار</option>
+                        </select>
+                    </td>
+                    <td><button class="stat-item" style="background:var(--danger); padding:5px 10px;" onclick="deleteGuest('${d.id}')">حذف</button></td>
+                </tr>`;
             });
         }
 
-        window.updateStatus = async (id, stat) => {
-            await updateDoc(doc(db, "guests_list", id), { status: stat });
-            loadGuests();
-        };
+        window.updateGuestStatus = async (id, val) => { await updateDoc(doc(db, "v2_guests", id), { status: val }); loadAdminMasterTable(); };
+        window.deleteGuest = async (id) => { if(confirm("حذف؟")) { await deleteDoc(doc(db, "v2_guests", id)); loadAdminMasterTable(); } };
 
-        window.sendWA = (phone, guestName) => {
-            const baseMsg = currentClientData.msg || "مرحباً بك";
-            const fileLink = currentClientData.file ? "\nرابط الدعوة: " + currentClientData.file : "";
-            const finalMsg = `يا ${guestName}\n${baseMsg}${fileLink}`;
-            window.open(`https://wa.me/${phone}?text=${encodeURIComponent(finalMsg)}`, '_blank');
-        };
+        // وظائف العميل (مشاهدة فقط)
+        async function checkClient(name) {
+            const q = query(collection(db, "v2_clients"), where("name", "==", name));
+            const snap = await getDocs(q);
+            if(snap.empty) return alert("الاسم غير مسجل");
+            
+            document.getElementById("login-page").className = "hidden";
+            document.getElementById("main-content").className = "container";
+            document.getElementById("client-view").className = "";
+            document.getElementById("view-title").innerText = "لوحة متابعة: " + name;
+            loadClientData(name);
+        }
 
-        window.deleteGuest = async (id) => { if(confirm("حذف الضيف؟")) { await deleteDoc(doc(db, "guests_list", id)); loadGuests(); } };
-        window.deleteClient = async (id) => { if(confirm("حذف العميل بكل بياناته؟")) { await deleteDoc(doc(db, "users_list", id)); loadClients(); } };
+        async function loadClientData(clientName) {
+            const q = query(collection(db, "v2_guests"), where("belongsTo", "==", clientName));
+            const snap = await getDocs(q);
+            const body = document.getElementById("client-table-body");
+            body.innerHTML = "";
+            let counts = { yes: 0, no: 0, wait: 0 };
+
+            snap.forEach(d => {
+                const g = d.data();
+                if(g.status === "حضور") counts.yes++;
+                else if(g.status === "اعتذار") counts.no++;
+                else counts.wait++;
+
+                body.innerHTML += `<tr>
+                    <td>${g.name}</td>
+                    <td style="color:${g.status==='حضور'?'#2ecc71':(g.status==='اعتذار'?'#ff4d4d':'#aaa')}">${g.status}</td>
+                    <td>${g.phone}</td>
+                </tr>`;
+            });
+
+            document.getElementById("count-yes").innerText = counts.yes;
+            document.getElementById("count-no").innerText = counts.no;
+            document.getElementById("count-wait").innerText = counts.wait;
+        }
     </script>
 </body>
 </html>
