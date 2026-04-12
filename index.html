@@ -3,290 +3,155 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>النظام الملكي لإدارة الدعوات</title>
+    <title>نظام الدعوات الملكي للأعراس</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
-        :root { --gold: #c5a059; --dark-bg: #0f0f0f; --card-bg: #1a1a1a; --text: #e0e0e0; }
-        body { font-family: 'Cairo', sans-serif; background: var(--dark-bg); color: var(--text); margin: 0; }
-        .container { max-width: 1200px; margin: auto; padding: 20px; }
-        .card { background: var(--card-bg); border: 1px solid #333; border-radius: 12px; padding: 20px; margin-bottom: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
-        h1, h2, h3 { color: var(--gold); }
+        /* المتغيرات اللونية الفخمة */
+        :root {
+            --gold-primary: #d4af37; /* ذهبي معتق */
+            --gold-light: #f1e5ac;  /* ذهبي فاتح للإضاءة */
+            --bg-dark: #080808;      /* أسود عميق */
+            --card-bg: rgba(26, 26, 26, 0.7); /* أسود شفاف للبطاقات */
+            --text-main: #e0e0e0;    /* رمادي فاتح للنصوص */
+            --border-color: rgba(212, 175, 55, 0.3); /* حواف ذهبية خفيفة */
+        }
+
+        body {
+            font-family: 'Cairo', sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            margin: 0;
+            /* خلفية مزخرفة بنقوش نباتية رسمية ذهبية (النقش الفخم المطلوب) */
+            background-image: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI2MDAiIGhlaWdodD0iNjAwIiB2aWV3Qm94PSIwIDAgNjAwIDYwMCI+PHBhdGggZmlsbD0ibm9uZSIgc3Ryb2tlPSIjZDQhZjM3IiBzdHJva2Utd2lkdGg9IjAuNSIgc3Ryb2tlLW9wYWNpdHk9IjAuMTUiIGQ9Ik0wIDZoMTAwdjEwMEgwek0xMDAgMTM2aDEwMHYxMDBIMTAwek0yMDAgMjM2aDEwMHYxMDBIMjAwek0zMDAgMzM2aDEwMHYxMDBIMzAwek00MDAgNDM2aDEwMHYxMDBINDAwek01MDAgNTM2aDEwMHYxMDBINTAweiIvPjxwYXRoIGZpbGw9Im5vbmUiIHN0cm9keT0iI2Q0YWYzNyIgc3Ryb2tlLXdpZHRoPSIwLjciIHN0cm9rZS1vcGFjaXR5PSIwLjIyIiBkPSJNMzAwIDZ2NjAwTTExNiAwaDQ4NE0wIDEzNmg2MDAiLz48ZyBmaWxsPSIjZDQhZjM3IiBmaWxsLW9wYWNpdHk9IjAuMTUiPjxjaXJjbGUgY3g9IjUiIGN5PSI1IiByPSIxLjUiLz48Y2lyY2xlIGN4PSIxMDUiIGN5PSIxMzUiIHI9IjEuNSIzPjxjaXJjbGUgY3g9IjIwNSIgY3k9IjIzNSIgcjPSIxLjUiLz48Y2lyY2xlIGN4PSIzMDUiIGN5PSIzMzUiIHI9IjEuNSIzPjxjaXJjbGUgY3g9IjQwNSIgY3k9IjQzNSIgcjPSIxLjUiLz48Y2lyY2xlIGN4PSI1MDUiIGN5PSI1MzUiIHI9IjEuNSIzPjwvZz48L3N2Zz4=');
+            background-attachment: fixed;
+        }
+
+        .container {
+            width: 95%;
+            max-width: 1300px;
+            margin: auto;
+            padding: 20px;
+        }
+
+        /* تنسيق البطاقات الزجاجية الفخمة (Glassmorphism) */
+        .card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.6);
+            backdrop-filter: blur(8px); /* تأثير الضبابية */
+            position: relative;
+            overflow: hidden;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
         
-        /*Inputs*/
-        input, select, textarea { width: 100%; padding: 12px; margin: 10px 0; border-radius: 8px; border: 1px solid #444; background: #000; color: #fff; box-sizing: border-box; font-size: 16px; }
-        input:focus { border-color: var(--gold); outline: none; }
+        /* تزيين زوايا البطاقات بنقوش ذهبية */
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0;
+            width: 50px; height: 50px;
+            border-top: 3px solid var(--gold-primary);
+            border-left: 3px solid var(--gold-primary);
+            border-top-left-radius: 20px;
+        }
+
+        .card::after {
+            content: '';
+            position: absolute;
+            bottom: 0; right: 0;
+            width: 50px; height: 50px;
+            border-bottom: 3px solid var(--gold-primary);
+            border-right: 3px solid var(--gold-primary);
+            border-bottom-right-radius: 20px;
+        }
+
+        h1, h2, h3, h4 { color: var(--gold-primary); text-shadow: 0 2px 4px rgba(0,0,0,0.5); font-weight: 700; }
         
-        /*Buttons*/
-        button { cursor: pointer; padding: 12px 20px; border-radius: 8px; border: none; font-weight: bold; transition: 0.3s; }
-        .btn-gold { background: var(--gold); color: #000; width: 100%; }
-        .btn-wa { background: #25d366; color: white; padding: 5px 10px; }
-        .btn-danger { background: #d9534f; color: white; padding: 5px 10px; }
+        /* الحقول المدخلة الاحترافية */
+        input, select, textarea {
+            width: 100%;
+            padding: 15px;
+            margin: 12px 0;
+            border-radius: 10px;
+            border: 1px solid #444;
+            background: rgba(0, 0, 0, 0.4);
+            color: #fff;
+            box-sizing: border-box;
+            font-size: 16px;
+            transition: all 0.3s ease;
+        }
+        input:focus {
+            border-color: var(--gold-primary);
+            box-shadow: 0 0 10px rgba(212, 175, 55, 0.3);
+            outline: none;
+        }
         
-        /*Grid & Table*/
-        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
-        th, td { padding: 12px; text-align: right; border-bottom: 1px solid #333; }
-        th { color: var(--gold); background: #111; }
+        /* الأزرار الملكية */
+        button {
+            cursor: pointer;
+            padding: 14px 28px;
+            border-radius: 10px;
+            border: none;
+            font-weight: bold;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .btn-gold {
+            background: linear-gradient(45deg, var(--gold-primary), var(--gold-light));
+            color: #1a1a1a;
+            width: 100%;
+            box-shadow: 0 5px 15px rgba(212, 175, 55, 0.2);
+        }
+        .btn-gold:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(212, 175, 55, 0.4);
+        }
+
+        .btn-wa { background: #2ecc71; color: white; padding: 7px 15px; font-size: 0.9em; margin-right: 5px;}
+        .btn-danger { background: #e74c3c; color: white; padding: 7px 15px; font-size: 0.9em;}
+
+        /* الجداول الملكية */
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; background: rgba(0,0,0,0.3); border-radius: 10px; overflow: hidden; }
+        th, td { padding: 18px; text-align: right; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        th { color: var(--gold-light); background: rgba(26, 26, 26, 0.5); font-weight: 700; text-transform: uppercase; }
+        tr:last-child td { border-bottom: none; }
+        tr:hover td { background-color: rgba(255,255,255,0.02); }
 
         .hidden { display: none !important; }
-        .qr-white { background: white; padding: 10px; display: inline-block; border-radius: 8px; }
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; }
+        @media (max-width: 900px) { .grid-2 { grid-template-columns: 1fr; } }
         
-        @media (max-width: 768px) { .grid-2 { grid-template-columns: 1fr; } }
+        .qr-white { background: white; padding: 15px; display: inline-block; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
+
+        /* تنسيقات صفحة الضيف */
+        .guest-container { max-width: 600px; margin: 40px auto; }
+        .inv-box {
+            text-align: center;
+            border: 3px double var(--gold-primary);
+            padding: 40px;
+            background: rgba(0,0,0,0.8);
+        }
+        .inv-img { width: 100%; border-radius: 15px; border: 2px solid var(--gold-primary); margin-bottom: 25px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
+        .status-dot { height: 12px; width: 12px; border-radius: 50%; display: inline-block; margin-right: 8px;}
     </style>
 </head>
 <body>
 
 <div id="app">
     <div id="login-page" class="container hidden">
-        <div class="card" style="max-width: 400px; margin: 100px auto;">
-            <h2 style="text-align: center;">👑 دخول النظام</h2>
-            <input id="user-input" type="text" placeholder="اسم المستخدم">
+        <div class="card inv-box" style="max-width: 450px; margin: 120px auto;">
+            <h1 style="text-align: center;">👑 بوابة النظام الملكي</h1>
+            <p style="text-align: center; color: #888;">يرجى تسجيل الدخول للوصول للوحة التحكم</p>
+            <input id="user-input" type="text" placeholder="اسم المستخدم أو العميل">
             <input id="pass-input" type="password" placeholder="كلمة المرور">
-            <button class="btn-gold" onclick="handleLogin()">دخول</button>
+            <button class="btn-gold" onclick="handleLogin()">تسجيل الدخول</button>
         </div>
     </div>
 
     <div id="main-page" class="container hidden">
-        <div style="display: flex; justify-content: space-between; align-items: center;">
-            <h2 id="welcome-title">لوحة التحكم</h2>
-            <button class="btn-danger" onclick="logout()">تسجيل خروج</button>
-        </div>
-
-        <div id="admin-section" class="hidden">
-            <div class="grid-2">
-                <div class="card">
-                    <h3>1. إضافة عميل جديد</h3>
-                    <input id="c-name" placeholder="اسم العميل">
-                    <input id="c-event" placeholder="اسم المناسبة">
-                    <input id="c-img" placeholder="رابط صورة الدعوة">
-                    <input id="c-map" placeholder="رابط الموقع (خريطة)">
-                    <button class="btn-gold" onclick="addClient()">تأسيس حساب</button>
-                </div>
-                <div class="card">
-                    <h3>2. إضافة ضيوف سريع</h3>
-                    <select id="client-select" onchange="loadAdminTable()"></select>
-                    <input id="g-name" placeholder="اسم الضيف">
-                    <input id="g-phone" placeholder="رقم الجوال (05...)">
-                    <button class="btn-gold" style="background: #2ecc71; color: white;" onclick="addGuest()">إضافة الضيف للقائمة</button>
-                    <p style="font-size: 12px; color: #888;">* يتم الإضافة للقائمة، ويمكنك الإرسال لاحقاً بضغطة زر</p>
-                </div>
-            </div>
-
-            <div class="card">
-                <h3>إدارة الضيوف</h3>
-                <div id="admin-table-container"></div>
-            </div>
-        </div>
-
-        <div id="client-section" class="hidden">
-            <div class="card" style="display: flex; justify-content: space-around; text-align: center;">
-                <div><h3 id="stat-yes">0</h3><p>حضور</p></div>
-                <div><h3 id="stat-no">0</h3><p>اعتذار</p></div>
-                <div><h3 id="stat-wait">0</h3><p>بانتظار الرد</p></div>
-            </div>
-            <div class="card">
-                <table id="client-table"><thead><tr><th>الاسم</th><th>الحالة</th></tr></thead><tbody id="client-body"></tbody></table>
-            </div>
-        </div>
-    </div>
-
-    <div id="guest-page" class="container hidden">
-        <div class="card" style="max-width: 500px; margin: auto; text-align: center; border-color: var(--gold);">
-            <h2 id="inv-event-title">دعوة خاصة</h2>
-            <img id="inv-img" style="width: 100%; border-radius: 10px; margin-bottom: 15px;">
-            <h3 id="inv-guest-name"></h3>
-            
-            <div id="guest-actions">
-                <button class="btn-gold" style="background:#2ecc71; color:white; margin-bottom:10px;" onclick="updateGuestResponse(true)">سأحضر بإذن الله</button>
-                <button class="btn-gold" style="background:#e74c3c; color:white;" onclick="updateGuestResponse(false)">أعتذر عن الحضور</button>
-            </div>
-
-            <div id="guest-confirmed" class="hidden">
-                <h3 style="color:#2ecc71">تم تأكيد حضورك! ✨</h3>
-                <div id="qrcode" class="qr-white"></div>
-                <p>📍 الموقع: <a id="inv-map" href="#" style="color:var(--gold)">اضغط هنا للخريطة</a></p>
-            </div>
-
-            <div id="guest-declined" class="hidden">
-                <h3 style="color:#e74c3c">نشكرك، تم تسجيل اعتذارك.</h3>
-            </div>
-        </div>
-    </div>
-</div>
-
-<script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-    import { getFirestore, collection, addDoc, getDocs, doc, updateDoc, query, where, getDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-
-    const firebaseConfig = {
-        apiKey: "AIzaSyBycODn3kTe7uRIBYifDogSPmv2towU6lA",
-        authDomain: "wedding-system-6fadd.firebaseapp.com",
-        projectId: "wedding-system-6fadd",
-        storageBucket: "wedding-system-6fadd.firebasestorage.app",
-        messagingSenderId: "902051092170",
-        appId: "1:902051092170:web:e228d3138a5b091b974633"
-    };
-
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
-
-    // التحقق من الجلسة السابقة (Stay Logged In)
-    window.onload = () => {
-        const savedUser = localStorage.getItem('loggedUser');
-        const savedRole = localStorage.getItem('userRole');
-        const urlParams = new URLSearchParams(window.location.search);
-        const gId = urlParams.get('id');
-
-        if (gId) return loadGuestScreen(gId);
-        if (savedUser) return showMain(savedRole, savedUser);
-        document.getElementById('login-page').classList.remove('hidden');
-    };
-
-    window.handleLogin = async () => {
-        const u = document.getElementById('user-input').value;
-        const p = document.getElementById('pass-input').value;
-        if(u === "admin" && p === "123456") {
-            saveLogin('admin', 'admin');
-        } else {
-            const q = query(collection(db, "v5_clients"), where("name", "==", u));
-            const s = await getDocs(q);
-            if(!s.empty) saveLogin('client', u);
-            else alert("خطأ في البيانات");
-        }
-    };
-
-    function saveLogin(role, user) {
-        localStorage.setItem('loggedUser', user);
-        localStorage.setItem('userRole', role);
-        showMain(role, user);
-    }
-
-    function showMain(role, user) {
-        document.getElementById('login-page').classList.add('hidden');
-        document.getElementById('main-page').classList.remove('hidden');
-        if(role === 'admin') {
-            document.getElementById('admin-section').classList.remove('hidden');
-            loadClientsSelect();
-        } else {
-            document.getElementById('client-section').classList.remove('hidden');
-            loadClientStats(user);
-        }
-    }
-
-    window.logout = () => { localStorage.clear(); location.reload(); };
-
-    // وظائف الأدمن
-    window.addClient = async () => {
-        const n = document.getElementById('c-name').value;
-        const e = document.getElementById('c-event').value;
-        const i = document.getElementById('c-img').value;
-        const m = document.getElementById('c-map').value;
-        await addDoc(collection(db, "v5_clients"), { name: n, event: e, img: i, map: m });
-        alert("تم الحفظ"); loadClientsSelect();
-    };
-
-    async function loadClientsSelect() {
-        const sel = document.getElementById('client-select');
-        const s = await getDocs(collection(db, "v5_clients"));
-        sel.innerHTML = "<option value=''>اختر العميل لرؤية ضيوفه</option>";
-        s.forEach(d => sel.innerHTML += `<option value="${d.data().name}">${d.data().name}</option>`);
-    }
-
-    window.addGuest = async () => {
-        const c = document.getElementById('client-select').value;
-        const n = document.getElementById('g-name').value;
-        let p = document.getElementById('g-phone').value;
-        if(!c || !n || !p) return alert("اكمل البيانات");
-        if(p.startsWith('0')) p = '966' + p.substring(1);
-
-        await addDoc(collection(db, "v5_guests"), { belongsTo: c, name: n, phone: p, status: "بانتظار الرد" });
-        document.getElementById('g-name').value = ""; 
-        document.getElementById('g-phone').value = "";
-        loadAdminTable();
-    };
-
-    window.loadAdminTable = async () => {
-        const c = document.getElementById('client-select').value;
-        const q = query(collection(db, "v5_guests"), where("belongsTo", "==", c));
-        const s = await getDocs(q);
-        let h = `<table><tr><th>الاسم</th><th>الحالة</th><th>إجراء</th></tr>`;
-        s.forEach(d => {
-            const g = d.data();
-            const link = window.location.href.split('?')[0] + "?id=" + d.id;
-            h += `<tr>
-                <td>${g.name}</td>
-                <td>${g.status}</td>
-                <td>
-                    <button class="btn-wa" onclick="sendInvite('${g.phone}', '${g.name}', '${link}')">واتساب</button>
-                    <button class="btn-danger" onclick="delGuest('${d.id}')">حذف</button>
-                </td>
-            </tr>`;
-        });
-        document.getElementById('admin-table-container').innerHTML = h + "</table>";
-    };
-
-    window.sendInvite = (phone, name, link) => {
-        const text = encodeURIComponent(`دعوة خاصة للغالي ${name}\nننتظر تشريفك لنا، يرجى تأكيد الحضور عبر الرابط:\n${link}`);
-        window.open(`https://wa.me/${phone}?text=${text}`, '_blank');
-    };
-
-    window.delGuest = async (id) => { if(confirm("حذف؟")) { await deleteDoc(doc(db, "v5_guests", id)); loadAdminTable(); }};
-
-    // وظائف الضيف
-    let currentGuestId = "";
-    async function loadGuestScreen(id) {
-        currentGuestId = id;
-        document.getElementById('guest-page').classList.remove('hidden');
-        const snap = await getDoc(doc(db, "v5_guests", id));
-        if(!snap.exists()) return;
-        const g = snap.data();
-        document.getElementById('inv-guest-name').innerText = "مرحباً " + g.name;
-        
-        const q = query(collection(db, "v5_clients"), where("name", "==", g.belongsTo));
-        const cs = await getDocs(q);
-        cs.forEach(d => {
-            const c = d.data();
-            document.getElementById('inv-img').src = c.img;
-            document.getElementById('inv-event-title').innerText = c.event;
-            document.getElementById('inv-map').href = c.map;
-        });
-
-        if(g.status === "حضور") showFinal(true);
-        else if(g.status === "اعتذار") showFinal(false);
-    }
-
-    window.updateGuestResponse = async (isYes) => {
-        const stat = isYes ? "حضور" : "اعتذار";
-        await updateDoc(doc(db, "v5_guests", currentGuestId), { status: stat });
-        showFinal(isYes);
-    };
-
-    function showFinal(isYes) {
-        document.getElementById('guest-actions').classList.add('hidden');
-        if(isYes) {
-            document.getElementById('guest-confirmed').classList.remove('hidden');
-            new QRCode(document.getElementById("qrcode"), { text: currentGuestId, width: 140, height: 140 });
-        } else {
-            document.getElementById('guest-declined').classList.remove('hidden');
-        }
-    }
-
-    // وظائف العميل (مشاهدة)
-    async function loadClientStats(name) {
-        const q = query(collection(db, "v5_guests"), where("belongsTo", "==", name));
-        const s = await getDocs(q);
-        let counts = { yes: 0, no: 0, wait: 0 };
-        const body = document.getElementById('client-body');
-        body.innerHTML = "";
-        s.forEach(d => {
-            const g = d.data();
-            if(g.status === "حضور") counts.yes++; else if(g.status === "اعتذار") counts.no++; else counts.wait++;
-            body.innerHTML += `<tr><td>${g.name}</td><td>${g.status}</td></tr>`;
-        });
-        document.getElementById('stat-yes').innerText = counts.yes;
-        document.getElementById('stat-no').innerText = counts.no;
-        document.getElementById('stat-wait').innerText = counts.wait;
-    }
-</script>
-</body>
-</html>
