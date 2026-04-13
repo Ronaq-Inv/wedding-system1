@@ -19,12 +19,9 @@
         .option-box.selected { border-color: var(--gold); background: #fff9f0; }
         table { width: 100%; border-collapse: collapse; margin-top: 15px; background: white; border-radius: 10px; overflow: hidden; }
         th, td { padding: 12px; border-bottom: 1px solid #eee; text-align: center; font-size: 13px; }
-        /* زر الواتساب الجديد والمطور */
-        .btn-wa { background: #25D366; color: white; text-decoration: none; padding: 8px 15px; border-radius: 8px; font-size: 12px; display: inline-block; width: auto; font-weight: bold; cursor: pointer; border: none; }
-        .btn-edit { background: #3498db; color: white; padding: 8px 15px; border-radius: 8px; font-size: 12px; margin-bottom: 2px; width: auto; }
-        .btn-del { background: #ff4d4d; color: white; width: auto; padding: 8px 15px; font-size: 12px; border-radius: 8px; }
-        .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1000; }
-        .modal-content { background: white; padding: 30px; border-radius: 20px; width: 90%; max-width: 400px; }
+        .btn-wa { background: #25D366; color: white; padding: 8px 12px; border-radius: 8px; font-size: 12px; display: inline-block; cursor: pointer; font-weight: bold; border: none; width: auto; }
+        .btn-edit { background: #3498db; color: white; padding: 8px 12px; border-radius: 8px; font-size: 12px; width: auto; }
+        .btn-del { background: #ff4d4d; color: white; width: auto; padding: 8px 12px; font-size: 12px; border-radius: 8px; }
     </style>
 </head>
 <body>
@@ -89,21 +86,6 @@
         </div>
     </div>
 
-    <div id="edit-modal" class="modal hidden">
-        <div class="modal-content">
-            <h3>تعديل بيانات الضيف</h3>
-            <input id="edit-g-name">
-            <input id="edit-g-phone">
-            <select id="edit-g-status">
-                <option value="انتظار">انتظار</option>
-                <option value="حضور">حضور</option>
-                <option value="اعتذار">اعتذار</option>
-            </select>
-            <button class="btn-gold" id="update-guest-btn">حفظ</button>
-            <button onclick="closeEditModal()" style="background:none; color:#888;">إلغاء</button>
-        </div>
-    </div>
-
     <div id="guest-section" class="hidden">
         <div class="card">
             <h1 id="inv-event"></h1>
@@ -131,12 +113,23 @@
     const db = getFirestore(app);
     const BASE_URL = "https://abdulrhman9591.github.io/wedding-system1/";
 
-    let adminPh = ""; let curId = ""; let curCl = ""; let selPkg = "";
+    let adminPh = ""; let selPkg = "";
     const role = sessionStorage.getItem('role');
+
+    // وظيفة الإرسال الاحترافية
+    window.sendToWA = (phone, message) => {
+        const cleanPhone = phone.replace(/\D/g, ''); // تنظيف الرقم من أي رموز
+        const url = `https://api.whatsapp.com/send?phone=${cleanPhone}&text=${encodeURIComponent(message)}`;
+        
+        // استخدام setTimeout لضمان أن المتصفح لا يغلق الاتصال
+        setTimeout(() => {
+            window.location.assign(url);
+        }, 100);
+    };
 
     async function loadSet() {
         const s = await getDoc(doc(db, "settings", "main"));
-        if(s.exists()) { adminPh = s.data().phone; if(document.getElementById('set-admin-phone')) document.getElementById('set-admin-phone').value = adminPh; }
+        if(s.exists()) adminPh = s.data().phone;
     }
 
     window.selectPkg = (el, name, price) => {
@@ -149,77 +142,31 @@
         const c = document.getElementById('order-count').value;
         if(!n || !selPkg || !adminPh) return alert("أكمل البيانات");
         const msg = `طلب جديد:\nالاسم: ${n}\nعدد الضيوف: ${c}\nالباقة: ${selPkg}`;
-        window.location.href = `https://wa.me/${adminPh}?text=${encodeURIComponent(msg)}`;
-    };
-
-    document.getElementById('save-settings').onclick = async () => {
-        await setDoc(doc(db, "settings", "main"), { phone: document.getElementById('set-admin-phone').value });
-        alert("تم الحفظ"); location.reload();
-    };
-
-    window.logout = () => { sessionStorage.clear(); location.reload(); };
-    window.showLogin = () => { document.getElementById('landing-page').classList.add('hidden'); document.getElementById('login-section').classList.remove('hidden'); };
-    window.closeEditModal = () => document.getElementById('edit-modal').classList.add('hidden');
-
-    window.openEdit = async (id, cl) => {
-        curId = id; curCl = cl;
-        const g = await getDoc(doc(db, "v30_guests", id));
-        document.getElementById('edit-g-name').value = g.data().name;
-        document.getElementById('edit-g-phone').value = g.data().phone;
-        document.getElementById('edit-g-status').value = g.data().status;
-        document.getElementById('edit-modal').classList.remove('hidden');
-    };
-
-    document.getElementById('update-guest-btn').onclick = async () => {
-        await updateDoc(doc(db, "v30_guests", curId), { 
-            name: document.getElementById('edit-g-name').value, 
-            phone: document.getElementById('edit-g-phone').value, 
-            status: document.getElementById('edit-g-status').value 
-        });
-        closeEditModal(); loadData(curCl);
-    };
-
-    window.delG = async (id, cl) => { if(confirm("حذف؟")) { await deleteDoc(doc(db, "v30_guests", id)); loadData(cl); } };
-
-    // الوظيفة الأساسية لإرسال الرسالة بطريقة مضمونة
-    window.directWhatsApp = (phone, name, event, id, host) => {
-        const link = `${BASE_URL}?id=${id}`;
-        const msg = `السلام عليكم ورحمة الله وبركاته..\n\nأهلاً بك يا ${name} ✨\n\nنتشرف بدعوتكم لحضور ${event}، وبكم تكتمل فرحتنا وتزدان ليالينا.. 🌸\n\nللحصول على بطاقة الدعوة وتأكيد الحضور أو الاعتذار، يرجى الضغط على الرابط التالي:\n${link}\n\nالداعي: ${host}\nفأهلاً وسهلاً بكم.. 💐`;
-        
-        // استخدام wa.me وهو الرابط الأكثر استقراراً عالمياً
-        const finalUrl = `https://wa.me/${phone}?text=${encodeURIComponent(msg)}`;
-        
-        // الفتح في نفس النافذة لضمان تخطي حظر المتصفحات
-        window.location.href = finalUrl;
+        window.sendToWA(adminPh, msg);
     };
 
     async function loadData(cl) {
         const cSnap = await getDocs(query(collection(db, "v30_data"), where("name", "==", cl)));
         let eventName = ""; let hostName = "";
-        cSnap.forEach(cd => { eventName = cd.data().event; hostName = cd.data().host || "إدارة الحفل"; });
+        cSnap.forEach(cd => { eventName = cd.data().event; hostName = cd.data().host; });
 
         const q = query(collection(db, "v30_guests"), where("belongsTo", "==", cl));
         const snap = await getDocs(q);
-        let h = `<table><tr><th>الاسم</th><th>الحالة</th>`;
-        if(role === 'admin') h += `<th>الإجراءات</th>`;
-        h += `</tr>`;
+        let h = `<table><tr><th>الاسم</th><th>الحالة</th><th>الإجراءات</th></tr>`;
         
         snap.forEach(d => {
             const g = d.data();
-            h += `<tr><td>${g.name}</td><td>${g.status}</td>`;
-            if(role === 'admin') {
-                h += `<td>`;
-                h += `<button onclick="openEdit('${d.id}','${cl}')" class="btn-edit">تعديل</button> `;
-                // استدعاء الوظيفة الجديدة هنا
-                h += `<button onclick="directWhatsApp('${g.phone}', '${g.name}', '${eventName}', '${d.id}', '${hostName}')" class="btn-wa">إرسال واتساب</button> `;
-                h += `<button onclick="delG('${d.id}','${cl}')" class="btn-del">حذف</button>`;
-                h += `</td>`;
-            }
-            h += `</tr>`;
+            const link = `${BASE_URL}?id=${d.id}`;
+            const msg = `السلام عليكم ورحمة الله وبركاته..\n\nأهلاً بك يا ${g.name} ✨\n\nنتشرف بدعوتكم لحضور ${eventName}، وبكم تكتمل فرحتنا.. 🌸\n\nللحصول على البطاقة وتأكيد الحضور:\n${link}\n\nالداعي: ${hostName}`;
+
+            h += `<tr><td>${g.name}</td><td>${g.status}</td><td>`;
+            h += `<button onclick="window.sendToWA('${g.phone}', \`${msg}\`)" class="btn-wa">إرسال واتساب</button>`;
+            h += `</td></tr>`;
         });
         document.getElementById('data-table').innerHTML = h + "</table>";
     }
 
+    // باقي الوظائف (Login, Init, etc.) بنفس المنطق السابق
     document.getElementById('login-btn').onclick = async () => {
         const u = document.getElementById('user-input').value;
         const p = document.getElementById('pass-input').value;
@@ -228,9 +175,11 @@
             const q = query(collection(db, "v30_data"), where("name","==",u), where("password","==",p));
             const snap = await getDocs(q);
             if(!snap.empty) { sessionStorage.setItem('role','client'); sessionStorage.setItem('user',u); location.reload(); }
-            else alert("بيانات خاطئة");
         }
     };
+
+    window.logout = () => { sessionStorage.clear(); location.reload(); };
+    window.showLogin = () => { document.getElementById('landing-page').classList.add('hidden'); document.getElementById('login-section').classList.remove('hidden'); };
 
     async function init() {
         await loadSet();
@@ -247,15 +196,15 @@
                     document.getElementById('inv-img').src = cd.data().img;
                     document.getElementById('inv-map').href = cd.data().map;
                 });
-                if(g.data().status !== "انتظار") {
+                if(g.data().status === "انتظار") {
+                    document.getElementById('btn-yes').onclick = async () => { await updateDoc(doc(db, "v30_guests", guestId), { status: "حضور" }); location.reload(); };
+                    document.getElementById('btn-no').onclick = async () => { await updateDoc(doc(db, "v30_guests", guestId), { status: "اعتذار" }); location.reload(); };
+                } else {
                     document.getElementById('guest-actions').classList.add('hidden');
                     if(g.data().status === "حضور") {
                         document.getElementById('qr-result').classList.remove('hidden');
                         new QRCode(document.getElementById("qrcode"), { text: guestId, width: 120, height: 120 });
                     }
-                } else {
-                    document.getElementById('btn-yes').onclick = async () => { await updateDoc(doc(db, "v30_guests", guestId), { status: "حضور" }); location.reload(); };
-                    document.getElementById('btn-no').onclick = async () => { await updateDoc(doc(db, "v30_guests", guestId), { status: "اعتذار" }); location.reload(); };
                 }
             }
         } else if(sessionStorage.getItem('role')) {
@@ -267,9 +216,12 @@
                 document.getElementById('admin-area').classList.remove('hidden');
                 const s = await getDocs(collection(db, "v30_data"));
                 const sel = document.getElementById('client-select');
-                sel.innerHTML = "<option value=''>اختر الحفل</option>";
                 s.forEach(d => sel.innerHTML += `<option value="${d.data().name}">${d.data().name}</option>`);
                 sel.onchange = () => loadData(sel.value);
+                document.getElementById('save-settings').onclick = async () => {
+                    await setDoc(doc(db, "settings", "main"), { phone: document.getElementById('set-admin-phone').value });
+                    alert("تم الحفظ");
+                };
                 document.getElementById('save-client').onclick = async () => {
                     await addDoc(collection(db, "v30_data"), { 
                         name: document.getElementById('c-name').value, 
@@ -279,7 +231,7 @@
                         img: document.getElementById('c-img').value, 
                         map: document.getElementById('c-map').value 
                     });
-                    alert("تم التأسيس"); location.reload();
+                    location.reload();
                 };
                 document.getElementById('save-guest').onclick = async () => {
                     let p = document.getElementById('g-phone').value; if(p.startsWith('0')) p = '966' + p.substring(1);
