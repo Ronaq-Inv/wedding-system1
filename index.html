@@ -76,7 +76,7 @@
                 <select id="client-select"></select>
                 <input id="g-name" placeholder="اسم الضيف">
                 <input id="g-phone" placeholder="الجوال (966)">
-                <button style="background:#8ebf9a; color:white;" id="save-guest">إضافة للجدول</button>
+                <input id="g-housing" placeholder="رقم الإسكان"> <button style="background:#8ebf9a; color:white;" id="save-guest">إضافة للجدول</button>
             </div>
         </div>
 
@@ -91,7 +91,7 @@
             <h3>تعديل الضيف</h3>
             <input id="edit-g-name">
             <input id="edit-g-phone">
-            <select id="edit-g-status">
+            <input id="edit-g-housing" placeholder="رقم الإسكان"> <select id="edit-g-status">
                 <option value="انتظار">انتظار</option>
                 <option value="حضور">حضور</option>
                 <option value="اعتذار">اعتذار</option>
@@ -131,7 +131,6 @@
     let adminPh = ""; let selPkg = ""; let curId = ""; let curCl = "";
     const role = sessionStorage.getItem('role');
 
-    // وظيفة الإرسال الآمنة
     window.sendToWA = (phone, message) => {
         const url = `https://api.whatsapp.com/send?phone=${phone.replace(/\D/g, '')}&text=${encodeURIComponent(message)}`;
         setTimeout(() => { window.location.assign(url); }, 100);
@@ -159,6 +158,7 @@
         const g = await getDoc(doc(db, "v30_guests", id));
         document.getElementById('edit-g-name').value = g.data().name;
         document.getElementById('edit-g-phone').value = g.data().phone;
+        document.getElementById('edit-g-housing').value = g.data().housing || "";
         document.getElementById('edit-g-status').value = g.data().status;
         document.getElementById('edit-modal').classList.remove('hidden');
     };
@@ -168,7 +168,8 @@
     document.getElementById('update-guest-btn').onclick = async () => {
         await updateDoc(doc(db, "v30_guests", curId), { 
             name: document.getElementById('edit-g-name').value, 
-            phone: document.getElementById('edit-g-phone').value, 
+            phone: document.getElementById('edit-g-phone').value,
+            housing: document.getElementById('edit-g-housing').value, 
             status: document.getElementById('edit-g-status').value 
         });
         closeEditModal(); loadData(curCl);
@@ -183,7 +184,7 @@
 
         const snap = await getDocs(query(collection(db, "v30_guests"), where("belongsTo", "==", cl)));
         let h = `<table><tr><th>الاسم</th><th>الحالة</th>`;
-        if(role === 'admin') h += `<th>الإجراءات</th>`;
+        if(role === 'admin') h += `<th>الإسكان</th><th>الإجراءات</th>`;
         h += `</tr>`;
         
         snap.forEach(d => {
@@ -191,6 +192,7 @@
             const msg = `السلام عليكم..\nأهلاً بك يا ${g.name} ✨\nنتشرف بدعوتكم لحضور ${eventName}..\nللتأكيد:\n${BASE_URL}?id=${d.id}\nالداعي: ${hostName}`;
             h += `<tr><td>${g.name}</td><td>${g.status}</td>`;
             if(role === 'admin') {
+                h += `<td>${g.housing || '-'}</td>`;
                 h += `<td>`;
                 h += `<button onclick="window.sendToWA('${g.phone}', \`${msg}\`)" class="btn-wa">إرسال</button> `;
                 h += `<button onclick="openEdit('${d.id}','${cl}')" class="btn-edit">تعديل</button> `;
@@ -272,7 +274,13 @@
                 };
                 document.getElementById('save-guest').onclick = async () => {
                     let p = document.getElementById('g-phone').value; if(p.startsWith('0')) p = '966' + p.substring(1);
-                    await addDoc(collection(db, "v30_guests"), { belongsTo: sel.value, name: document.getElementById('g-name').value, phone: p, status: "انتظار" });
+                    await addDoc(collection(db, "v30_guests"), { 
+                        belongsTo: sel.value, 
+                        name: document.getElementById('g-name').value, 
+                        phone: p, 
+                        housing: document.getElementById('g-housing').value, // حفظ الإسكان
+                        status: "انتظار" 
+                    });
                     loadData(sel.value);
                 };
             } else loadData(user);
