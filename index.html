@@ -20,7 +20,12 @@
         table { width: 100%; border-collapse: collapse; margin-top: 15px; background: white; border-radius: 10px; overflow: hidden; }
         th, td { padding: 12px; border-bottom: 1px solid #eee; text-align: center; font-size: 13px; }
         .btn-wa { background: #25D366; color: white; text-decoration: none; padding: 5px 10px; border-radius: 8px; font-size: 11px; }
-        .btn-del { background: #ff4d4d; color: white; width: auto; padding: 5px 10px; font-size: 11px; }
+        .btn-edit { background: #3498db; color: white; padding: 5px 10px; border-radius: 8px; font-size: 11px; margin-left: 5px; }
+        .btn-del { background: #ff4d4d; color: white; width: auto; padding: 5px 10px; font-size: 11px; border-radius: 8px; }
+        
+        /* Modal Style for Editing */
+        .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1000; }
+        .modal-content { background: white; padding: 30px; border-radius: 20px; width: 90%; max-width: 400px; }
     </style>
 </head>
 <body>
@@ -60,7 +65,6 @@
                 <input id="set-admin-phone" placeholder="رقم واتساب استقبال الطلبات (مثال: 96650...)">
                 <button class="btn-gold" id="save-settings">حفظ رقم الواتساب</button>
             </div>
-
             <div class="card">
                 <h3>🎀 تأسيس حفل جديد</h3>
                 <input id="c-name" placeholder="اسم العميل">
@@ -82,6 +86,21 @@
         <div class="card" style="overflow-x:auto;">
             <h3>قائمة البيانات والردود</h3>
             <div id="data-table"></div>
+        </div>
+    </div>
+
+    <div id="edit-modal" class="modal hidden">
+        <div class="modal-content">
+            <h3 style="color:var(--gold)">تعديل بيانات الضيف</h3>
+            <input id="edit-g-name" placeholder="الاسم">
+            <input id="edit-g-phone" placeholder="الجوال">
+            <select id="edit-g-status">
+                <option value="انتظار">انتظار</option>
+                <option value="حضور">حضور</option>
+                <option value="اعتذار">اعتذار</option>
+            </select>
+            <button class="btn-gold" id="update-guest-btn">تحديث البيانات</button>
+            <button onclick="closeEditModal()" style="background:none; color:#888; margin-top:10px;">إلغاء</button>
         </div>
     </div>
 
@@ -113,14 +132,15 @@
     const BASE_URL = "https://abdulrhman9591.github.io/wedding-system1/";
 
     let selPkg = "";
-    let dynamicAdminPhone = ""; // سيتم سحبه من Firestore
+    let dynamicAdminPhone = "";
+    let currentEditId = "";
+    let currentEditClient = "";
 
     window.selectPkg = (el, name, price) => {
         document.querySelectorAll('.option-box').forEach(b => b.classList.remove('selected'));
         el.classList.add('selected'); selPkg = `${name} (${price} ريال)`;
     };
 
-    // تحميل رقم الواتساب من الإعدادات
     async function getSettings() {
         const s = await getDoc(doc(db, "settings", "main"));
         if(s.exists()) {
@@ -132,19 +152,44 @@
     document.getElementById('send-order').onclick = () => {
         const n = document.getElementById('order-name').value;
         const c = document.getElementById('order-count').value;
-        if(!n || !selPkg || !dynamicAdminPhone) return alert("يرجى التأكد من إدخال بياناتك واختيار الباقة، وتأكد من ضبط رقم الإدارة في الإعدادات");
-        window.open(`https://wa.me/${dynamicAdminPhone}?text=طلب خدمة جديد 🌸%0Aالاسم: ${n}%0Aعدد الضيوف: ${c}%0Aالباقة: ${selPkg}`, '_blank');
+        if(!n || !selPkg || !dynamicAdminPhone) return alert("أكمل البيانات");
+        window.open(`https://wa.me/${dynamicAdminPhone}?text=طلب خدمة جديد:%0Aالاسم: ${n}%0Aعدد الضيوف: ${c}%0Aالباقة: ${selPkg}`, '_blank');
     };
 
     document.getElementById('save-settings').onclick = async () => {
         const ph = document.getElementById('set-admin-phone').value;
         await setDoc(doc(db, "settings", "main"), { phone: ph });
-        alert("تم حفظ رقم الواتساب الجديد بنجاح");
-        location.reload();
+        alert("تم الحفظ"); location.reload();
     };
 
     window.showLogin = () => { document.getElementById('landing-page').classList.add('hidden'); document.getElementById('login-section').classList.remove('hidden'); };
     window.logout = () => { sessionStorage.clear(); location.reload(); };
+
+    // ميزة التعديل
+    window.openEdit = async (id, client) => {
+        currentEditId = id;
+        currentEditClient = client;
+        const gDoc = await getDoc(doc(db, "v30_guests", id));
+        if(gDoc.exists()) {
+            document.getElementById('edit-g-name').value = gDoc.data().name;
+            document.getElementById('edit-g-phone').value = gDoc.data().phone;
+            document.getElementById('edit-g-status').value = gDoc.data().status;
+            document.getElementById('edit-modal').classList.remove('hidden');
+        }
+    };
+
+    window.closeEditModal = () => document.getElementById('edit-modal').classList.add('hidden');
+
+    document.getElementById('update-guest-btn').onclick = async () => {
+        const newName = document.getElementById('edit-g-name').value;
+        const newPhone = document.getElementById('edit-g-phone').value;
+        const newStatus = document.getElementById('edit-g-status').value;
+        await updateDoc(doc(db, "v30_guests", currentEditId), { name: newName, phone: newPhone, status: newStatus });
+        alert("تم التحديث");
+        closeEditModal();
+        loadData(currentEditClient);
+    };
+
     window.delG = async (id, client) => { if(confirm("حذف؟")) { await deleteDoc(doc(db, "v30_guests", id)); loadData(client); } };
 
     document.getElementById('login-btn').onclick = async () => {
@@ -163,17 +208,16 @@
     async function loadData(client) {
         const q = query(collection(db, "v30_guests"), where("belongsTo", "==", client));
         const snap = await getDocs(q);
-        let h = `<table><tr><th>الاسم</th><th>الحالة</th>`;
-        if(sessionStorage.getItem('role') === 'admin') h += `<th>واتساب</th><th>حذف</th>`;
-        h += `</tr>`;
+        let h = `<table><tr><th>الاسم</th><th>الجوال</th><th>الحالة</th><th>إجراءات</th></tr>`;
         snap.forEach(d => {
             const g = d.data(); const link = `${BASE_URL}?id=${d.id}`;
-            h += `<tr><td>${g.name}</td><td>${g.status}</td>`;
+            h += `<tr><td>${g.name}</td><td>${g.phone}</td><td>${g.status}</td><td>`;
+            h += `<button onclick="openEdit('${d.id}','${client}')" class="btn-edit">تعديل</button>`;
             if(sessionStorage.getItem('role') === 'admin') {
-                h += `<td><a href="https://wa.me/${g.phone}?text=نتشرف بدعوتكم: ${link}" target="_blank" class="btn-wa">إرسال</a></td>`;
-                h += `<td><button onclick="delG('${d.id}','${client}')" class="btn-del">🗑️</button></td>`;
+                h += `<a href="https://wa.me/${g.phone}?text=نتشرف بدعوتكم: ${link}" target="_blank" class="btn-wa">واتساب</a>`;
+                h += `<button onclick="delG('${d.id}','${client}')" class="btn-del">🗑️</button>`;
             }
-            h += `</tr>`;
+            h += `</td></tr>`;
         });
         document.getElementById('data-table').innerHTML = h + "</table>";
     }
