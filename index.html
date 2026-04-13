@@ -15,11 +15,11 @@
         h3 { color: var(--gold); margin-top: 0; }
         input, select { width: 100%; padding: 12px; margin: 8px 0; border-radius: 10px; border: 1px solid #ddd; box-sizing: border-box; }
         button { cursor: pointer; padding: 12px; border-radius: 10px; border: none; font-weight: bold; transition: 0.3s; }
-        .btn-whatsapp { background: #25D366; color: white; padding: 5px 10px; font-size: 12px; text-decoration: none; border-radius: 5px; }
-        .btn-edit { background: #f0ad4e; color: white; padding: 5px 10px; font-size: 12px; }
+        .btn-whatsapp { background: #25D366; color: white; padding: 8px 12px; font-size: 13px; text-decoration: none; border-radius: 8px; display: inline-block; }
+        .btn-edit { background: #f0ad4e; color: white; padding: 8px 12px; font-size: 13px; border-radius: 8px; }
         table { width: 100%; border-collapse: collapse; margin-top: 15px; background: white; }
         th, td { padding: 12px; border-bottom: 1px solid #eee; text-align: center; }
-        .status-tag { padding: 4px 8px; border-radius: 5px; font-size: 12px; }
+        .status-tag { padding: 4px 8px; border-radius: 5px; font-size: 12px; background: #eee; }
     </style>
 </head>
 <body>
@@ -29,7 +29,7 @@
         <h3>دخول النظام 🌸</h3>
         <input id="user-input" placeholder="اسم المستخدم">
         <input id="pass-input" type="password" placeholder="كلمة المرور">
-        <button onclick="handleLogin()" style="background:var(--gold); color:white; width:100%;">دخول</button>
+        <button id="login-trigger" style="background:var(--gold); color:white; width:100%;">دخول</button>
     </div>
 
     <div id="main-page" class="hidden">
@@ -49,14 +49,14 @@
                     <input id="c-event" placeholder="اسم المناسبة">
                     <input id="c-img" placeholder="رابط صورة الكرت">
                     <input id="c-map" placeholder="رابط الموقع (Maps)">
-                    <button onclick="addClient()" style="background:var(--gold); color:white; width:100%;">حفظ الحفل</button>
+                    <button id="save-client" style="background:var(--gold); color:white; width:100%;">حفظ الحفل</button>
                 </div>
                 <div class="card">
                     <h3>📝 إضافة ضيف</h3>
                     <select id="client-select"></select>
                     <input id="g-name" placeholder="اسم الضيف">
                     <input id="g-phone" placeholder="رقم الجوال (05xxxx)">
-                    <button onclick="addGuest()" style="background:#8ebf9a; color:white; width:100%;">إضافة الضيف</button>
+                    <button id="save-guest" style="background:#8ebf9a; color:white; width:100%;">إضافة الضيف</button>
                 </div>
             </div>
 
@@ -84,7 +84,9 @@
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
-    // ربط الدوال بالنافذة (Window) لتجعلها قابلة للاستدعاء من الأزرار
+    // الرابط الثابت لموقعك على GitHub Pages
+    const BASE_URL = "https://abdulrhman9591.github.io/wedding-system1/";
+
     window.handleLogin = async () => {
         const u = document.getElementById('user-input').value;
         const p = document.getElementById('pass-input').value;
@@ -93,6 +95,7 @@
             location.reload();
         }
     };
+    document.getElementById('login-trigger').onclick = window.handleLogin;
 
     window.addClient = async () => {
         const data = {
@@ -105,13 +108,14 @@
         alert("تم حفظ الحفل");
         location.reload();
     };
+    document.getElementById('save-client').onclick = window.addClient;
 
     window.addGuest = async () => {
         const clientName = document.getElementById('client-select').value;
         const name = document.getElementById('g-name').value;
         let phone = document.getElementById('g-phone').value;
+        if(!clientName || !name || !phone) return alert("يرجى إكمال البيانات");
         
-        // معالجة رقم الجوال للواتساب
         if(phone.startsWith('0')) phone = '966' + phone.substring(1);
         else if(!phone.startsWith('966')) phone = '966' + phone;
 
@@ -124,12 +128,13 @@
         alert("تمت إضافة الضيف");
         loadAdminTable(clientName);
     };
+    document.getElementById('save-guest').onclick = window.addGuest;
 
-    // دالة الأدمن لتعديل الحالة (تصفير الحالة)
     window.resetGuestStatus = async (id, clientName) => {
         const newStatus = prompt("أدخل الحالة الجديدة (انتظار / حضور / اعتذار):", "انتظار");
         if(newStatus) {
             await updateDoc(doc(db, "v30_guests", id), { status: newStatus });
+            alert("تم تحديث الحالة");
             loadAdminTable(clientName);
         }
     };
@@ -137,18 +142,19 @@
     async function loadAdminTable(clientName) {
         const q = query(collection(db, "v30_guests"), where("belongsTo", "==", clientName));
         const snap = await getDocs(q);
-        let html = `<table><tr><th>الاسم</th><th>الحالة</th><th>إرسال</th><th>تحكم</th></tr>`;
+        let html = `<table><tr><th>الاسم</th><th>الحالة</th><th>إرسال الدعوة</th><th>التحكم</th></tr>`;
         
         snap.forEach(d => {
             const g = d.data();
-            const inviteUrl = window.location.origin + window.location.pathname + "?id=" + d.id;
+            // هنا التصحيح: نستخدم الرابط الثابت للمستودع
+            const inviteUrl = `${BASE_URL}?id=${d.id}`;
             const waMsg = `السلام عليكم يا ${g.name}%0Aنتشرف بدعوتكم لحضور حفلنا عبر الرابط التالي:%0A${inviteUrl}`;
             
             html += `<tr>
                 <td>${g.name}</td>
                 <td><span class="status-tag">${g.status}</span></td>
                 <td><a href="https://wa.me/${g.phone}?text=${waMsg}" target="_blank" class="btn-whatsapp">واتساب ✅</a></td>
-                <td><button onclick="resetGuestStatus('${d.id}', '${clientName}')" class="btn-edit">تعديل</button></td>
+                <td><button onclick="resetGuestStatus('${d.id}', '${clientName}')" class="btn-edit">⚙️ تعديل</button></td>
             </tr>`;
         });
         document.getElementById('admin-table-container').innerHTML = html + "</table>";
@@ -162,13 +168,12 @@
 
             const s = await getDocs(collection(db, "v30_data"));
             const sel = document.getElementById('client-select');
-            sel.innerHTML = "<option>اختر حفل لرؤية الضيوف</option>";
+            sel.innerHTML = "<option value=''>اختر حفل لرؤية الضيوف</option>";
             s.forEach(d => sel.innerHTML += `<option value="${d.data().name}">${d.data().name}</option>`);
             
-            sel.onchange = () => loadAdminTable(sel.value);
+            sel.onchange = () => { if(sel.value) loadAdminTable(sel.value); };
         }
     }
-
     init();
 </script>
 </body>
