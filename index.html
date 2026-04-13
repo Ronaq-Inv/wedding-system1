@@ -19,8 +19,8 @@
         .option-box.selected { border-color: var(--gold); background: #fff9f0; }
         table { width: 100%; border-collapse: collapse; margin-top: 15px; background: white; border-radius: 10px; overflow: hidden; }
         th, td { padding: 12px; border-bottom: 1px solid #eee; text-align: center; font-size: 13px; }
-        .btn-wa { background: #25D366; color: white; text-decoration: none; padding: 5px 10px; border-radius: 8px; font-size: 11px; display: inline-block; }
-        .btn-edit { background: #3498db; color: white; padding: 5px 10px; border-radius: 8px; font-size: 11px; margin-bottom: 2px; }
+        .btn-wa { background: #25D366; color: white; padding: 5px 10px; border-radius: 8px; font-size: 11px; display: inline-block; border:none; width: auto; }
+        .btn-edit { background: #3498db; color: white; padding: 5px 10px; border-radius: 8px; font-size: 11px; margin-bottom: 2px; width: auto; }
         .btn-del { background: #ff4d4d; color: white; width: auto; padding: 5px 10px; font-size: 11px; border-radius: 8px; }
         .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1000; }
         .modal-content { background: white; padding: 30px; border-radius: 20px; width: 90%; max-width: 400px; }
@@ -130,7 +130,7 @@
     const db = getFirestore(app);
     const BASE_URL = "https://abdulrhman9591.github.io/wedding-system1/";
 
-    let selPkg = ""; let adminPh = ""; let curId = ""; let curCl = "";
+    let adminPh = ""; let curId = ""; let curCl = ""; let selPkg = "";
     const role = sessionStorage.getItem('role');
 
     async function loadSet() {
@@ -147,8 +147,8 @@
         const n = document.getElementById('order-name').value;
         const c = document.getElementById('order-count').value;
         if(!n || !selPkg || !adminPh) return alert("أكمل البيانات");
-        const orderMsg = encodeURIComponent(`طلب جديد:\nالاسم: ${n}\nعدد الضيوف: ${c}\nالباقة: ${selPkg}`);
-        window.open(`https://wa.me/${adminPh}?text=${orderMsg}`, '_blank');
+        const msg = `طلب جديد:\nالاسم: ${n}\nعدد الضيوف: ${c}\nالباقة: ${selPkg}`;
+        window.open(`https://wa.me/${adminPh}?text=${encodeURIComponent(msg)}`, '_blank');
     };
 
     document.getElementById('save-settings').onclick = async () => {
@@ -180,6 +180,13 @@
 
     window.delG = async (id, cl) => { if(confirm("حذف؟")) { await deleteDoc(doc(db, "v30_guests", id)); loadData(cl); } };
 
+    // وظيفة الإرسال البرمجية لحل مشكلة عدم الإرسال
+    window.sendWhatsApp = (phone, name, event, link, host) => {
+        const msg = `السلام عليكم ورحمة الله وبركاته..\n\nأهلاً بك يا ${name} ✨\n\nنتشرف بدعوتكم لحضور ${event}، وبكم تكتمل فرحتنا وتزدان ليالينا.. 🌸\n\nللحصول على بطاقة الدعوة وتأكيد الحضور أو الاعتذار، يرجى الضغط على الرابط التالي:\n${link}\n\nالداعي: ${host}\nفأهلاً وسهلاً بكم.. 💐`;
+        const waUrl = `https://wa.me/${phone}?text=${encodeURIComponent(msg)}`;
+        window.open(waUrl, '_blank');
+    };
+
     async function loadData(cl) {
         const cSnap = await getDocs(query(collection(db, "v30_data"), where("name", "==", cl)));
         let eventName = ""; let hostName = "";
@@ -193,14 +200,11 @@
         
         snap.forEach(d => {
             const g = d.data(); const link = `${BASE_URL}?id=${d.id}`;
-            const msgBody = `السلام عليكم ورحمة الله وبركاته..\n\nأهلاً بك يا ${g.name} ✨\n\nنتشرف بدعوتكم لحضور ${eventName}، وبكم تكتمل فرحتنا وتزدان ليالينا.. 🌸\n\nللحصول على بطاقة الدعوة وتأكيد الحضور أو الاعتذار، يرجى الضغط على الرابط التالي:\n${link}\n\nالداعي: ${hostName}\nفأهلاً وسهلاً بكم.. 💐`;
-            const encodedMsg = encodeURIComponent(msgBody);
-
             h += `<tr><td>${g.name}</td><td>${g.status}</td>`;
             if(role === 'admin') {
                 h += `<td>`;
                 h += `<button onclick="openEdit('${d.id}','${cl}')" class="btn-edit">تعديل</button> `;
-                h += `<a href="https://wa.me/${g.phone}?text=${encodedMsg}" target="_blank" class="btn-wa">ارسال واتساب</a> `;
+                h += `<button onclick="sendWhatsApp('${g.phone}', '${g.name}', '${eventName}', '${link}', '${hostName}')" class="btn-wa">ارسال واتساب</button> `;
                 h += `<button onclick="delG('${d.id}','${cl}')" class="btn-del">حذف</button>`;
                 h += `</td>`;
             }
@@ -212,11 +216,11 @@
     document.getElementById('login-btn').onclick = async () => {
         const u = document.getElementById('user-input').value;
         const p = document.getElementById('pass-input').value;
-        if(u === "admin" && p === "123456") { sessionStorage.setItem('role', 'admin'); sessionStorage.setItem('user', u); location.reload(); }
+        if(u === "admin" && p === "123456") { sessionStorage.setItem('role','admin'); sessionStorage.setItem('user',u); location.reload(); }
         else {
-            const q = query(collection(db, "v30_data"), where("name", "==", u), where("password", "==", p));
+            const q = query(collection(db, "v30_data"), where("name","==",u), where("password","==",p));
             const snap = await getDocs(q);
-            if(!snap.empty) { sessionStorage.setItem('role', 'client'); sessionStorage.setItem('user', u); location.reload(); }
+            if(!snap.empty) { sessionStorage.setItem('role','client'); sessionStorage.setItem('user',u); location.reload(); }
             else alert("بيانات خاطئة");
         }
     };
