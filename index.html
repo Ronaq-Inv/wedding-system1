@@ -33,11 +33,11 @@
         <div class="card">
             <h2 style="color:var(--gold)">طلب تصميم دعوة إلكترونية 🌸</h2>
             <input id="order-name" placeholder="اسمك الكريم">
-            <input id="order-count" type="number" placeholder="عدد الضيوف">
+            <input id="order-count" type="number" placeholder="عدد الضيوف المتوقع">
             <div class="option-box" onclick="selectPkg(this, 'بطاقة دعوة', '50')">بطاقة دعوة فقط (50 ريال)</div>
             <div class="option-box" onclick="selectPkg(this, 'نظام كامل', '150')">واتساب + باركود + خريطة (150 ريال)</div>
             <button class="btn-gold" id="send-order">إرسال الطلب عبر واتساب 🚀</button>
-            <p style="margin-top:20px; font-size:12px; color:#888; cursor:pointer;" onclick="showLogin()">تسجيل دخول الإدارة / العملاء</p>
+            <p style="margin-top:20px; font-size:12px; color:#888; cursor:pointer;" onclick="showLogin()">دخول الإدارة والعملاء</p>
         </div>
     </div>
 
@@ -59,30 +59,30 @@
 
         <div id="admin-area" class="hidden">
             <div class="card">
-                <h3>⚙️ إعدادات استقبال الطلبات</h3>
+                <h3>⚙️ إعدادات النظام</h3>
                 <input id="set-admin-phone" placeholder="رقم واتساب الاستقبال (966...)">
-                <button class="btn-gold" id="save-settings">حفظ الرقم</button>
+                <button class="btn-gold" id="save-settings">حفظ رقم الإدارة</button>
             </div>
             <div class="card">
-                <h3>🎀 حفل جديد</h3>
-                <input id="c-name" placeholder="اسم العميل">
+                <h3>🎀 تأسيس حفل</h3>
+                <input id="c-name" placeholder="اسم المستخدم للعميل">
                 <input id="c-pass" placeholder="كلمة المرور">
-                <input id="c-event" placeholder="المناسبة">
-                <input id="c-img" placeholder="رابط الصورة">
-                <input id="c-map" placeholder="رابط الخريطة">
-                <button class="btn-gold" id="save-client">حفظ الحفل</button>
+                <input id="c-event" placeholder="اسم المناسبة">
+                <input id="c-img" placeholder="رابط صورة الدعوة">
+                <input id="c-map" placeholder="رابط الموقع (Google Maps)">
+                <button class="btn-gold" id="save-client">تأسيس الحفل</button>
             </div>
             <div class="card">
                 <h3>📝 إضافة ضيوف</h3>
                 <select id="client-select"></select>
                 <input id="g-name" placeholder="اسم الضيف">
                 <input id="g-phone" placeholder="الجوال (966)">
-                <button style="background:#8ebf9a; color:white;" id="save-guest">إضافة ضيف</button>
+                <button style="background:#8ebf9a; color:white;" id="save-guest">إضافة للجدول</button>
             </div>
         </div>
 
         <div class="card" style="overflow-x:auto;">
-            <h3>قائمة الضيوف</h3>
+            <h3 id="table-title">بيانات الضيوف</h3>
             <div id="data-table"></div>
         </div>
     </div>
@@ -97,7 +97,7 @@
                 <option value="حضور">حضور</option>
                 <option value="اعتذار">اعتذار</option>
             </select>
-            <button class="btn-gold" id="update-guest-btn">تحديث</button>
+            <button class="btn-gold" id="update-guest-btn">حفظ التعديلات</button>
             <button onclick="closeEditModal()" style="background:none; color:#888; margin-top:10px;">إلغاء</button>
         </div>
     </div>
@@ -113,7 +113,7 @@
             </div>
             <div id="qr-result" class="hidden">
                 <div id="qrcode" style="display:flex; justify-content:center; margin:15px;"></div>
-                <p style="color:#27ae60; font-weight:bold;">تم التأكيد ✅</p>
+                <p style="color:#27ae60; font-weight:bold;">ننتظر تشريفكم ✅</p>
                 <a id="inv-map" target="_blank" style="color:var(--gold); font-weight:bold;">📍 موقع القاعة</a>
             </div>
         </div>
@@ -130,6 +130,7 @@
     const BASE_URL = "https://abdulrhman9591.github.io/wedding-system1/";
 
     let selPkg = ""; let adminPh = ""; let curId = ""; let curCl = "";
+    const role = sessionStorage.getItem('role');
 
     window.selectPkg = (el, name, price) => {
         document.querySelectorAll('.option-box').forEach(b => b.classList.remove('selected'));
@@ -144,13 +145,13 @@
     document.getElementById('send-order').onclick = () => {
         const n = document.getElementById('order-name').value;
         const c = document.getElementById('order-count').value;
-        if(!n || !selPkg || !adminPh) return alert("أكمل البيانات");
-        window.open(`https://wa.me/${adminPh}?text=طلب جديد:%0Aالاسم: ${n}%0Aعدد الضيوف: ${c}%0Aالباقة: ${selPkg}`, '_blank');
+        if(!n || !selPkg || !adminPh) return alert("يرجى إكمال البيانات");
+        window.open(`https://wa.me/${adminPh}?text=طلب خدمة جديد 🌸%0Aالاسم: ${n}%0Aعدد الضيوف: ${c}%0Aالباقة: ${selPkg}`, '_blank');
     };
 
     document.getElementById('save-settings').onclick = async () => {
         await setDoc(doc(db, "settings", "main"), { phone: document.getElementById('set-admin-phone').value });
-        alert("تم الحفظ"); location.reload();
+        alert("تم تحديث رقم الإدارة"); location.reload();
     };
 
     window.logout = () => { sessionStorage.clear(); location.reload(); };
@@ -175,7 +176,7 @@
         closeEditModal(); loadData(curCl);
     };
 
-    window.delG = async (id, cl) => { if(confirm("حذف؟")) { await deleteDoc(doc(db, "v30_guests", id)); loadData(cl); } };
+    window.delG = async (id, cl) => { if(confirm("هل أنت متأكد من الحذف؟")) { await deleteDoc(doc(db, "v30_guests", id)); loadData(cl); } };
 
     document.getElementById('login-btn').onclick = async () => {
         const u = document.getElementById('user-input').value;
@@ -185,23 +186,28 @@
             const q = query(collection(db, "v30_data"), where("name","==",u), where("password","==",p));
             const snap = await getDocs(q);
             if(!snap.empty) { sessionStorage.setItem('role','client'); sessionStorage.setItem('user',u); location.reload(); }
-            else alert("خطأ");
+            else alert("بيانات الدخول غير صحيحة");
         }
     };
 
     async function loadData(cl) {
         const q = query(collection(db, "v30_guests"), where("belongsTo", "==", cl));
         const snap = await getDocs(q);
-        let h = `<table><tr><th>الاسم</th><th>الحالة</th><th>إجراء</th></tr>`;
+        let h = `<table><tr><th>الاسم</th><th>الحالة</th>`;
+        if(role === 'admin') h += `<th>الإجراءات</th>`;
+        h += `</tr>`;
+        
         snap.forEach(d => {
             const g = d.data(); const link = `${BASE_URL}?id=${d.id}`;
-            h += `<tr><td>${g.name}</td><td>${g.status}</td><td>`;
-            h += `<button onclick="openEdit('${d.id}','${cl}')" class="btn-edit">تعديل</button>`;
-            if(sessionStorage.getItem('role') === 'admin') {
-                h += `<a href="https://wa.me/${g.phone}?text=دعوة: ${link}" target="_blank" class="btn-wa">واتساب</a>`;
-                h += `<button onclick="delG('${d.id}','${cl}')" class="btn-del">🗑️</button>`;
+            h += `<tr><td>${g.name}</td><td>${g.status}</td>`;
+            if(role === 'admin') {
+                h += `<td>`;
+                h += `<button onclick="openEdit('${d.id}','${cl}')" class="btn-edit">تعديل</button> `;
+                h += `<a href="https://wa.me/${g.phone}?text=نتشرف بدعوتكم: ${link}" target="_blank" class="btn-wa">واتساب</a> `;
+                h += `<button onclick="delG('${d.id}','${cl}')" class="btn-del">حذف</button>`;
+                h += `</td>`;
             }
-            h += `</td></tr>`;
+            h += `</tr>`;
         });
         document.getElementById('data-table').innerHTML = h + "</table>";
     }
@@ -235,18 +241,18 @@
         } else if(sessionStorage.getItem('role')) {
             document.getElementById('landing-page').classList.add('hidden');
             document.getElementById('dashboard-section').classList.remove('hidden');
-            const role = sessionStorage.getItem('role'); const user = sessionStorage.getItem('user');
+            const user = sessionStorage.getItem('user');
             document.getElementById('welcome-msg').innerText = "مرحباً: " + user;
             if(role === 'admin') {
                 document.getElementById('admin-area').classList.remove('hidden');
                 const s = await getDocs(collection(db, "v30_data"));
                 const sel = document.getElementById('client-select');
-                sel.innerHTML = "<option value=''>اختر الحفل</option>";
+                sel.innerHTML = "<option value=''>اختر العميل لعرض ضيوفه</option>";
                 s.forEach(d => sel.innerHTML += `<option value="${d.data().name}">${d.data().name}</option>`);
                 sel.onchange = () => loadData(sel.value);
                 document.getElementById('save-client').onclick = async () => {
                     await addDoc(collection(db, "v30_data"), { name: document.getElementById('c-name').value, password: document.getElementById('c-pass').value, event: document.getElementById('c-event').value, img: document.getElementById('c-img').value, map: document.getElementById('c-map').value });
-                    location.reload();
+                    alert("تم تأسيس الحفل بنجاح"); location.reload();
                 };
                 document.getElementById('save-guest').onclick = async () => {
                     let p = document.getElementById('g-phone').value; if(p.startsWith('0')) p = '966' + p.substring(1);
