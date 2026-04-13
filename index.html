@@ -19,9 +19,10 @@
         .option-box.selected { border-color: var(--gold); background: #fff9f0; }
         table { width: 100%; border-collapse: collapse; margin-top: 15px; background: white; border-radius: 10px; overflow: hidden; }
         th, td { padding: 12px; border-bottom: 1px solid #eee; text-align: center; font-size: 13px; }
-        .btn-wa { background: #25D366; color: white; text-decoration: none; padding: 5px 10px; border-radius: 8px; font-size: 11px; display: inline-block; width: auto; font-weight: bold; }
-        .btn-edit { background: #3498db; color: white; padding: 5px 10px; border-radius: 8px; font-size: 11px; margin-bottom: 2px; width: auto; }
-        .btn-del { background: #ff4d4d; color: white; width: auto; padding: 5px 10px; font-size: 11px; border-radius: 8px; }
+        /* زر الواتساب الجديد والمطور */
+        .btn-wa { background: #25D366; color: white; text-decoration: none; padding: 8px 15px; border-radius: 8px; font-size: 12px; display: inline-block; width: auto; font-weight: bold; cursor: pointer; border: none; }
+        .btn-edit { background: #3498db; color: white; padding: 8px 15px; border-radius: 8px; font-size: 12px; margin-bottom: 2px; width: auto; }
+        .btn-del { background: #ff4d4d; color: white; width: auto; padding: 8px 15px; font-size: 12px; border-radius: 8px; }
         .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1000; }
         .modal-content { background: white; padding: 30px; border-radius: 20px; width: 90%; max-width: 400px; }
     </style>
@@ -148,7 +149,7 @@
         const c = document.getElementById('order-count').value;
         if(!n || !selPkg || !adminPh) return alert("أكمل البيانات");
         const msg = `طلب جديد:\nالاسم: ${n}\nعدد الضيوف: ${c}\nالباقة: ${selPkg}`;
-        window.location.href = `https://api.whatsapp.com/send?phone=${adminPh}&text=${encodeURIComponent(msg)}`;
+        window.location.href = `https://wa.me/${adminPh}?text=${encodeURIComponent(msg)}`;
     };
 
     document.getElementById('save-settings').onclick = async () => {
@@ -180,6 +181,18 @@
 
     window.delG = async (id, cl) => { if(confirm("حذف؟")) { await deleteDoc(doc(db, "v30_guests", id)); loadData(cl); } };
 
+    // الوظيفة الأساسية لإرسال الرسالة بطريقة مضمونة
+    window.directWhatsApp = (phone, name, event, id, host) => {
+        const link = `${BASE_URL}?id=${id}`;
+        const msg = `السلام عليكم ورحمة الله وبركاته..\n\nأهلاً بك يا ${name} ✨\n\nنتشرف بدعوتكم لحضور ${event}، وبكم تكتمل فرحتنا وتزدان ليالينا.. 🌸\n\nللحصول على بطاقة الدعوة وتأكيد الحضور أو الاعتذار، يرجى الضغط على الرابط التالي:\n${link}\n\nالداعي: ${host}\nفأهلاً وسهلاً بكم.. 💐`;
+        
+        // استخدام wa.me وهو الرابط الأكثر استقراراً عالمياً
+        const finalUrl = `https://wa.me/${phone}?text=${encodeURIComponent(msg)}`;
+        
+        // الفتح في نفس النافذة لضمان تخطي حظر المتصفحات
+        window.location.href = finalUrl;
+    };
+
     async function loadData(cl) {
         const cSnap = await getDocs(query(collection(db, "v30_data"), where("name", "==", cl)));
         let eventName = ""; let hostName = "";
@@ -192,15 +205,13 @@
         h += `</tr>`;
         
         snap.forEach(d => {
-            const g = d.data(); const link = `${BASE_URL}?id=${d.id}`;
-            const msg = `السلام عليكم ورحمة الله وبركاته..\n\nأهلاً بك يا ${g.name} ✨\n\nنتشرف بدعوتكم لحضور ${eventName}، وبكم تكتمل فرحتنا وتزدان ليالينا.. 🌸\n\nللحصول على بطاقة الدعوة وتأكيد الحضور أو الاعتذار، يرجى الضغط على الرابط التالي:\n${link}\n\nالداعي: ${hostName}\nفأهلاً وسهلاً بكم.. 💐`;
-            const waUrl = `https://api.whatsapp.com/send?phone=${g.phone}&text=${encodeURIComponent(msg)}`;
-
+            const g = d.data();
             h += `<tr><td>${g.name}</td><td>${g.status}</td>`;
             if(role === 'admin') {
                 h += `<td>`;
                 h += `<button onclick="openEdit('${d.id}','${cl}')" class="btn-edit">تعديل</button> `;
-                h += `<a href="${waUrl}" target="_blank" class="btn-wa">ارسال واتساب</a> `;
+                // استدعاء الوظيفة الجديدة هنا
+                h += `<button onclick="directWhatsApp('${g.phone}', '${g.name}', '${eventName}', '${d.id}', '${hostName}')" class="btn-wa">إرسال واتساب</button> `;
                 h += `<button onclick="delG('${d.id}','${cl}')" class="btn-del">حذف</button>`;
                 h += `</td>`;
             }
