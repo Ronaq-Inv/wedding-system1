@@ -3,109 +3,73 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>نظام الدعوات الراقي</title>
+    <title>نظام الدعوات المطور</title>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&family=Amiri&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
-        :root {
-            --soft-pink: #fdf2f2;
-            --rose-gold: #e5b3a3;
-            --accent-pink: #f8d7da;
-            --deep-gray: #5a5a5a;
-            --pure-white: #ffffff;
-        }
-
-        body {
-            font-family: 'Cairo', sans-serif;
-            background-color: var(--soft-pink);
-            color: var(--deep-gray);
-            margin: 0;
-            padding: 0;
-            background-image: url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M11 18c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm48 25c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm-43-7c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm63 31c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM34 90c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm56-76c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM12 86c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm28-65c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm23-11c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-6 60c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm29 22c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zM32 56c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-13-8c4.418 0 8-3.582 8-8s-3.582-8-8-8-8 3.582-8 8 3.582 8 8 8zm66 15c.552 0 1-.448 1-1s-.448-1-1-1-1 .448-1 1 .448 1 1 1z' fill='%23e5b3a3' fill-opacity='0.1' fill-rule='evenodd'/%3E%3C/svg%3E");
-        }
-
-        .container { width: 90%; max-width: 1100px; margin: auto; padding: 20px; }
+        :root { --soft-pink: #fdf2f2; --rose-gold: #e5b3a3; --deep-gray: #5a5a5a; --pure-white: #ffffff; }
+        body { font-family: 'Cairo', sans-serif; background-color: var(--soft-pink); color: var(--deep-gray); margin: 0; padding: 0; }
+        .container { width: 95%; max-width: 1200px; margin: auto; padding: 20px; }
         .hidden { display: none !important; }
-
-        .card {
-            background: var(--pure-white);
-            border-radius: 25px;
-            padding: 30px;
-            margin-bottom: 25px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.03);
-            border: 1px solid rgba(229, 179, 163, 0.2);
-        }
-
-        h1, h2, h3 { color: var(--rose-gold); font-family: 'Amiri', serif; }
-
-        input, select {
-            width: 100%; padding: 15px; margin: 10px 0; border-radius: 12px;
-            border: 1px solid #eee; background: #fafafa; color: var(--deep-gray); box-sizing: border-box;
-        }
-
-        /* تنسيق خاص لرفع الملفات */
-        input[type="file"] { padding: 10px; background: #fff; border: 2px dashed var(--rose-gold); }
-
-        button {
-            cursor: pointer; padding: 15px 25px; border-radius: 12px; border: none;
-            font-weight: bold; transition: 0.3s; width: 100%; font-size: 16px;
-        }
-
-        .btn-main { background: var(--rose-gold); color: white; box-shadow: 0 4px 15px rgba(229, 179, 163, 0.4); }
-        .btn-main:hover { opacity: 0.9; }
-
-        .btn-wa { background: #58cc71; color: white; width: auto; padding: 8px 15px; }
-        .btn-danger { background: #f8d7da; color: #721c24; width: auto; padding: 8px 15px; }
-
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        th, td { padding: 18px; text-align: right; border-bottom: 1px solid #f9f9f9; }
-
-        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 25px; }
+        .card { background: var(--pure-white); border-radius: 20px; padding: 25px; margin-bottom: 20px; box-shadow: 0 5px 20px rgba(0,0,0,0.03); border: 1px solid rgba(229, 179, 163, 0.2); }
+        h1, h2, h3 { color: var(--rose-gold); font-family: 'Amiri', serif; margin-top: 0; }
+        input, select, textarea { width: 100%; padding: 12px; margin: 8px 0; border-radius: 10px; border: 1px solid #eee; background: #fafafa; box-sizing: border-box; font-family: 'Cairo'; }
+        button { cursor: pointer; padding: 12px; border-radius: 10px; border: none; font-weight: bold; transition: 0.3s; }
+        .btn-main { background: var(--rose-gold); color: white; width: 100%; }
+        .btn-wa { background: #58cc71; color: white; padding: 5px 10px; font-size: 13px; }
+        .btn-edit { background: #3498db; color: white; padding: 5px 10px; font-size: 13px; }
+        .btn-danger { background: #f8d7da; color: #721c24; padding: 5px 10px; font-size: 13px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        th, td { padding: 12px; text-align: right; border-bottom: 1px solid #f5f5f5; font-size: 14px; }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
         @media (max-width: 768px) { .grid { grid-template-columns: 1fr; } }
-
-        .inv-img { width: 100%; border-radius: 20px; margin-bottom: 20px; box-shadow: 0 15px 30px rgba(0,0,0,0.1); border: 5px solid white; }
-        .qr-box { background: white; padding: 20px; display: inline-block; border: 1px solid #eee; border-radius: 20px; }
+        .inv-img { width: 100%; border-radius: 15px; border: 4px solid white; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+        /* Modal Style */
+        .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 100; }
     </style>
 </head>
 <body>
 
 <div id="app" class="container">
     
-    <div id="login-page" class="card" style="max-width: 450px; margin: 80px auto; text-align: center;">
-        <h1 style="font-size: 2.5em;">🌸 مرحباً بك</h1>
-        <input id="user-input" type="text" placeholder="اسم المستخدم">
+    <div id="login-page" class="card" style="max-width: 400px; margin: 80px auto; text-align: center;">
+        <h1>🌸 دخول النظام</h1>
+        <input id="user-input" placeholder="اسم المستخدم">
         <input id="pass-input" type="password" placeholder="كلمة المرور">
-        <button class="btn-main" onclick="handleLogin()">دخول النظام</button>
+        <button class="btn-main" onclick="handleLogin()">دخول</button>
     </div>
 
     <div id="main-page" class="hidden">
-        <div style="display: flex; justify-content: space-between; align-items: center; background: white; padding: 15px 30px; border-radius: 20px; margin-bottom: 20px;">
-            <h2 id="view-title" style="margin:0">لوحة التحكم</h2>
+        <div class="card" style="display: flex; justify-content: space-between; align-items: center;">
+            <h2 style="margin:0">لوحة التحكم</h2>
             <button class="btn-danger" style="width: auto;" onclick="logout()">خروج</button>
         </div>
 
         <div id="admin-view" class="hidden">
             <div class="grid">
                 <div class="card">
-                    <h3>🎀 تأسيس مناسبة جديدة</h3>
+                    <h3>🎀 حفل جديد</h3>
                     <input id="c-name" placeholder="اسم العميل">
-                    <input id="c-event" placeholder="عنوان المناسبة">
-                    <label style="font-size: 13px; color: var(--rose-gold);">ارفاق كرت الدعوة (صورة):</label>
+                    <input id="c-event" placeholder="عنوان الحفل">
+                    <label style="font-size:12px;">الصورة (اختياري):</label>
                     <input id="c-img-file" type="file" accept="image/*">
-                    <input id="c-map" placeholder="رابط موقع القاعة (Google Maps)">
-                    <button id="save-btn" class="btn-main" onclick="addClient()">حفظ وإعداد المناسبة</button>
+                    <input id="c-map" placeholder="رابط الخريطة">
+                    <button id="save-btn" class="btn-main" onclick="addClient()">تأسيس الحفل</button>
                 </div>
                 <div class="card">
-                    <h3>📝 إضافة الضيوف</h3>
+                    <h3>📝 إضافة وتخصيص</h3>
                     <select id="client-select" onchange="loadAdminTable()"></select>
                     <input id="g-name" placeholder="اسم الضيف">
-                    <input id="g-phone" placeholder="رقم الجوال">
-                    <button class="btn-main" style="background:#8ebf9a" onclick="addGuest()">إضافة للقائمة</button>
+                    <input id="g-phone" placeholder="رقم الجوال (05...)">
+                    <button class="btn-main" style="background:#8ebf9a" onclick="addGuest()">إضافة الضيف</button>
+                    <hr>
+                    <label style="font-size:12px;">نص رسالة الواتساب:</label>
+                    <textarea id="wa-template" rows="3">دعوة خاصة لـ [اسم_الضيف] ✨ نرجو تأكيد حضورك عبر الرابط: [الرابط]</textarea>
                 </div>
             </div>
             <div class="card">
-                <h3>📋 قائمة المدعوين</h3>
-                <div id="admin-table">يرجى اختيار العميل أولاً...</div>
+                <h3>📋 قائمة المدعوين (يمكنك التعديل مباشرة)</h3>
+                <div id="admin-table" style="overflow-x:auto;"></div>
             </div>
         </div>
 
@@ -114,28 +78,40 @@
                 <div class="card" style="text-align: center;"><h1><span id="stat-yes" style="color:#8ebf9a">0</span></h1><p>حضور</p></div>
                 <div class="card" style="text-align: center;"><h1><span id="stat-no" style="color:#e5b3a3">0</span></h1><p>اعتذار</p></div>
             </div>
-            <div class="card">
-                <table id="client-table"><thead><tr><th>الاسم</th><th>الحالة</th></tr></thead><tbody id="client-body"></tbody></table>
+            <div class="card"><table id="client-table"><thead><tr><th>الاسم</th><th>الحالة</th></tr></thead><tbody id="client-body"></tbody></table></div>
+        </div>
+    </div>
+
+    <div id="guest-page" class="hidden" style="max-width: 500px; margin: auto; text-align: center;">
+        <div class="card">
+            <h1 id="inv-event"></h1>
+            <img id="inv-img" class="inv-img">
+            <h2 id="inv-guest"></h2>
+            <div id="guest-actions">
+                <button class="btn-main" style="background:#8ebf9a; margin-bottom:10px;" onclick="updateGuest(true)">سأحضر ✅</button>
+                <button class="btn-main" style="background:#f4f4f4; color: #888;" onclick="updateGuest(false)">أعتذر ❌</button>
+            </div>
+            <div id="guest-final-yes" class="hidden">
+                <h2 style="color:#8ebf9a">نسعد بحضورك! ✨</h2>
+                <div id="qrcode" style="background:white; padding:10px; display:inline-block;"></div>
+                <p>📍 الموقع: <a id="inv-map" href="#" target="_blank" style="color:var(--rose-gold)">اضغط هنا</a></p>
             </div>
         </div>
     </div>
 
-    <div id="guest-page" class="hidden" style="max-width: 550px; margin: auto; text-align: center;">
-        <div class="card">
-            <h1 id="inv-event">دعوة فرح</h1>
-            <img id="inv-img" class="inv-img">
-            <h2 id="inv-guest"></h2>
-            <div id="guest-actions">
-                <button class="btn-main" style="background:#8ebf9a; margin-bottom:15px;" onclick="updateGuest(true)">بكل حب، سأحضر ✨</button>
-                <button class="btn-main" style="background:#f4f4f4; color: #888;" onclick="updateGuest(false)">أعتذر عن الحضور</button>
-            </div>
-            <div id="guest-final-yes" class="hidden">
-                <h2 style="color:#8ebf9a">نسعد جداً بحضورك! ✨</h2>
-                <div id="qrcode" class="qr-box"></div>
-                <p style="margin-top: 20px;">📍 الموقع: <a id="inv-map" href="#" target="_blank" style="color:var(--rose-gold);">اضغط هنا للخريطة</a></p>
-            </div>
-            <div id="guest-final-no" class="hidden">
-                <h3 style="color:#e5b3a3">تم تسجيل اعتذارك بنجاح.</h3>
+    <div id="edit-modal" class="modal hidden">
+        <div class="card" style="width: 90%; max-width: 400px;">
+            <h3>تعديل بيانات الضيف</h3>
+            <input id="edit-g-name" placeholder="الاسم">
+            <input id="edit-g-phone" placeholder="الجوال">
+            <select id="edit-g-status">
+                <option value="انتظار">انتظار</option>
+                <option value="حضور">حضور</option>
+                <option value="اعتذار">اعتذار</option>
+            </select>
+            <div style="display:flex; gap:10px;">
+                <button class="btn-main" onclick="saveGuestEdit()">حفظ</button>
+                <button class="btn-danger" style="width:100%" onclick="closeModal()">إلغاء</button>
             </div>
         </div>
     </div>
@@ -159,11 +135,8 @@
 
     window.onload = () => {
         const urlParams = new URLSearchParams(window.location.search);
-        const gId = urlParams.get('id');
-        if (gId) return loadGuest(gId);
-        const savedUser = localStorage.getItem('loggedUser');
-        const savedRole = localStorage.getItem('userRole');
-        if (savedUser) return showMain(savedRole, savedUser);
+        if (urlParams.get('id')) return loadGuest(urlParams.get('id'));
+        if (localStorage.getItem('loggedUser')) showMain(localStorage.getItem('userRole'), localStorage.getItem('loggedUser'));
     };
 
     window.handleLogin = async () => {
@@ -173,60 +146,45 @@
             localStorage.setItem('loggedUser', 'admin'); localStorage.setItem('userRole', 'admin');
             location.reload();
         } else {
-            const q = query(collection(db, "v8_clients"), where("name", "==", u));
+            const q = query(collection(db, "v9_clients"), where("name", "==", u));
             const s = await getDocs(q);
-            if(!s.empty) {
-                localStorage.setItem('loggedUser', u); localStorage.setItem('userRole', 'client');
-                location.reload();
-            } else alert("خطأ في البيانات");
+            if(!s.empty) { localStorage.setItem('loggedUser', u); localStorage.setItem('userRole', 'client'); location.reload(); }
+            else alert("بيانات خاطئة");
         }
     };
 
     function showMain(role, user) {
         document.getElementById('login-page').classList.add('hidden');
         document.getElementById('main-page').classList.remove('hidden');
-        if(role === 'admin') {
-            document.getElementById('admin-view').classList.remove('hidden');
-            loadClientsList();
-        } else {
-            document.getElementById('client-view').classList.remove('hidden');
-            loadClientStats(user);
-        }
+        if(role === 'admin') { document.getElementById('admin-view').classList.remove('hidden'); loadClientsList(); }
+        else { document.getElementById('client-view').classList.remove('hidden'); loadClientStats(user); }
     }
 
     window.logout = () => { localStorage.clear(); location.reload(); };
 
-    // تحويل الصورة لنص (Base64)
     const toBase64 = file => new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.readAsDataURL(file);
-        reader.onload = () => resolve(reader.result);
-        reader.onerror = error => reject(error);
+        const r = new FileReader(); r.readAsDataURL(file); r.onload = () => resolve(r.result); r.onerror = e => reject(e);
     });
 
     window.addClient = async () => {
         const n = document.getElementById('c-name').value;
         const e = document.getElementById('c-event').value;
-        const map = document.getElementById('c-map').value;
-        const file = document.getElementById('c-img-file').files[0];
+        const m = document.getElementById('c-map').value;
+        const f = document.getElementById('c-img-file').files[0];
+        let img = "https://via.placeholder.com/500x300/fdf2f2/e5b3a3?text=Wedding+Invitation"; 
+        
+        if(!n || !e) return alert("أكمل البيانات");
+        document.getElementById('save-btn').innerText = "جاري الحفظ...";
+        if(f) img = await toBase64(f);
 
-        if(!n || !e || !file) return alert("يرجى إكمال البيانات واختيار صورة الكرت");
-
-        document.getElementById('save-btn').innerText = "جاري الرفع...";
-        try {
-            const imgBase64 = await toBase64(file);
-            await addDoc(collection(db, "v8_clients"), { name: n, event: e, img: imgBase64, map: map });
-            alert("تم تأسيس الحفل بنجاح 🌸");
-            location.reload();
-        } catch (err) {
-            alert("حدث خطأ أثناء رفع الصورة");
-        }
+        await addDoc(collection(db, "v9_clients"), { name: n, event: e, img: img, map: m });
+        location.reload();
     };
 
     async function loadClientsList() {
         const sel = document.getElementById('client-select');
-        const s = await getDocs(collection(db, "v8_clients"));
-        sel.innerHTML = "<option value=''>اختر العميل...</option>";
+        const s = await getDocs(collection(db, "v9_clients"));
+        sel.innerHTML = "<option value=''>اختر الحفل...</option>";
         s.forEach(d => sel.innerHTML += `<option value="${d.data().name}">${d.data().name}</option>`);
     }
 
@@ -234,60 +192,74 @@
         const c = document.getElementById('client-select').value;
         const n = document.getElementById('g-name').value;
         let p = document.getElementById('g-phone').value;
+        if(!c || !n || !p) return alert("أكمل البيانات");
         if(p.startsWith('0')) p = '966' + p.substring(1);
-        await addDoc(collection(db, "v8_guests"), { belongsTo: c, name: n, phone: p, status: "انتظار" });
-        document.getElementById('g-name').value = ""; document.getElementById('g-phone').value = "";
+        await addDoc(collection(db, "v9_guests"), { belongsTo: c, name: n, phone: p, status: "انتظار" });
         loadAdminTable();
     };
 
     window.loadAdminTable = async () => {
         const c = document.getElementById('client-select').value;
-        const q = query(collection(db, "v8_guests"), where("belongsTo", "==", c));
+        const q = query(collection(db, "v9_guests"), where("belongsTo", "==", c));
         const s = await getDocs(q);
-        let h = `<table><tr><th>الاسم</th><th>الحالة</th><th>إجراء</th></tr>`;
+        let h = `<table><tr><th>الاسم</th><th>الجوال</th><th>الحالة</th><th>إجراء</th></tr>`;
         s.forEach(d => {
             const g = d.data();
             const link = window.location.href.split('?')[0] + "?id=" + d.id;
-            h += `<tr><td>${g.name}</td><td>${g.status}</td><td>
-                <button class="btn-wa" onclick="sendWA('${g.phone}', '${g.name}', '${link}')">إرسال 📱</button>
-                <button class="btn-danger" onclick="delG('${d.id}')">حذف</button></td></tr>`;
+            h += `<tr><td>${g.name}</td><td>${g.phone}</td><td>${g.status}</td><td>
+                <button class="btn-wa" onclick="sendWA('${g.phone}', '${g.name}', '${link}')">واتس</button>
+                <button class="btn-edit" onclick="openEditModal('${d.id}', '${g.name}', '${g.phone}', '${g.status}')">تعديل</button>
+            </td></tr>`;
         });
         document.getElementById('admin-table').innerHTML = h + "</table>";
     };
 
     window.sendWA = (p, n, l) => {
-        const text = encodeURIComponent(`دعوة خاصة لـ ${n} ✨\nنرجو تأكيد حضورك عبر الرابط:\n${l}`);
-        window.open(`https://wa.me/${p}?text=${text}`);
+        let msg = document.getElementById('wa-template').value;
+        msg = msg.replace("[اسم_الضيف]", n).replace("[الرابط]", l);
+        window.open(`https://wa.me/${p}?text=${encodeURIComponent(msg)}`);
     };
 
-    window.delG = async (id) => { if(confirm("حذف؟")) { await deleteDoc(doc(db, "v8_guests", id)); loadAdminTable(); }};
+    // وظائف التعديل
+    let currentEditId = "";
+    window.openEditModal = (id, n, p, s) => {
+        currentEditId = id;
+        document.getElementById('edit-g-name').value = n;
+        document.getElementById('edit-g-phone').value = p;
+        document.getElementById('edit-g-status').value = s;
+        document.getElementById('edit-modal').classList.remove('hidden');
+    };
+    window.closeModal = () => document.getElementById('edit-modal').classList.add('hidden');
+    window.saveGuestEdit = async () => {
+        const n = document.getElementById('edit-g-name').value;
+        const p = document.getElementById('edit-g-phone').value;
+        const s = document.getElementById('edit-g-status').value;
+        await updateDoc(doc(db, "v9_guests", currentEditId), { name: n, phone: p, status: s });
+        closeModal(); loadAdminTable();
+    };
 
+    // الضيف
     let currentGuestId = "";
     async function loadGuest(id) {
         currentGuestId = id;
         document.getElementById('login-page').classList.add('hidden');
         document.getElementById('guest-page').classList.remove('hidden');
-        const gDoc = await getDoc(doc(db, "v8_guests", id));
-        if(!gDoc.exists()) return;
-        const g = gDoc.data();
+        const gSnap = await getDoc(doc(db, "v9_guests", id));
+        const g = gSnap.data();
         document.getElementById('inv-guest').innerText = "يا " + g.name;
-
-        const q = query(collection(db, "v8_clients"), where("name", "==", g.belongsTo));
-        const cS = await getDocs(q);
-        cS.forEach(d => {
+        const cSnap = await getDocs(query(collection(db, "v9_clients"), where("name", "==", g.belongsTo)));
+        cSnap.forEach(d => {
             const c = d.data();
             document.getElementById('inv-img').src = c.img;
             document.getElementById('inv-event').innerText = c.event;
             document.getElementById('inv-map').href = c.map;
         });
-
-        if(g.status === "حضور") showF(true);
-        else if(g.status === "اعتذار") showF(false);
+        if(g.status !== "انتظار") showF(g.status === "حضور");
     }
 
     window.updateGuest = async (yes) => {
         const s = yes ? "حضور" : "اعتذار";
-        await updateDoc(doc(db, "v8_guests", currentGuestId), { status: s });
+        await updateDoc(doc(db, "v9_guests", currentGuestId), { status: s });
         showF(yes);
     };
 
@@ -295,25 +267,22 @@
         document.getElementById('guest-actions').classList.add('hidden');
         if(yes) {
             document.getElementById('guest-final-yes').classList.remove('hidden');
-            new QRCode(document.getElementById("qrcode"), { text: currentGuestId, width: 140, height: 140 });
-        } else {
-            document.getElementById('guest-final-no').classList.remove('hidden');
-        }
+            new QRCode(document.getElementById("qrcode"), { text: currentGuestId, width: 120, height: 120 });
+        } else alert("تم تسجيل اعتذارك");
     }
 
-    async function loadClientStats(user) {
-        const q = query(collection(db, "v8_guests"), where("belongsTo", "==", user));
+    async function loadClientStats(u) {
+        const q = query(collection(db, "v9_guests"), where("belongsTo", "==", u));
         const s = await getDocs(q);
-        let counts = { y:0, n:0 };
-        const body = document.getElementById('client-body');
-        body.innerHTML = "";
+        let cy = 0, cn = 0;
+        const b = document.getElementById('client-body'); b.innerHTML = "";
         s.forEach(d => {
             const g = d.data();
-            if(g.status==='حضور') counts.y++; else if(g.status==='اعتذار') counts.n++;
-            body.innerHTML += `<tr><td>${g.name}</td><td>${g.status}</td></tr>`;
+            if(g.status==='حضور') cy++; else if(g.status==='اعتذار') cn++;
+            b.innerHTML += `<tr><td>${g.name}</td><td>${g.status}</td></tr>`;
         });
-        document.getElementById('stat-yes').innerText = counts.y;
-        document.getElementById('stat-no').innerText = counts.n;
+        document.getElementById('stat-yes').innerText = cy;
+        document.getElementById('stat-no').innerText = cn;
     }
 </script>
 </body>
