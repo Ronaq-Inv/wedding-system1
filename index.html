@@ -68,7 +68,7 @@
                 <input id="c-name" placeholder="اسم المستخدم للعميل">
                 <input id="c-pass" placeholder="كلمة المرور">
                 <input id="c-event" placeholder="اسم المناسبة">
-                <input id="c-host" placeholder="اسم الداعي (الذي سيظهر في الرسالة)">
+                <input id="c-host" placeholder="اسم الداعي">
                 <input id="c-img" placeholder="رابط صورة الدعوة">
                 <input id="c-map" placeholder="رابط الموقع">
                 <button class="btn-gold" id="save-client">تأسيس الحفل</button>
@@ -147,7 +147,8 @@
         const n = document.getElementById('order-name').value;
         const c = document.getElementById('order-count').value;
         if(!n || !selPkg || !adminPh) return alert("أكمل البيانات");
-        window.open(`https://wa.me/${adminPh}?text=طلب جديد:%0Aالاسم: ${n}%0Aعدد الضيوف: ${c}%0Aالباقة: ${selPkg}`, '_blank');
+        const orderMsg = encodeURIComponent(`طلب جديد:\nالاسم: ${n}\nعدد الضيوف: ${c}\nالباقة: ${selPkg}`);
+        window.open(`https://wa.me/${adminPh}?text=${orderMsg}`, '_blank');
     };
 
     document.getElementById('save-settings').onclick = async () => {
@@ -180,7 +181,6 @@
     window.delG = async (id, cl) => { if(confirm("حذف؟")) { await deleteDoc(doc(db, "v30_guests", id)); loadData(cl); } };
 
     async function loadData(cl) {
-        // جلب بيانات العميل لمعرفة اسم المناسبة والداعي
         const cSnap = await getDocs(query(collection(db, "v30_data"), where("name", "==", cl)));
         let eventName = ""; let hostName = "";
         cSnap.forEach(cd => { eventName = cd.data().event; hostName = cd.data().host || "إدارة الحفل"; });
@@ -193,14 +193,14 @@
         
         snap.forEach(d => {
             const g = d.data(); const link = `${BASE_URL}?id=${d.id}`;
-            // الرسالة الفخمة المنسقة
-            const msg = `السلام عليكم ورحمة الله وبركاته..%0A%0Aأهلاً بك يا ${g.name} ✨%0A%0Aنتشرف بدعوتكم لحضور ${eventName}، وبكم تكتمل فرحتنا وتزدان ليالينا.. 🌸%0A%0Aللحصول على بطاقة الدعوة وتأكيد الحضور أو الاعتذار، يرجى الضغط على الرابط التالي:%0A${link}%0A%0Aالداعي: ${hostName}%0Aفأهلاً وسهلاً بكم.. 💐`;
+            const msgBody = `السلام عليكم ورحمة الله وبركاته..\n\nأهلاً بك يا ${g.name} ✨\n\nنتشرف بدعوتكم لحضور ${eventName}، وبكم تكتمل فرحتنا وتزدان ليالينا.. 🌸\n\nللحصول على بطاقة الدعوة وتأكيد الحضور أو الاعتذار، يرجى الضغط على الرابط التالي:\n${link}\n\nالداعي: ${hostName}\nفأهلاً وسهلاً بكم.. 💐`;
+            const encodedMsg = encodeURIComponent(msgBody);
 
             h += `<tr><td>${g.name}</td><td>${g.status}</td>`;
             if(role === 'admin') {
                 h += `<td>`;
                 h += `<button onclick="openEdit('${d.id}','${cl}')" class="btn-edit">تعديل</button> `;
-                h += `<a href="https://wa.me/${g.phone}?text=${msg}" target="_blank" class="btn-wa">ارسال واتساب</a> `;
+                h += `<a href="https://wa.me/${g.phone}?text=${encodedMsg}" target="_blank" class="btn-wa">ارسال واتساب</a> `;
                 h += `<button onclick="delG('${d.id}','${cl}')" class="btn-del">حذف</button>`;
                 h += `</td>`;
             }
@@ -212,11 +212,11 @@
     document.getElementById('login-btn').onclick = async () => {
         const u = document.getElementById('user-input').value;
         const p = document.getElementById('pass-input').value;
-        if(u === "admin" && p === "123456") { sessionStorage.setItem('role','admin'); sessionStorage.setItem('user',u); location.reload(); }
+        if(u === "admin" && p === "123456") { sessionStorage.setItem('role', 'admin'); sessionStorage.setItem('user', u); location.reload(); }
         else {
-            const q = query(collection(db, "v30_data"), where("name","==",u), where("password","==",p));
+            const q = query(collection(db, "v30_data"), where("name", "==", u), where("password", "==", p));
             const snap = await getDocs(q);
-            if(!snap.empty) { sessionStorage.setItem('role','client'); sessionStorage.setItem('user',u); location.reload(); }
+            if(!snap.empty) { sessionStorage.setItem('role', 'client'); sessionStorage.setItem('user', u); location.reload(); }
             else alert("بيانات خاطئة");
         }
     };
