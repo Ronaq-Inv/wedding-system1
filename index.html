@@ -30,6 +30,7 @@
         <div class="card">
             <h2 style="color:var(--gold)">طلب تصميم دعوة إلكترونية 🌸</h2>
             <input id="order-name" placeholder="اسمك الكريم">
+            <input id="order-count" type="number" placeholder="عدد الضيوف">
             <div class="option-box" onclick="selectPkg(this, 'بطاقة دعوة', '50')">بطاقة دعوة فقط (50 ريال)</div>
             <div class="option-box" onclick="selectPkg(this, 'نظام كامل', '150')">واتساب + باركود + خريطة (150 ريال)</div>
             <button class="btn-gold" id="send-order">إرسال الطلب عبر واتساب 🚀</button>
@@ -55,10 +56,16 @@
 
         <div id="admin-area" class="hidden">
             <div class="card">
+                <h3>⚙️ إعدادات النظام والطلبات</h3>
+                <input id="set-admin-phone" placeholder="رقم واتساب استقبال الطلبات (مثال: 96650...)">
+                <button class="btn-gold" id="save-settings">حفظ رقم الواتساب</button>
+            </div>
+
+            <div class="card">
                 <h3>🎀 تأسيس حفل جديد</h3>
-                <input id="c-name" placeholder="اسم العميل (للدخول)">
-                <input id="c-pass" placeholder="كلمة مرور العميل">
-                <input id="c-event" placeholder="اسم المناسبة">
+                <input id="c-name" placeholder="اسم العميل">
+                <input id="c-pass" placeholder="كلمة المرور">
+                <input id="c-event" placeholder="المناسبة">
                 <input id="c-img" placeholder="رابط صورة الكرت">
                 <input id="c-map" placeholder="رابط الخريطة">
                 <button class="btn-gold" id="save-client">حفظ الحفل</button>
@@ -98,7 +105,7 @@
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-    import { getFirestore, collection, addDoc, getDocs, doc, updateDoc, deleteDoc, query, where, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    import { getFirestore, collection, addDoc, getDocs, doc, updateDoc, deleteDoc, query, where, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
     const firebaseConfig = { apiKey: "AIzaSyBycODn3kTe7uRIBYifDogSPmv2towU6lA", projectId: "wedding-system-6fadd", appId: "1:902051092170:web:e228d3138a5b091b974633" };
     const app = initializeApp(firebaseConfig);
@@ -106,20 +113,39 @@
     const BASE_URL = "https://abdulrhman9591.github.io/wedding-system1/";
 
     let selPkg = "";
+    let dynamicAdminPhone = ""; // سيتم سحبه من Firestore
+
     window.selectPkg = (el, name, price) => {
         document.querySelectorAll('.option-box').forEach(b => b.classList.remove('selected'));
-        el.classList.add('selected'); selPkg = name + " (" + price + " ريال)";
+        el.classList.add('selected'); selPkg = `${name} (${price} ريال)`;
     };
+
+    // تحميل رقم الواتساب من الإعدادات
+    async function getSettings() {
+        const s = await getDoc(doc(db, "settings", "main"));
+        if(s.exists()) {
+            dynamicAdminPhone = s.data().phone;
+            if(document.getElementById('set-admin-phone')) document.getElementById('set-admin-phone').value = dynamicAdminPhone;
+        }
+    }
 
     document.getElementById('send-order').onclick = () => {
         const n = document.getElementById('order-name').value;
-        if(!n || !selPkg) return alert("أكمل البيانات");
-        window.open(`https://wa.me/966508222356?text=طلب جديد:%0Aالاسم: ${n}%0Aالباقة: ${selPkg}`, '_blank');
+        const c = document.getElementById('order-count').value;
+        if(!n || !selPkg || !dynamicAdminPhone) return alert("يرجى التأكد من إدخال بياناتك واختيار الباقة، وتأكد من ضبط رقم الإدارة في الإعدادات");
+        window.open(`https://wa.me/${dynamicAdminPhone}?text=طلب خدمة جديد 🌸%0Aالاسم: ${n}%0Aعدد الضيوف: ${c}%0Aالباقة: ${selPkg}`, '_blank');
+    };
+
+    document.getElementById('save-settings').onclick = async () => {
+        const ph = document.getElementById('set-admin-phone').value;
+        await setDoc(doc(db, "settings", "main"), { phone: ph });
+        alert("تم حفظ رقم الواتساب الجديد بنجاح");
+        location.reload();
     };
 
     window.showLogin = () => { document.getElementById('landing-page').classList.add('hidden'); document.getElementById('login-section').classList.remove('hidden'); };
     window.logout = () => { sessionStorage.clear(); location.reload(); };
-    window.delG = async (id, c) => { if(confirm("حذف؟")) { await deleteDoc(doc(db, "v30_guests", id)); loadData(c); } };
+    window.delG = async (id, client) => { if(confirm("حذف؟")) { await deleteDoc(doc(db, "v30_guests", id)); loadData(client); } };
 
     document.getElementById('login-btn').onclick = async () => {
         const u = document.getElementById('user-input').value;
@@ -153,6 +179,7 @@
     }
 
     async function init() {
+        await getSettings();
         const urlParams = new URLSearchParams(window.location.search);
         const guestId = urlParams.get('id');
         if(guestId) {
@@ -182,7 +209,7 @@
             document.getElementById('landing-page').classList.add('hidden');
             document.getElementById('dashboard-section').classList.remove('hidden');
             const role = sessionStorage.getItem('role'); const user = sessionStorage.getItem('user');
-            document.getElementById('welcome-msg').innerText = "مرحباً: " + user;
+            document.getElementById('welcome-msg').innerText = `مرحباً: ${user}`;
             if(role === 'admin') {
                 document.getElementById('admin-area').classList.remove('hidden');
                 const s = await getDocs(collection(db, "v30_data"));
@@ -192,7 +219,7 @@
                 sel.onchange = () => loadData(sel.value);
                 document.getElementById('save-client').onclick = async () => {
                     await addDoc(collection(db, "v30_data"), { name: document.getElementById('c-name').value, password: document.getElementById('c-pass').value, event: document.getElementById('c-event').value, img: document.getElementById('c-img').value, map: document.getElementById('c-map').value });
-                    alert("تم الحفظ"); location.reload();
+                    alert("تم حفظ الحفل"); location.reload();
                 };
                 document.getElementById('save-guest').onclick = async () => {
                     let p = document.getElementById('g-phone').value; if(p.startsWith('0')) p = '966' + p.substring(1);
