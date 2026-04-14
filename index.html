@@ -34,6 +34,9 @@
         .status-اعتذار { background: #ffebee; color: #c62828; }
         .status-انتظار { background: #fff8e1; color: #f9a825; }
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: flex; align-items: center; justify-content: center; z-index: 9999; }
+        .entry-code-box { background: #f9f9f9; border: 2px dashed var(--gold); padding: 15px; margin-top: 15px; border-radius: 10px; }
+        #qrcode-container { display: flex; justify-content: center; margin: 15px auto; }
+        #qrcode-container img { border: 5px solid white; box-shadow: 0 0 10px rgba(0,0,0,0.1); padding: 5px; background: #fff; }
     </style>
 </head>
 <body>
@@ -50,10 +53,15 @@
                 <button class="btn-gold" style="background:#e74c3c" id="btn-decline">اعتذار</button>
             </div>
             <div id="after-confirm-area" class="hidden">
-                <div id="qrcode-container"></div>
-                <p id="entry-code-text" style="font-weight:bold;"></p>
-                <button class="btn-gold" id="btn-map">📍 موقع المناسبة</button>
+                <div class="entry-code-box">
+                    <p id="pass-title" style="margin:0; color:var(--dark-gold); font-weight:bold;">بطاقة دخولك الشخصية 🎫</p>
+                    <div id="qrcode-container"></div>
+                    <p id="entry-code-text" style="font-weight:bold; letter-spacing: 2px; margin-top:5px; color:var(--black)"></p>
+                    <small id="pass-instruction">يرجى إبراز هذا الكود للمنظم عند الباب</small>
+                </div>
+                <button class="btn-gold" style="margin-top:15px; background:#2c3e50" id="btn-map">📍 موقع المناسبة</button>
             </div>
+            <div id="decline-msg" class="hidden" style="color: #c62828; margin-top: 20px; font-weight: bold;">نشكرك على إبلاغنا، تمنينا تواجدك معنا.</div>
         </div>
     </div>
 
@@ -79,17 +87,30 @@
 
         <div id="admin-area" class="hidden">
             <div class="card">
-                <h3>⚙️ إعدادات الإدارة</h3>
+                <h3>⚙️ إعدادات الإدارة السريعة</h3>
                 <div class="admin-quick-actions">
                     <button class="btn-nav" onclick="window.open('scan.html', '_blank')">🔍 ماسح الكود</button>
+                    <button class="btn-nav" onclick="window.open('orders.html', '_blank')">📥 طلبات العملاء</button>
+                    <button class="btn-nav" id="view-client-page">📄 صفحة العميل</button>
                 </div>
+                <button id="btn-edit-client-data" class="btn-gold hidden" style="background:#34495e; margin-top:10px;">✏️ تعديل بيانات الحفل</button>
+            </div>
+            <div class="card">
+                <h3>🎀 تأسيس حفل جديد</h3>
+                <input id="c-name" placeholder="اسم المستخدم">
+                <input id="c-pass" placeholder="كلمة المرور">
+                <input id="c-event" placeholder="اسم المناسبة">
+                <input id="c-host" placeholder="اسم الداعي">
+                <input id="c-img" placeholder="رابط صورة الدعوة">
+                <input id="c-map" placeholder="رابط الموقع">
+                <button class="btn-gold" id="save-client">إنشاء الحساب</button>
             </div>
             <div class="card">
                 <h3>📝 إضافة ضيوف</h3>
                 <select id="client-select"></select>
                 <input id="g-name" placeholder="اسم الضيف">
-                <input id="g-phone" placeholder="الجوال">
-                <button class="btn-gold" id="save-guest" style="background:#27ae60">إضافة</button>
+                <input id="g-phone" placeholder="الجوال (966...)">
+                <button class="btn-gold" id="save-guest" style="background:#27ae60">إضافة للجدول</button>
             </div>
         </div>
 
@@ -101,6 +122,30 @@
     </div>
 </div>
 
+<div id="client-edit-modal" class="modal-overlay hidden">
+    <div class="card" style="width: 90%; max-width: 450px;">
+        <h3>تعديل بيانات الحفل ⚙️</h3>
+        <input id="edit-c-event" placeholder="اسم المناسبة">
+        <input id="edit-c-host" placeholder="اسم الداعي">
+        <input id="edit-c-img" placeholder="رابط صورة الدعوة">
+        <input id="edit-c-map" placeholder="رابط الموقع">
+        <input id="edit-c-pass" placeholder="كلمة مرور العميل">
+        <input type="hidden" id="edit-c-doc-id">
+        <button class="btn-gold" id="confirm-client-update">تحديث البيانات الآن</button>
+        <button onclick="document.getElementById('client-edit-modal').classList.add('hidden')" style="background:none; color:red; margin-top:10px;">إلغاء</button>
+    </div>
+</div>
+
+<div id="wa-modal" class="modal-overlay hidden">
+    <div class="card" style="width: 90%; max-width: 450px;">
+        <h3>تعديل رسالة الواتساب 📱</h3>
+        <textarea id="wa-text-area" rows="10" style="text-align: right; font-size: 14px;"></textarea>
+        <input type="hidden" id="wa-target-phone">
+        <button class="btn-gold" onclick="window.finalSendWA()" style="background:#25D366">إرسال الآن ✅</button>
+        <button onclick="document.getElementById('wa-modal').classList.add('hidden')" style="background:none; color:red; margin-top:10px;">إلغاء</button>
+    </div>
+</div>
+
 <div id="edit-modal" class="modal-overlay hidden">
     <div class="card" style="width: 90%; max-width: 400px;">
         <h3>تعديل بيانات الضيف</h3>
@@ -108,10 +153,11 @@
         <select id="edit-status">
             <option value="انتظار">انتظار</option>
             <option value="مؤكد">مؤكد</option>
-            <option value="تم-الدخول">تم-الدخول</option>
+            <option value="تم-الدخول">تم الدخول</option>
             <option value="اعتذار">اعتذار</option>
         </select>
         <button class="btn-gold" id="confirm-edit">تحديث البيانات</button>
+        <button onclick="document.getElementById('edit-modal').classList.add('hidden')" style="background:none; color:red;">إلغاء</button>
     </div>
 </div>
 
@@ -122,33 +168,77 @@
     const firebaseConfig = { apiKey: "AIzaSyBycODn3kTe7uRIBYifDogSPmv2towU6lA", projectId: "wedding-system-6fadd", appId: "1:902051092170:web:e228d3138a5b091b974633" };
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
+    const BASE_URL = "https://ronaq-inv.github.io/wedding-system1/"; 
 
     const role = sessionStorage.getItem('role');
     const user = sessionStorage.getItem('user');
+    let editingGuestId = "";
 
     window.logout = () => { sessionStorage.clear(); location.reload(); };
 
-    // تحميل البيانات مع شرط العميل
+    // دوال الواتساب والتعديل (ستعمل فقط إذا نودي عليها من الجدول)
+    window.prepareWA = (phone, name, evName, guestId, host) => {
+        const msg = `⚜️ *دعوة حضور* ⚜️\n\nأهلاً بك يا ${name} ✨\nنتشرف بدعوتكم لحضور: ${evName}..\n\nبانتظار تأكيد حضوركم عبر الرابط التالي:\n${BASE_URL}?id=${guestId}\n\nالداعي: ${host}`;
+        document.getElementById('wa-target-phone').value = phone;
+        document.getElementById('wa-text-area').value = msg;
+        document.getElementById('wa-modal').classList.remove('hidden');
+    };
+
+    window.finalSendWA = () => {
+        const phone = document.getElementById('wa-target-phone').value.replace(/\D/g, '');
+        const text = encodeURIComponent(document.getElementById('wa-text-area').value);
+        window.open(`https://api.whatsapp.com/send?phone=${phone}&text=${text}`, '_blank');
+        document.getElementById('wa-modal').classList.add('hidden');
+    };
+
+    window.openEdit = (id, name, phone, status, cl) => {
+        editingGuestId = id;
+        document.getElementById('edit-name').value = name;
+        document.getElementById('edit-phone').value = phone;
+        document.getElementById('edit-status').value = status;
+        document.getElementById('edit-modal').classList.remove('hidden');
+        window.currentSelectedClient = cl;
+    };
+
     async function loadData(cl) {
         if (!cl) return;
+        const cSnap = await getDocs(query(collection(db, "v30_data"), where("name", "==", cl)));
+        let evName = ""; let host = ""; 
+        cSnap.forEach(cd => { 
+            evName = cd.data().event; host = cd.data().host;
+            if(role === 'admin') {
+                document.getElementById('edit-c-event').value = cd.data().event;
+                document.getElementById('edit-c-host').value = cd.data().host;
+                document.getElementById('edit-c-img').value = cd.data().img;
+                document.getElementById('edit-c-map').value = cd.data().map;
+                document.getElementById('edit-c-pass').value = cd.data().password;
+                document.getElementById('edit-c-doc-id').value = cd.id;
+            }
+        });
+
         const snap = await getDocs(query(collection(db, "v30_guests"), where("belongsTo", "==", cl)));
         
-        // بناء الجدول
+        // بناء الهيدر: إذا كان العميل (client) لا يظهر عمود الإجراءات
         let h = `<table><tr><th>الاسم</th><th>الحالة</th>`;
-        if (role === 'admin') h += `<th>الإجراءات</th>`; // عمود الإجراءات يظهر فقط للأدمن
+        if (role === 'admin') h += `<th>الإجراءات</th>`;
         h += `</tr>`;
 
         snap.forEach(d => {
             const g = d.data();
-            h += `<tr><td>${g.name}</td><td><span class="status-pill status-${g.status}">${g.status}</span></td>`;
+            const statusLabel = g.status.replace('-', ' ');
+            h += `<tr><td>${g.name}</td><td><span class="status-pill status-${g.status}">${statusLabel}</span></td>`;
+            
+            // إضافة أزرار الإرسال والتعديل فقط للأدمن
             if (role === 'admin') {
-                h += `<td><button onclick="window.openEdit('${d.id}', '${g.name}', '${g.phone}', '${g.status}', '${cl}')" class="btn-edit">تعديل</button></td>`;
+                h += `<td>
+                        <button onclick="window.prepareWA('${g.phone}', '${g.name}', '${evName}', '${d.id}', '${host}')" class="btn-wa">إرسال</button>
+                        <button onclick="window.openEdit('${d.id}', '${g.name}', '${g.phone}', '${g.status}', '${cl}')" class="btn-edit">تعديل</button>
+                      </td>`;
             }
             h += `</tr>`;
         });
         document.getElementById('data-table').innerHTML = h + "</table>";
 
-        // الإحصائيات (تظهر للجميع)
         const guestsArr = snap.docs.map(d => d.data());
         document.getElementById('stat-total').innerText = guestsArr.length;
         document.getElementById('stat-yes').innerText = guestsArr.filter(g => g.status === 'مؤكد' || g.status === 'تم-الدخول').length;
@@ -159,52 +249,47 @@
     // تسجيل الدخول
     document.getElementById('login-btn').onclick = async () => {
         const u = document.getElementById('user-input').value, p = document.getElementById('pass-input').value;
-        if(u === "admin" && p === "123456") { 
-            sessionStorage.setItem('role','admin'); sessionStorage.setItem('user',u); location.reload(); 
-        } else {
+        if(u === "admin" && p === "123456") { sessionStorage.setItem('role','admin'); sessionStorage.setItem('user',u); location.reload(); }
+        else {
             const snap = await getDocs(query(collection(db, "v30_data"), where("name","==",u), where("password","==",p)));
-            if(!snap.empty) { 
-                sessionStorage.setItem('role','client'); sessionStorage.setItem('user',u); location.reload(); 
-            } else alert("خطأ في البيانات!");
+            if(!snap.empty) { sessionStorage.setItem('role','client'); sessionStorage.setItem('user',u); location.reload(); } else alert("خطأ!");
         }
     };
 
     async function init() {
-        if(sessionStorage.getItem('role')) {
+        const guestId = new URLSearchParams(window.location.search).get('id');
+        if (guestId) handleGuestView(guestId);
+        else if(sessionStorage.getItem('role')) {
             document.getElementById('dashboard-section').classList.remove('hidden');
-            document.getElementById('welcome-msg').innerText = "مرحباً: " + user;
+            document.getElementById('welcome-msg').innerText = "لوحة: " + user;
             if(role === 'admin') {
                 document.getElementById('admin-area').classList.remove('hidden');
                 const s = await getDocs(collection(db, "v30_data"));
                 const sel = document.getElementById('client-select');
+                sel.innerHTML = "<option value=''>اختر الحفل...</option>";
                 s.forEach(d => sel.innerHTML += `<option value="${d.data().name}">${d.data().name}</option>`);
                 sel.onchange = () => loadData(sel.value);
             } else {
-                loadData(user);
+                loadData(user); // للعميل العادي
             }
-        } else {
-            document.getElementById('login-section').classList.remove('hidden');
-        }
+        } else document.getElementById('login-section').classList.remove('hidden');
     }
     init();
 
-    // وظيفة فتح التعديل للأدمن
-    window.openEdit = (id, name, phone, status, cl) => {
-        window.editingId = id; window.currentCl = cl;
-        document.getElementById('edit-name').value = name;
-        document.getElementById('edit-phone').value = phone;
-        document.getElementById('edit-status').value = status;
-        document.getElementById('edit-modal').classList.remove('hidden');
-    };
-
+    // بقية أكواد الحفظ للأدمن (لا يتم استدعاؤها للعميل)
     document.getElementById('confirm-edit').onclick = async () => {
-        await updateDoc(doc(db, "v30_guests", window.editingId), {
-            name: document.getElementById('edit-name').value,
-            phone: document.getElementById('edit-phone').value,
-            status: document.getElementById('edit-status').value
+        await updateDoc(doc(db, "v30_guests", editingGuestId), {
+            name: document.getElementById('edit-name').value, phone: document.getElementById('edit-phone').value, status: document.getElementById('edit-status').value
         });
         document.getElementById('edit-modal').classList.add('hidden');
-        loadData(window.currentCl);
+        loadData(window.currentSelectedClient || user);
+    };
+
+    document.getElementById('save-guest').onclick = async () => {
+        const sel = document.getElementById('client-select').value;
+        let p = document.getElementById('g-phone').value; if(p.startsWith('0')) p = '966' + p.substring(1);
+        await addDoc(collection(db, "v30_guests"), { belongsTo: sel, name: document.getElementById('g-name').value, phone: p, status: "انتظار" });
+        loadData(sel);
     };
 </script>
 </body>
