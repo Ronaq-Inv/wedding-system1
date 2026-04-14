@@ -64,10 +64,9 @@
         .status-اعتذار { background: #ffebee; color: #c62828; }
         .status-انتظار { background: #fff8e1; color: #f9a825; }
 
-        .btn-wa { background: #25D366; color: white; padding: 6px 10px; border-radius: 8px; font-size: 11px; margin: 2px; }
-        .btn-edit { background: #3498db; color: white; padding: 6px 10px; border-radius: 8px; font-size: 11px; margin: 2px; }
+        .btn-wa { background: #25D366 !important; color: white !important; padding: 6px 10px; border-radius: 8px; font-size: 11px; margin: 2px; }
+        .btn-edit { background: #3498db !important; color: white !important; padding: 6px 10px; border-radius: 8px; font-size: 11px; margin: 2px; }
 
-        /* تنسيق بطاقة الدعوة للضيف */
         .invitation-img { width: 100%; border-radius: 15px; margin-bottom: 20px; border: 2px solid var(--gold); }
     </style>
 </head>
@@ -174,7 +173,24 @@
     const user = sessionStorage.getItem('user');
     let editingGuestId = "";
 
-    // منطق عرض البيانات
+    // تعريف الدوال عالمياً لتشتغل مع HTML
+    window.sendToWA = (phone, message) => {
+        const cleanPhone = phone.toString().replace(/\D/g, '');
+        const waLink = `https://api.whatsapp.com/send?phone=${cleanPhone}&text=${encodeURIComponent(message)}`;
+        window.open(waLink, '_blank');
+    };
+
+    window.openEdit = (id, name, phone, status, cl) => {
+        editingGuestId = id;
+        document.getElementById('edit-name').value = name;
+        document.getElementById('edit-phone').value = phone;
+        document.getElementById('edit-status').value = status;
+        document.getElementById('edit-modal').classList.remove('hidden');
+        window.currentClient = cl;
+    };
+
+    window.logout = () => { sessionStorage.clear(); location.reload(); };
+
     async function loadData(cl) {
         if (!cl) return;
         const cSnap = await getDocs(query(collection(db, "v30_data"), where("name", "==", cl)));
@@ -206,7 +222,6 @@
         document.getElementById('stat-no').innerText = guestsArr.filter(g => g.status === 'اعتذار').length;
     }
 
-    // التعامل مع دعوة الضيف
     async function handleGuestView(guestId) {
         const gDoc = await getDoc(doc(db, "v30_guests", guestId));
         if (gDoc.exists()) {
@@ -236,16 +251,6 @@
         }
     }
 
-    // وظائف الأزرار
-    window.openEdit = (id, name, phone, status, cl) => {
-        editingGuestId = id;
-        document.getElementById('edit-name').value = name;
-        document.getElementById('edit-phone').value = phone;
-        document.getElementById('edit-status').value = status;
-        document.getElementById('edit-modal').classList.remove('hidden');
-        window.currentClient = cl;
-    };
-
     document.getElementById('confirm-edit').onclick = async () => {
         const ref = doc(db, "v30_guests", editingGuestId);
         await updateDoc(ref, {
@@ -255,6 +260,29 @@
         });
         document.getElementById('edit-modal').classList.add('hidden');
         loadData(window.currentClient);
+    };
+
+    document.getElementById('view-client-page').onclick = () => {
+        const sel = document.getElementById('client-select').value;
+        if(sel) window.open(`${BASE_URL}?user=${sel}`, '_blank');
+        else alert("اختر حفلاً أولاً");
+    };
+
+    document.getElementById('save-client').onclick = async () => {
+        await addDoc(collection(db, "v30_data"), { 
+            name: document.getElementById('c-name').value, password: document.getElementById('c-pass').value, 
+            event: document.getElementById('c-event').value, host: document.getElementById('c-host').value, 
+            img: document.getElementById('c-img').value, map: document.getElementById('c-map').value 
+        });
+        location.reload();
+    };
+
+    document.getElementById('save-guest').onclick = async () => {
+        const sel = document.getElementById('client-select').value;
+        let p = document.getElementById('g-phone').value; 
+        if(p.startsWith('0')) p = '966' + p.substring(1);
+        await addDoc(collection(db, "v30_guests"), { belongsTo: sel, name: document.getElementById('g-name').value, phone: p, status: "انتظار" });
+        loadData(sel);
     };
 
     document.getElementById('login-btn').onclick = async () => {
@@ -270,9 +298,6 @@
         }
     };
 
-    window.logout = () => { sessionStorage.clear(); location.reload(); };
-
-    // التشغيل الأولي وفحص الرابط
     async function init() {
         const params = new URLSearchParams(window.location.search);
         const guestId = params.get('id');
@@ -294,12 +319,7 @@
             document.getElementById('login-section').classList.remove('hidden');
         }
     }
-    
     init();
-
-    window.sendToWA = (phone, message) => {
-        window.location.assign(`https://api.whatsapp.com/send?phone=${phone.replace(/\D/g, '')}&text=${encodeURIComponent(message)}`);
-    };
 </script>
 </body>
 </html>
