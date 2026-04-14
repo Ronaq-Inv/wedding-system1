@@ -3,68 +3,96 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ماسح الدخول | فخامة</title>
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet">
+    <title>ماسح الدخول 🔍</title>
     <script src="https://unpkg.com/html5-qrcode"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Cairo', sans-serif; background-color: #fdf2f2; margin: 0; padding: 20px; text-align: center; }
-        .card { background: white; border-radius: 20px; padding: 20px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
-        #reader { width: 100%; border-radius: 15px; overflow: hidden; background: #000; }
-        .status-msg { margin-top: 20px; padding: 15px; border-radius: 10px; font-weight: bold; display: none; }
-        .success { background: #d4edda; color: #155724; }
-        .error { background: #f8d7da; color: #721c24; }
-        .btn-back { margin-top: 20px; background: #888; color: white; border: none; padding: 10px 20px; border-radius: 10px; cursor: pointer; }
+        body { font-family: 'Cairo', sans-serif; background: #1a1a1a; color: white; text-align: center; margin: 0; padding: 20px; }
+        #reader { width: 100%; max-width: 500px; margin: auto; border: 2px solid #c5a059; border-radius: 15px; overflow: hidden; background: #000; }
+        #result { margin-top: 20px; padding: 15px; border-radius: 10px; font-weight: bold; font-size: 18px; }
+        .success { background: #27ae60; color: white; }
+        .error { background: #e74c3c; color: white; }
+        .scanning { background: #34495e; color: #fff; }
     </style>
 </head>
 <body>
 
-<div class="card">
-    <h2 style="color:#c5a059">جهاز فحص التصاريح</h2>
+    <h2 style="color:#c5a059">نظام رونق - ماسح الدخول ⚜️</h2>
     <div id="reader"></div>
-    <div id="result-msg" class="status-msg"></div>
-    <button class="btn-back" onclick="window.close()">إغلاق الصفحة</button>
-</div>
+    <div id="result" class="scanning">بانتظار مسح الكود...</div>
+    <button onclick="location.reload()" style="margin-top:20px; padding:10px; border-radius:8px; cursor:pointer;">إعادة تشغيل الكاميرا</button>
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
     import { getFirestore, doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-    const firebaseConfig = { apiKey: "AIzaSyBycODn3kTe7uRIBYifDogSPmv2towU6lA", projectId: "wedding-system-6fadd", appId: "1:902051092170:web:e228d3138a5b091b974633" };
+    const firebaseConfig = { 
+        apiKey: "AIzaSyBycODn3kTe7uRIBYifDogSPmv2towU6lA", 
+        projectId: "wedding-system-6fadd", 
+        appId: "1:902051092170:web:e228d3138a5b091b974633" 
+    };
+    
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
-    const msgBox = document.getElementById('result-msg');
+    // متغير للتحكم في عملية المسح (منع التكرار)
+    let isProcessing = false;
 
-    function showMsg(text, type) {
-        msgBox.innerText = text;
-        msgBox.className = `status-msg ${type}`;
-        msgBox.style.display = 'block';
-        setTimeout(() => { msgBox.style.display = 'none'; }, 3000);
-    }
+    async function onScanSuccess(decodedText) {
+        // إذا كان النظام مشغولاً بمعالجة كود حالياً، تجاهل المسحة الجديدة
+        if (isProcessing) return;
 
-    function onScanSuccess(decodedText) {
-        // تجنب التكرار السريع
-        html5QrcodeScanner.pause();
-        
-        const guestRef = doc(db, "v30_guests", decodedText);
-        getDoc(guestRef).then(async (snap) => {
-            if(snap.exists()) {
-                if(snap.data().status === "حضور") {
-                    showMsg("⚠️ هذا الضيف مسجل حضور مسبقاً: " + snap.data().name, "error");
+        isProcessing = true; // تفعيل وضع المعالجة (قفل المسح)
+        const resultDiv = document.getElementById('result');
+        resultDiv.className = 'scanning';
+        resultDiv.innerText = "جاري التحقق من الكود...";
+
+        try {
+            const guestRef = doc(db, "v30_guests", decodedText);
+            const guestSnap = await getDoc(guestRef);
+
+            if (guestSnap.exists()) {
+                const guestData = guestSnap.data();
+
+                if (guestData.status === "تم-الدخول") {
+                    resultDiv.className = 'error';
+                    resultDiv.innerText = `⚠️ تنبيه: ${guestData.name} مسجل دخوله مسبقاً!`;
                 } else {
-                    await updateDoc(guestRef, { status: "حضور" });
-                    showMsg("✅ تم تسجيل دخول: " + snap.data().name, "success");
-                    // تشغيل صوت تنبيه بسيط إذا أردت
-                    new Audio('https://www.soundjay.com/buttons/beep-07a.mp3').play();
+                    // تحديث الحالة إلى "تم-الدخول"
+                    await updateDoc(guestRef, { status: "تم-الدخول" });
+                    resultDiv.className = 'success';
+                    resultDiv.innerText = `✅ تم دخول: ${guestData.name} بنجاح`;
+                    
+                    // إصدار صوت تنبيه بسيط (اختياري)
+                    const audio = new Audio('https://www.soundjay.com/buttons/sounds/button-3.mp3');
+                    audio.play();
                 }
             } else {
-                showMsg("❌ باركود غير معروف!", "error");
+                resultDiv.className = 'error';
+                resultDiv.innerText = "❌ الكود غير صحيح أو غير موجود!";
             }
-            setTimeout(() => { html5QrcodeScanner.resume(); }, 2000);
-        });
+        } catch (error) {
+            resultDiv.className = 'error';
+            resultDiv.innerText = "حدث خطأ أثناء الاتصال بالقاعدة";
+            console.error(error);
+        }
+
+        // الانتظار لمدة 3 ثوانٍ قبل السماح بمسح كود جديد (الهدوء المطلوب)
+        setTimeout(() => {
+            isProcessing = false;
+            if(resultDiv.className !== 'success') {
+                resultDiv.innerText = "جاهز لمسح كود جديد...";
+                resultDiv.className = 'scanning';
+            }
+        }, 3000); 
     }
 
-    let html5QrcodeScanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: 250 });
+    // إعداد الماسح الضوئي
+    const html5QrcodeScanner = new Html5QrcodeScanner("reader", { 
+        fps: 10, // عدد الفريمات في الثانية
+        qrbox: { width: 250, height: 250 } 
+    });
+    
     html5QrcodeScanner.render(onScanSuccess);
 </script>
 </body>
