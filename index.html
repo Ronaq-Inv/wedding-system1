@@ -36,7 +36,6 @@
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: flex; align-items: center; justify-content: center; z-index: 9999; }
         .entry-code-box { background: #f9f9f9; border: 2px dashed var(--gold); padding: 15px; margin-top: 15px; border-radius: 10px; }
         #qrcode-container { display: flex; justify-content: center; margin: 15px auto; }
-        #qrcode-container img { border: 5px solid white; box-shadow: 0 0 10px rgba(0,0,0,0.1); padding: 5px; background: #fff; }
     </style>
 </head>
 <body>
@@ -91,10 +90,9 @@
                 <div class="admin-quick-actions">
                     <button class="btn-nav" onclick="window.open('scan.html', '_blank')">🔍 ماسح الكود</button>
                     <button class="btn-nav" onclick="window.open('orders.html', '_blank')">📥 طلبات العملاء</button>
-                    <button class="btn-nav" id="view-client-page">📄 صفحة العميل</button>
                 </div>
-                <button id="btn-edit-client-data" class="btn-gold hidden" style="background:#34495e; margin-top:10px;">✏️ تعديل بيانات الحفل</button>
             </div>
+
             <div class="card">
                 <h3>🎀 تأسيس حفل جديد</h3>
                 <input id="c-name" placeholder="اسم المستخدم">
@@ -105,6 +103,12 @@
                 <input id="c-map" placeholder="رابط الموقع">
                 <button class="btn-gold" id="save-client">إنشاء الحساب</button>
             </div>
+
+            <div class="card">
+                <h3>👥 تعديل بيانات العملاء (الحفلات)</h3>
+                <div id="clients-list-table"></div>
+            </div>
+
             <div class="card">
                 <h3>📝 إضافة ضيوف</h3>
                 <select id="client-select"></select>
@@ -122,30 +126,6 @@
     </div>
 </div>
 
-<div id="client-edit-modal" class="modal-overlay hidden">
-    <div class="card" style="width: 90%; max-width: 450px;">
-        <h3>تعديل بيانات الحفل ⚙️</h3>
-        <input id="edit-c-event" placeholder="اسم المناسبة">
-        <input id="edit-c-host" placeholder="اسم الداعي">
-        <input id="edit-c-img" placeholder="رابط صورة الدعوة">
-        <input id="edit-c-map" placeholder="رابط الموقع">
-        <input id="edit-c-pass" placeholder="كلمة مرور العميل">
-        <input type="hidden" id="edit-c-doc-id">
-        <button class="btn-gold" id="confirm-client-update">تحديث البيانات الآن</button>
-        <button onclick="document.getElementById('client-edit-modal').classList.add('hidden')" style="background:none; color:red; margin-top:10px;">إلغاء</button>
-    </div>
-</div>
-
-<div id="wa-modal" class="modal-overlay hidden">
-    <div class="card" style="width: 90%; max-width: 450px;">
-        <h3>تعديل رسالة الواتساب 📱</h3>
-        <textarea id="wa-text-area" rows="10" style="text-align: right; font-size: 14px;"></textarea>
-        <input type="hidden" id="wa-target-phone">
-        <button class="btn-gold" onclick="window.finalSendWA()" style="background:#25D366">إرسال الآن ✅</button>
-        <button onclick="document.getElementById('wa-modal').classList.add('hidden')" style="background:none; color:red; margin-top:10px;">إلغاء</button>
-    </div>
-</div>
-
 <div id="edit-modal" class="modal-overlay hidden">
     <div class="card" style="width: 90%; max-width: 400px;">
         <h3>تعديل بيانات الضيف</h3>
@@ -156,8 +136,32 @@
             <option value="تم-الدخول">تم الدخول</option>
             <option value="اعتذار">اعتذار</option>
         </select>
-        <button class="btn-gold" id="confirm-edit">تحديث البيانات</button>
+        <button class="btn-gold" id="confirm-edit">تحديث</button>
         <button onclick="document.getElementById('edit-modal').classList.add('hidden')" style="background:none; color:red;">إلغاء</button>
+    </div>
+</div>
+
+<div id="edit-client-modal" class="modal-overlay hidden">
+    <div class="card" style="width: 90%; max-width: 450px;">
+        <h3>تعديل بيانات الحفل ⚙️</h3>
+        <input id="ec-event" placeholder="اسم المناسبة">
+        <input id="ec-host" placeholder="اسم الداعي">
+        <input id="ec-img" placeholder="رابط صورة الدعوة">
+        <input id="ec-map" placeholder="رابط الموقع">
+        <input id="ec-pass" placeholder="كلمة مرور العميل">
+        <input type="hidden" id="ec-doc-id">
+        <button class="btn-gold" id="confirm-client-update">حفظ التغييرات</button>
+        <button onclick="document.getElementById('edit-client-modal').classList.add('hidden')" style="background:none; color:red; margin-top:10px;">إلغاء</button>
+    </div>
+</div>
+
+<div id="wa-modal" class="modal-overlay hidden">
+    <div class="card" style="width: 90%; max-width: 450px;">
+        <h3>رسالة الواتساب 📱</h3>
+        <textarea id="wa-text-area" rows="8"></textarea>
+        <input type="hidden" id="wa-target-phone">
+        <button class="btn-gold" onclick="window.finalSendWA()" style="background:#25D366">إرسال ✅</button>
+        <button onclick="document.getElementById('wa-modal').classList.add('hidden')" style="background:none; color:red; margin-top:10px;">إلغاء</button>
     </div>
 </div>
 
@@ -176,7 +180,41 @@
 
     window.logout = () => { sessionStorage.clear(); location.reload(); };
 
-    // دوال الواتساب والتعديل (ستعمل فقط إذا نودي عليها من الجدول)
+    // --- وظائف الأدمن لتعديل العملاء ---
+    window.openEditClient = (id, ev, host, img, map, pass) => {
+        document.getElementById('ec-doc-id').value = id;
+        document.getElementById('ec-event').value = ev;
+        document.getElementById('ec-host').value = host;
+        document.getElementById('ec-img').value = img;
+        document.getElementById('ec-map').value = map;
+        document.getElementById('ec-pass').value = pass;
+        document.getElementById('edit-client-modal').classList.remove('hidden');
+    };
+
+    document.getElementById('confirm-client-update').onclick = async () => {
+        const id = document.getElementById('ec-doc-id').value;
+        await updateDoc(doc(db, "v30_data", id), {
+            event: document.getElementById('ec-event').value,
+            host: document.getElementById('ec-host').value,
+            img: document.getElementById('ec-img').value,
+            map: document.getElementById('ec-map').value,
+            password: document.getElementById('ec-pass').value
+        });
+        location.reload();
+    };
+
+    async function loadClientsList() {
+        const snap = await getDocs(collection(db, "v30_data"));
+        let h = `<table><tr><th>العميل</th><th>المناسبة</th><th>إدارة</th></tr>`;
+        snap.forEach(d => {
+            const c = d.data();
+            h += `<tr><td>${c.name}</td><td>${c.event}</td>
+            <td><button class="btn-edit" onclick="window.openEditClient('${d.id}','${c.event}','${c.host}','${c.img}','${c.map}','${c.password}')">تعديل</button></td></tr>`;
+        });
+        document.getElementById('clients-list-table').innerHTML = h + "</table>";
+    }
+
+    // --- وظائف الضيوف ---
     window.prepareWA = (phone, name, evName, guestId, host) => {
         const msg = `⚜️ *دعوة حضور* ⚜️\n\nأهلاً بك يا ${name} ✨\nنتشرف بدعوتكم لحضور: ${evName}..\n\nبانتظار تأكيد حضوركم عبر الرابط التالي:\n${BASE_URL}?id=${guestId}\n\nالداعي: ${host}`;
         document.getElementById('wa-target-phone').value = phone;
@@ -204,36 +242,21 @@
         if (!cl) return;
         const cSnap = await getDocs(query(collection(db, "v30_data"), where("name", "==", cl)));
         let evName = ""; let host = ""; 
-        cSnap.forEach(cd => { 
-            evName = cd.data().event; host = cd.data().host;
-            if(role === 'admin') {
-                document.getElementById('edit-c-event').value = cd.data().event;
-                document.getElementById('edit-c-host').value = cd.data().host;
-                document.getElementById('edit-c-img').value = cd.data().img;
-                document.getElementById('edit-c-map').value = cd.data().map;
-                document.getElementById('edit-c-pass').value = cd.data().password;
-                document.getElementById('edit-c-doc-id').value = cd.id;
-            }
-        });
+        cSnap.forEach(cd => { evName = cd.data().event; host = cd.data().host; });
 
         const snap = await getDocs(query(collection(db, "v30_guests"), where("belongsTo", "==", cl)));
-        
-        // بناء الهيدر: إذا كان العميل (client) لا يظهر عمود الإجراءات
         let h = `<table><tr><th>الاسم</th><th>الحالة</th>`;
-        if (role === 'admin') h += `<th>الإجراءات</th>`;
+        if(role === 'admin') h += `<th>الإجراءات</th>`;
         h += `</tr>`;
 
         snap.forEach(d => {
             const g = d.data();
-            const statusLabel = g.status.replace('-', ' ');
-            h += `<tr><td>${g.name}</td><td><span class="status-pill status-${g.status}">${statusLabel}</span></td>`;
-            
-            // إضافة أزرار الإرسال والتعديل فقط للأدمن
-            if (role === 'admin') {
+            h += `<tr><td>${g.name}</td><td><span class="status-pill status-${g.status}">${g.status.replace('-',' ')}</span></td>`;
+            if(role === 'admin') {
                 h += `<td>
-                        <button onclick="window.prepareWA('${g.phone}', '${g.name}', '${evName}', '${d.id}', '${host}')" class="btn-wa">إرسال</button>
-                        <button onclick="window.openEdit('${d.id}', '${g.name}', '${g.phone}', '${g.status}', '${cl}')" class="btn-edit">تعديل</button>
-                      </td>`;
+                    <button onclick="window.prepareWA('${g.phone}', '${g.name}', '${evName}', '${d.id}', '${host}')" class="btn-wa">إرسال</button>
+                    <button onclick="window.openEdit('${d.id}', '${g.name}', '${g.phone}', '${g.status}', '${cl}')" class="btn-edit">تعديل</button>
+                </td>`;
             }
             h += `</tr>`;
         });
@@ -246,7 +269,7 @@
         document.getElementById('stat-no').innerText = guestsArr.filter(g => g.status === 'اعتذار').length;
     }
 
-    // تسجيل الدخول
+    // --- المعالجات الأساسية ---
     document.getElementById('login-btn').onclick = async () => {
         const u = document.getElementById('user-input').value, p = document.getElementById('pass-input').value;
         if(u === "admin" && p === "123456") { sessionStorage.setItem('role','admin'); sessionStorage.setItem('user',u); location.reload(); }
@@ -256,33 +279,13 @@
         }
     };
 
-    async function init() {
-        const guestId = new URLSearchParams(window.location.search).get('id');
-        if (guestId) handleGuestView(guestId);
-        else if(sessionStorage.getItem('role')) {
-            document.getElementById('dashboard-section').classList.remove('hidden');
-            document.getElementById('welcome-msg').innerText = "لوحة: " + user;
-            if(role === 'admin') {
-                document.getElementById('admin-area').classList.remove('hidden');
-                const s = await getDocs(collection(db, "v30_data"));
-                const sel = document.getElementById('client-select');
-                sel.innerHTML = "<option value=''>اختر الحفل...</option>";
-                s.forEach(d => sel.innerHTML += `<option value="${d.data().name}">${d.data().name}</option>`);
-                sel.onchange = () => loadData(sel.value);
-            } else {
-                loadData(user); // للعميل العادي
-            }
-        } else document.getElementById('login-section').classList.remove('hidden');
-    }
-    init();
-
-    // بقية أكواد الحفظ للأدمن (لا يتم استدعاؤها للعميل)
-    document.getElementById('confirm-edit').onclick = async () => {
-        await updateDoc(doc(db, "v30_guests", editingGuestId), {
-            name: document.getElementById('edit-name').value, phone: document.getElementById('edit-phone').value, status: document.getElementById('edit-status').value
+    document.getElementById('save-client').onclick = async () => {
+        await addDoc(collection(db, "v30_data"), { 
+            name: document.getElementById('c-name').value, password: document.getElementById('c-pass').value, 
+            event: document.getElementById('c-event').value, host: document.getElementById('c-host').value, 
+            img: document.getElementById('c-img').value, map: document.getElementById('c-map').value 
         });
-        document.getElementById('edit-modal').classList.add('hidden');
-        loadData(window.currentSelectedClient || user);
+        location.reload();
     };
 
     document.getElementById('save-guest').onclick = async () => {
@@ -291,6 +294,61 @@
         await addDoc(collection(db, "v30_guests"), { belongsTo: sel, name: document.getElementById('g-name').value, phone: p, status: "انتظار" });
         loadData(sel);
     };
+
+    document.getElementById('confirm-edit').onclick = async () => {
+        await updateDoc(doc(db, "v30_guests", editingGuestId), {
+            name: document.getElementById('edit-name').value, phone: document.getElementById('edit-phone').value, status: document.getElementById('edit-status').value
+        });
+        document.getElementById('edit-modal').classList.add('hidden');
+        loadData(window.currentSelectedClient || user);
+    };
+
+    // --- عرض الضيف ---
+    async function handleGuestView(guestId) {
+        const gDoc = await getDoc(doc(db, "v30_guests", guestId));
+        if (gDoc.exists()) {
+            const gData = gDoc.data();
+            const cSnap = await getDocs(query(collection(db, "v30_data"), where("name", "==", gData.belongsTo)));
+            let cData = {}; cSnap.forEach(d => cData = d.data());
+            document.getElementById('guest-section').classList.remove('hidden');
+            document.getElementById('guest-welcome').innerText = `أهلاً بك يا ${gData.name}`;
+            document.getElementById('event-image').src = cData.img;
+            document.getElementById('event-details').innerText = `${cData.event} - الداعي: ${cData.host}`;
+            if (gData.status === "مؤكد" || gData.status === "تم-الدخول") showEntryPass(guestId, cData.map, gData.status);
+            else if (gData.status === "اعتذار") { document.getElementById('guest-actions').classList.add('hidden'); document.getElementById('decline-msg').classList.remove('hidden'); }
+            document.getElementById('btn-confirm').onclick = async () => { await updateDoc(doc(db, "v30_guests", guestId), { status: "مؤكد" }); showEntryPass(guestId, cData.map, "مؤكد"); };
+            document.getElementById('btn-decline').onclick = async () => { await updateDoc(doc(db, "v30_guests", guestId), { status: "اعتذار" }); document.getElementById('guest-actions').classList.add('hidden'); document.getElementById('decline-msg').classList.remove('hidden'); };
+        }
+    }
+
+    function showEntryPass(id, mapUrl, currentStatus) {
+        document.getElementById('guest-actions').classList.add('hidden');
+        document.getElementById('after-confirm-area').classList.remove('hidden');
+        const qrContainer = document.getElementById("qrcode-container");
+        qrContainer.innerHTML = "";
+        new QRCode(qrContainer, { text: id, width: 180, height: 180 });
+        document.getElementById('entry-code-text').innerText = id.substring(0, 10).toUpperCase();
+        document.getElementById('btn-map').onclick = () => window.open(mapUrl, '_blank');
+    }
+
+    async function init() {
+        const guestId = new URLSearchParams(window.location.search).get('id');
+        if (guestId) handleGuestView(guestId);
+        else if(sessionStorage.getItem('role')) {
+            document.getElementById('dashboard-section').classList.remove('hidden');
+            document.getElementById('welcome-msg').innerText = "لوحة: " + user;
+            if(role === 'admin') {
+                document.getElementById('admin-area').classList.remove('hidden');
+                loadClientsList();
+                const s = await getDocs(collection(db, "v30_data"));
+                const sel = document.getElementById('client-select');
+                sel.innerHTML = "<option value=''>اختر الحفل لعرض الضيوف...</option>";
+                s.forEach(d => sel.innerHTML += `<option value="${d.data().name}">${d.data().name}</option>`);
+                sel.onchange = () => loadData(sel.value);
+            } else loadData(user);
+        } else document.getElementById('login-section').classList.remove('hidden');
+    }
+    init();
 </script>
 </body>
 </html>
