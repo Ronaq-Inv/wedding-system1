@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>نظام رونق للدعوات ⚜️</title>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
         :root { --pink: #fdf2f2; --gold: #c5a059; --dark-gold: #b38b7d; --black: #1a1a1a; }
         body { font-family: 'Cairo', sans-serif; background-color: var(--pink); background-image: url('https://www.transparenttextures.com/patterns/islamic-art.png'); margin: 0; padding: 0; direction: rtl; }
@@ -33,7 +33,10 @@
         .status-انتظار { background: #fff8e1; color: #f9a825; }
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: flex; align-items: center; justify-content: center; z-index: 9999; }
         .entry-code-box { background: #f9f9f9; border: 2px dashed var(--gold); padding: 15px; margin-top: 15px; border-radius: 10px; }
-        #barcode-img { width: 100%; max-width: 300px; height: auto; margin: 10px auto; }
+        
+        /* تعديل حاوية الـ QR Code لضمان التوسط */
+        #qrcode-img { margin: 15px auto; display: flex; justify-content: center; }
+        #qrcode-img img { border: 4px solid white; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
     </style>
 </head>
 <body>
@@ -52,9 +55,9 @@
             <div id="after-confirm-area" class="hidden">
                 <div class="entry-code-box">
                     <p style="margin:0; color:var(--dark-gold); font-weight:bold;">بطاقة دخولك الشخصية 🎫</p>
-                    <svg id="barcode-img"></svg>
+                    <div id="qrcode-img"></div>
                     <p id="entry-code-text" style="font-weight:bold; letter-spacing: 2px; margin-top:5px;"></p>
-                    <small>يرجى إبراز هذا الباركود للمنظم عند الباب</small>
+                    <small>يرجى إبراز هذا الكود للمنظم عند الباب</small>
                 </div>
                 <button class="btn-gold" style="margin-top:15px; background:#2c3e50" id="btn-map">📍 موقع المناسبة</button>
             </div>
@@ -84,7 +87,7 @@
             <div class="card">
                 <h3>⚙️ إعدادات الإدارة السريعة</h3>
                 <div class="admin-quick-actions">
-                    <button class="btn-nav" onclick="window.open('scan.html', '_blank')">🔍 ماسح الباركود</button>
+                    <button class="btn-nav" onclick="window.open('scan.html', '_blank')">🔍 ماسح الكود</button>
                     <button class="btn-nav" onclick="window.open('orders.html', '_blank')">📥 طلبات العملاء</button>
                     <button class="btn-nav" id="view-client-page">📄 صفحة العميل</button>
                 </div>
@@ -163,7 +166,6 @@
     const user = sessionStorage.getItem('user');
     let editingGuestId = "";
 
-    // منطق الواتساب
     window.prepareWA = (phone, name, evName, guestId, host) => {
         const msg = `⚜️ *دعوة حضور* ⚜️\n\nأهلاً بك يا ${name} ✨\nنتشرف بدعوتكم لحضور: ${evName}..\n\nبانتظار تأكيد حضوركم عبر الرابط التالي:\n${BASE_URL}?id=${guestId}\n\nالداعي: ${host}\n\n*ملاحظة:* إذا لم يفتح الرابط، يرجى الرد بكلمة "تم" لتفعيله.`;
         document.getElementById('wa-target-phone').value = phone;
@@ -180,14 +182,13 @@
 
     window.logout = () => { sessionStorage.clear(); location.reload(); };
 
-    // دالة فتح تعديل الضيف (المصلحة)
     window.openEdit = (id, name, phone, status, cl) => {
         editingGuestId = id;
         document.getElementById('edit-name').value = name;
         document.getElementById('edit-phone').value = phone;
         document.getElementById('edit-status').value = status;
         document.getElementById('edit-modal').classList.remove('hidden');
-        window.currentSelectedClient = cl; // لحفظ العميل المختار عند التحديث
+        window.currentSelectedClient = cl;
     };
 
     async function loadData(cl) {
@@ -239,16 +240,27 @@
         }
     }
 
+    // وظيفة الـ QR Code المحدثة
     function showEntryPass(id, mapUrl) {
         document.getElementById('guest-actions').classList.add('hidden');
         document.getElementById('after-confirm-area').classList.remove('hidden');
-        const cleanId = id.substring(0, 10).toUpperCase();
-        JsBarcode("#barcode-img", cleanId, { format: "CODE128", lineColor: "#1a1a1a", width: 2, height: 60, displayValue: false });
-        document.getElementById('entry-code-text').innerText = cleanId;
+        
+        // تنظيف الحاوية وتوليد QR جديد
+        const qrContainer = document.getElementById("qrcode-img");
+        qrContainer.innerHTML = "";
+        new QRCode(qrContainer, {
+            text: id,
+            width: 180,
+            height: 180,
+            colorDark : "#1a1a1a",
+            colorLight : "#ffffff",
+            correctLevel : QRCode.CorrectLevel.H
+        });
+
+        document.getElementById('entry-code-text').innerText = id.substring(0, 10).toUpperCase();
         document.getElementById('btn-map').onclick = () => window.open(mapUrl, '_blank');
     }
 
-    // تأكيد تحديث بيانات الضيف
     document.getElementById('confirm-edit').onclick = async () => {
         await updateDoc(doc(db, "v30_guests", editingGuestId), {
             name: document.getElementById('edit-name').value,
