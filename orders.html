@@ -17,61 +17,79 @@
         }
 
         .order-card { 
-            background: white; border-radius: 25px; padding: 40px 30px; width: 90%; max-width: 500px; 
-            box-shadow: 0 15px 35px rgba(0,0,0,0.1); border-top: 6px solid var(--gold); text-align: center;
-            position: relative; margin-top: 50px;
+            background: white; border-radius: 30px; padding: 50px 30px; width: 90%; max-width: 550px; 
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1); border-top: 8px solid var(--gold); text-align: center;
+            position: relative; margin-top: 60px;
         }
 
+        /* تعديل اللوجو ليكون كبيراً وفي المنتصف */
         .logo-container {
-            width: 140px; height: 140px; margin: -110px auto 20px;
-            background: white; border-radius: 50%; padding: 5px;
-            border: 3px solid var(--gold); box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-            overflow: hidden;
+            width: 180px; height: 180px; margin: -140px auto 30px;
+            background: white; border-radius: 50%; padding: 10px;
+            border: 4px solid var(--gold); box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+            overflow: hidden; display: flex; align-items: center; justify-content: center;
         }
-        .logo-container img { width: 100%; height: 100%; object-fit: contain; }
+        .logo-container img { width: 100%; height: auto; object-fit: contain; }
 
-        h2 { color: var(--gold); margin-bottom: 5px; font-weight: 700; }
-        p.subtitle { color: #666; font-size: 14px; margin-bottom: 25px; }
+        h2 { color: var(--gold); margin-bottom: 5px; font-weight: 700; font-size: 28px; }
+        p.subtitle { color: #777; font-size: 15px; margin-bottom: 30px; }
 
+        .input-group { margin-bottom: 15px; text-align: right; }
+        label { display: block; margin-bottom: 5px; color: var(--gold); font-weight: bold; font-size: 14px; margin-right: 5px; }
         input { 
-            width: 100%; padding: 14px; margin: 10px 0; border-radius: 12px; 
-            border: 1px solid #ddd; font-family: 'Cairo'; box-sizing: border-box; text-align: center;
+            width: 100%; padding: 15px; border-radius: 12px; 
+            border: 1px solid #eee; font-family: 'Cairo'; box-sizing: border-box; text-align: center;
+            background: #fcfcfc; transition: 0.3s;
         }
+        input:focus { border-color: var(--gold); outline: none; background: white; }
 
-        .package-options { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 20px 0; }
+        .package-options { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin: 25px 0; }
         .pkg-box { 
-            border: 2px solid #eee; padding: 15px; border-radius: 15px; cursor: pointer;
-            transition: 0.3s ease; font-size: 13px; font-weight: bold; color: #555;
-            display: flex; flex-direction: column; justify-content: center;
+            border: 2px solid #f0f0f0; padding: 20px 15px; border-radius: 18px; cursor: pointer;
+            transition: 0.3s ease; display: flex; flex-direction: column; justify-content: center;
         }
-        .pkg-box.active { border-color: var(--gold); background: #fff9f0; color: var(--gold); }
+        .pkg-box:hover { border-color: var(--gold); transform: translateY(-3px); }
+        .pkg-box.active { border-color: var(--gold); background: #fff9f0; color: var(--gold); box-shadow: 0 8px 15px rgba(197, 160, 89, 0.15); }
 
-        button { 
+        .pkg-name { font-weight: bold; font-size: 14px; }
+        .pkg-price { font-size: 18px; font-weight: 700; color: var(--black); margin-top: 8px; }
+        .active .pkg-price { color: var(--gold); }
+
+        .btn-order { 
             background: linear-gradient(135deg, var(--gold), var(--dark-gold)); 
-            color: white; padding: 16px; border-radius: 12px; border: none; width: 100%; 
-            font-weight: bold; cursor: pointer; font-size: 18px; margin-top: 15px;
+            color: white; padding: 18px; border-radius: 15px; border: none; width: 100%; 
+            font-weight: bold; cursor: pointer; font-size: 18px; margin-top: 20px;
+            box-shadow: 0 10px 20px rgba(197, 160, 89, 0.3);
         }
 
-        /* زر دخول الأدمن السري */
-        .admin-lock {
-            position: absolute; bottom: 10px; right: 10px; font-size: 14px;
-            color: #ddd; cursor: pointer; opacity: 0.5; transition: 0.3s;
+        .admin-trigger {
+            position: absolute; bottom: 15px; left: 15px; font-size: 12px;
+            color: #ddd; cursor: pointer; opacity: 0.6; transition: 0.3s;
         }
-        .admin-lock:hover { opacity: 1; color: var(--gold); }
+        .admin-trigger:hover { opacity: 1; color: var(--gold); }
 
-        /* نافذة تعديل الأدمن */
-        .admin-panel {
+        /* لوحة تحكم الأدمن الجديدة */
+        .admin-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.8); display: none; align-items: center; justify-content: center; z-index: 1000;
+            background: rgba(0,0,0,0.85); display: none; align-items: center; justify-content: center; z-index: 2000;
+            backdrop-filter: blur(5px);
         }
-        .panel-content { background: white; padding: 25px; border-radius: 20px; width: 90%; max-width: 400px; text-align: right; }
+        .admin-modal { 
+            background: white; border-radius: 25px; width: 95%; max-width: 450px; 
+            max-height: 85vh; overflow-y: auto; padding: 30px; position: relative;
+        }
+        .admin-modal h3 { color: var(--black); border-bottom: 2px solid var(--gold); padding-bottom: 10px; margin-top: 0; }
+        
+        .edit-item { background: #f9f9f9; padding: 15px; border-radius: 15px; margin-bottom: 15px; border: 1px solid #eee; text-align: right; }
+        .edit-item label { color: #555; font-size: 12px; }
+        .edit-item input { background: white; margin: 5px 0; padding: 10px; }
+
+        .admin-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 20px; }
+        .btn-save { background: var(--gold); color: white; padding: 12px; border-radius: 10px; border: none; cursor: pointer; font-weight: bold; }
+        .btn-cancel { background: #eee; color: #666; padding: 12px; border-radius: 10px; border: none; cursor: pointer; font-weight: bold; }
     </style>
 </head>
 <body>
-
-<audio id="bgMusic" loop>
-    <source src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" type="audio/mpeg">
-</audio>
 
 <div class="order-card">
     <div class="logo-container">
@@ -81,95 +99,115 @@
     <h2>رَوْنَق للمناسبات ⚜️</h2>
     <p class="subtitle">تميز بدعوتك.. واجعل حفلكم ذكرى لا تُنسى</p>
 
-    <input id="cust-name" placeholder="الاسم الكريم">
-    <input id="cust-phone" placeholder="رقم الجوال (966)">
+    <div class="input-group">
+        <label>الاسم الكريم</label>
+        <input id="cust-name" placeholder="أدخل اسمك هنا">
+    </div>
     
-    <div style="text-align: right; margin: 15px 5px 5px; font-size: 14px; color: var(--gold); font-weight: bold;">اختر نوع الخدمة:</div>
-    <div class="package-options" id="pkg-container">
-        </div>
+    <div class="input-group">
+        <label>رقم الجوال</label>
+        <input id="cust-phone" placeholder="966xxxxxxxxx">
+    </div>
+    
+    <div style="text-align: right; margin: 20px 5px 10px; font-size: 15px; color: var(--gold); font-weight: bold;">اختر الخدمة المطلوبة:</div>
+    <div class="package-options" id="pkg-list"></div>
 
-    <button onclick="sendOrder()">تأكيد الطلب عبر واتساب 🚀</button>
+    <button class="btn-order" onclick="sendOrder()">إرسال الطلب عبر واتساب 🚀</button>
     
-    <div class="admin-lock" onclick="openAdmin()">🔒 دخول الإدارة</div>
+    <div class="admin-trigger" onclick="openAdminPortal()">🔒 الإدارة</div>
 </div>
 
-<div id="adminPanel" class="admin-panel">
-    <div class="panel-content">
-        <h3 style="color:var(--gold)">تعديل الباقات</h3>
-        <div id="edit-fields"></div>
-        <button onclick="saveChanges()" class="btn-gold">حفظ التغييرات</button>
-        <button onclick="closeAdmin()" style="background:none; color:#888; width:100%; margin-top:10px;">إلغاء</button>
+<div id="adminOverlay" class="admin-overlay">
+    <div class="admin-modal">
+        <h3>تعديل خدمات المتجر ⚙️</h3>
+        <p style="font-size: 13px; color: #888; margin-bottom: 20px;">يمكنك تعديل أسماء الخدمات وأسعارها كما تظهر للعملاء.</p>
+        
+        <div id="admin-edit-area"></div>
+
+        <div class="admin-btns">
+            <button class="btn-save" onclick="applyAdminChanges()">حفظ التعديلات</button>
+            <button class="btn-cancel" onclick="closeAdminPortal()">إغلاق</button>
+        </div>
     </div>
 </div>
 
 <script>
-    // بيانات الباقات الافتراضية
-    let packages = [
-        { id: 0, name: 'دعوة ثابتة', price: '50' },
-        { id: 1, name: 'دعوة فيديو', price: '100' },
-        { id: 2, name: 'نظام الباركود', price: '150' },
-        { id: 3, name: 'الباقة الملكية', price: '250' }
+    // بيانات الخدمات
+    let storeServices = [
+        { id: 0, title: 'تصميم دعوة ثابتة', cost: '50' },
+        { id: 1, title: 'تصميم دعوة فيديو', cost: '100' },
+        { id: 2, title: 'نظام باركود الدخول', cost: '150' },
+        { id: 3, title: 'الباقة الملكية الشاملة', cost: '250' }
     ];
 
-    let selectedPackage = "";
-    const bgMusic = document.getElementById('bgMusic');
+    let currentSelection = "";
 
-    function renderPackages() {
-        const container = document.getElementById('pkg-container');
-        container.innerHTML = "";
-        packages.forEach(pkg => {
-            container.innerHTML += `
-                <div class="pkg-box" onclick="selectPkg(this, '${pkg.name}', '${pkg.price}')">
-                    <span>${pkg.name}</span>
-                    <span style="font-size:16px; color:var(--black); margin-top:5px;">${pkg.price} ر.س</span>
+    // عرض الخدمات في الواجهة
+    function drawServices() {
+        const list = document.getElementById('pkg-list');
+        list.innerHTML = "";
+        storeServices.forEach(srv => {
+            list.innerHTML += `
+                <div class="pkg-box" onclick="handleSelect(this, '${srv.title}', '${srv.cost}')">
+                    <span class="pkg-name">${srv.title}</span>
+                    <span class="pkg-price">${srv.cost} ر.س</span>
                 </div>`;
         });
     }
 
-    function selectPkg(el, name, price) {
+    function handleSelect(element, name, price) {
         document.querySelectorAll('.pkg-box').forEach(b => b.classList.remove('active'));
-        el.classList.add('active');
-        selectedPackage = `${name} بقيمة ${price} ريال`;
+        element.classList.add('active');
+        currentSelection = `${name} (${price} ريال)`;
     }
 
-    // وظائف الأدمن
-    function openAdmin() {
-        const pass = prompt("أدخل كلمة مرور الإدارة:");
-        if (pass === "123456") { // كلمة المرور الخاصة بك
-            document.getElementById('adminPanel').style.display = 'flex';
-            const fields = document.getElementById('edit-fields');
-            fields.innerHTML = "";
-            packages.forEach((pkg, index) => {
-                fields.innerHTML += `
-                    <div style="margin-bottom:10px; border-bottom:1px solid #eee; padding-bottom:5px;">
-                        <input id="edit-n-${index}" value="${pkg.name}" placeholder="الاسم">
-                        <input id="edit-p-${index}" value="${pkg.price}" placeholder="السعر">
+    // وظائف الأدمن المطورة
+    function openAdminPortal() {
+        const pin = prompt("كلمة مرور الإدارة:");
+        if (pin === "123456") {
+            document.getElementById('adminOverlay').style.display = 'flex';
+            const area = document.getElementById('admin-edit-area');
+            area.innerHTML = "";
+            storeServices.forEach((srv, idx) => {
+                area.innerHTML += `
+                    <div class="edit-item">
+                        <label>الخدمة ${idx + 1}</label>
+                        <input id="inp-n-${idx}" value="${srv.title}" placeholder="اسم الخدمة">
+                        <input id="inp-p-${idx}" value="${srv.cost}" placeholder="السعر">
                     </div>`;
             });
-        } else { alert("كلمة المرور خاطئة"); }
+        } else if(pin !== null) { alert("عذراً، كلمة المرور غير صحيحة"); }
     }
 
-    function saveChanges() {
-        packages.forEach((pkg, index) => {
-            pkg.name = document.getElementById(`edit-n-${index}`).value;
-            pkg.price = document.getElementById(`edit-p-${index}`).value;
+    function applyAdminChanges() {
+        storeServices.forEach((srv, idx) => {
+            srv.title = document.getElementById(`inp-n-${idx}`).value;
+            srv.cost = document.getElementById(`inp-p-${idx}`).value;
         });
-        renderPackages();
-        closeAdmin();
-        alert("تم تحديث الباقات بنجاح");
+        drawServices();
+        closeAdminPortal();
+        alert("تم التحديث بنجاح ✨");
     }
 
-    function closeAdmin() { document.getElementById('adminPanel').style.display = 'none'; }
+    function closeAdminPortal() { document.getElementById('adminOverlay').style.display = 'none'; }
 
+    // إرسال الطلب
     function sendOrder() {
         const name = document.getElementById('cust-name').value;
         const phone = document.getElementById('cust-phone').value;
-        if(!name || !selectedPackage) return alert("يرجى إكمال البيانات واختيار باقة");
-        window.location.href = `https://wa.me/966532956835?text=⚜️ *طلب جديد من رونق* %0Aالاسم: ${name}%0Aالجوال: ${phone}%0Aالخدمة: ${selectedPackage}`;
+        const myWhatsApp = "966547805012";
+
+        if(!name || !currentSelection) {
+            alert("يرجى كتابة الاسم واختيار خدمة");
+            return;
+        }
+
+        const msg = `⚜️ *طلب خدمة من رَوْنَق* ⚜️%0A%0A*الاسم:* ${name}%0A*الجوال:* ${phone}%0A*الخدمة:* ${currentSelection}`;
+        window.location.href = `https://wa.me/${myWhatsApp}?text=${msg}`;
     }
 
-    document.body.addEventListener('click', () => { bgMusic.play(); }, { once: true });
-    renderPackages();
+    // التشغيل الأولي
+    drawServices();
 </script>
 </body>
 </html>
