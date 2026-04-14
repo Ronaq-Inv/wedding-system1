@@ -1,142 +1,13 @@
-<!DOCTYPE html>
-<html lang="ar" dir="rtl">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>رونق للمناسبات | طلب خدمة</title>
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet">
-    <style>
-        :root { --pink: #fdf2f2; --gold: #c5a059; --black: #1a1a1a; --dark-gold: #b38b7d; }
-        
-        body { 
-            font-family: 'Cairo', sans-serif; 
-            background-color: var(--pink); 
-            background-image: url('https://www.transparenttextures.com/patterns/islamic-art.png');
-            margin: 0; padding: 0; direction: rtl; 
-            display: flex; align-items: center; justify-content: center; min-height: 100vh;
-        }
-
-        .order-card { 
-            background: white; border-radius: 30px; padding: 50px 30px; width: 90%; max-width: 550px; 
-            box-shadow: 0 20px 40px rgba(0,0,0,0.1); border-top: 8px solid var(--gold); text-align: center;
-            position: relative; margin-top: 60px;
-        }
-
-        /* تعديل اللوجو ليكون كبيراً وفي المنتصف */
-        .logo-container {
-            width: 180px; height: 180px; margin: -140px auto 30px;
-            background: white; border-radius: 50%; padding: 10px;
-            border: 4px solid var(--gold); box-shadow: 0 8px 20px rgba(0,0,0,0.15);
-            overflow: hidden; display: flex; align-items: center; justify-content: center;
-        }
-        .logo-container img { width: 100%; height: auto; object-fit: contain; }
-
-        h2 { color: var(--gold); margin-bottom: 5px; font-weight: 700; font-size: 28px; }
-        p.subtitle { color: #777; font-size: 15px; margin-bottom: 30px; }
-
-        .input-group { margin-bottom: 15px; text-align: right; }
-        label { display: block; margin-bottom: 5px; color: var(--gold); font-weight: bold; font-size: 14px; margin-right: 5px; }
-        input { 
-            width: 100%; padding: 15px; border-radius: 12px; 
-            border: 1px solid #eee; font-family: 'Cairo'; box-sizing: border-box; text-align: center;
-            background: #fcfcfc; transition: 0.3s;
-        }
-        input:focus { border-color: var(--gold); outline: none; background: white; }
-
-        .package-options { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin: 25px 0; }
-        .pkg-box { 
-            border: 2px solid #f0f0f0; padding: 20px 15px; border-radius: 18px; cursor: pointer;
-            transition: 0.3s ease; display: flex; flex-direction: column; justify-content: center;
-        }
-        .pkg-box:hover { border-color: var(--gold); transform: translateY(-3px); }
-        .pkg-box.active { border-color: var(--gold); background: #fff9f0; color: var(--gold); box-shadow: 0 8px 15px rgba(197, 160, 89, 0.15); }
-
-        .pkg-name { font-weight: bold; font-size: 14px; }
-        .pkg-price { font-size: 18px; font-weight: 700; color: var(--black); margin-top: 8px; }
-        .active .pkg-price { color: var(--gold); }
-
-        .btn-order { 
-            background: linear-gradient(135deg, var(--gold), var(--dark-gold)); 
-            color: white; padding: 18px; border-radius: 15px; border: none; width: 100%; 
-            font-weight: bold; cursor: pointer; font-size: 18px; margin-top: 20px;
-            box-shadow: 0 10px 20px rgba(197, 160, 89, 0.3);
-        }
-
-        .admin-trigger {
-            position: absolute; bottom: 15px; left: 15px; font-size: 12px;
-            color: #ddd; cursor: pointer; opacity: 0.6; transition: 0.3s;
-        }
-        .admin-trigger:hover { opacity: 1; color: var(--gold); }
-
-        .admin-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.85); display: none; align-items: center; justify-content: center; z-index: 2000;
-            backdrop-filter: blur(5px);
-        }
-        .admin-modal { 
-            background: white; border-radius: 25px; width: 95%; max-width: 450px; 
-            max-height: 85vh; overflow-y: auto; padding: 30px; position: relative;
-        }
-        .admin-modal h3 { color: var(--black); border-bottom: 2px solid var(--gold); padding-bottom: 10px; margin-top: 0; }
-        
-        .edit-item { background: #f9f9f9; padding: 15px; border-radius: 15px; margin-bottom: 15px; border: 1px solid #eee; text-align: right; }
-        .edit-item label { color: #555; font-size: 12px; }
-        .edit-item input { background: white; margin: 5px 0; padding: 10px; }
-
-        .admin-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 20px; }
-        .btn-save { background: var(--gold); color: white; padding: 12px; border-radius: 10px; border: none; cursor: pointer; font-weight: bold; }
-        .btn-cancel { background: #eee; color: #666; padding: 12px; border-radius: 10px; border: none; cursor: pointer; font-weight: bold; }
-    </style>
-</head>
-<body>
-
-<div class="order-card">
-    <div class="logo-container">
-        <img src="logo.jpg" alt="رونق">
-    </div>
-
-    <h2>رَوْنَق للمناسبات ⚜️</h2>
-    <p class="subtitle">تميز بدعوتك.. واجعل حفلكم ذكرى لا تُنسى</p>
-
-    <div class="input-group">
-        <label>الاسم الكريم</label>
-        <input id="cust-name" placeholder="أدخل اسمك هنا">
-    </div>
-    
-    <div class="input-group">
-        <label>رقم الجوال</label>
-        <input id="cust-phone" placeholder="966xxxxxxxxx">
-    </div>
-    
-    <div style="text-align: right; margin: 20px 5px 10px; font-size: 15px; color: var(--gold); font-weight: bold;">اختر الخدمة المطلوبة:</div>
-    <div class="package-options" id="pkg-list"></div>
-
-    <button class="btn-order" onclick="sendOrder()">إرسال الطلب عبر واتساب 🚀</button>
-    
-    <div class="admin-trigger" onclick="openAdminPortal()">🔒 الإدارة</div>
-</div>
-
-<div id="adminOverlay" class="admin-overlay">
-    <div class="admin-modal">
-        <h3>تعديل خدمات المتجر ⚙️</h3>
-        <p style="font-size: 13px; color: #888; margin-bottom: 20px;">يمكنك تعديل أسماء الخدمات وأسعارها كما تظهر للعملاء.</p>
-        
-        <div id="admin-edit-area"></div>
-
-        <div class="admin-btns">
-            <button class="btn-save" onclick="applyAdminChanges()">حفظ التعديلات</button>
-            <button class="btn-cancel" onclick="closeAdminPortal()">إغلاق</button>
-        </div>
-    </div>
-</div>
-
 <script>
-    let storeServices = [
+    // 1. محاولة تحميل البيانات المحفوظة سابقاً، إذا لم توجد نستخدم القيم الأصلية
+    let defaultServices = [
         { id: 0, title: 'تصميم دعوة ثابتة', cost: '50' },
         { id: 1, title: 'تصميم دعوة فيديو', cost: '100' },
         { id: 2, title: 'نظام باركود الدخول', cost: '150' },
         { id: 3, title: 'الباقة الملكية الشاملة', cost: '250' }
     ];
+
+    let storeServices = JSON.parse(localStorage.getItem('rawnaq_services')) || defaultServices;
 
     let currentSelection = "";
 
@@ -180,9 +51,13 @@
             srv.title = document.getElementById(`inp-n-${idx}`).value;
             srv.cost = document.getElementById(`inp-p-${idx}`).value;
         });
+
+        // 2. حفظ التعديلات الجديدة في ذاكرة المتصفح قبل إعادة الرسم
+        localStorage.setItem('rawnaq_services', JSON.stringify(storeServices));
+
         drawServices();
         closeAdminPortal();
-        alert("تم التحديث بنجاح ✨");
+        alert("تم حفظ التعديلات بنجاح ولن تضيع عند التحديث ✨");
     }
 
     function closeAdminPortal() { document.getElementById('adminOverlay').style.display = 'none'; }
@@ -203,5 +78,3 @@
 
     drawServices();
 </script>
-</body>
-</html>
