@@ -34,9 +34,9 @@
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: flex; align-items: center; justify-content: center; z-index: 9999; }
         .entry-code-box { background: #f9f9f9; border: 2px dashed var(--gold); padding: 15px; margin-top: 15px; border-radius: 10px; }
         
-        /* تعديل حاوية الـ QR Code لضمان التوسط */
-        #qrcode-img { margin: 15px auto; display: flex; justify-content: center; }
-        #qrcode-img img { border: 4px solid white; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+        /* تنسيق منطقة الـ QR لضمان التوسط والوضوح */
+        #qrcode-container { display: flex; justify-content: center; margin: 15px auto; }
+        #qrcode-container img { border: 5px solid white; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
     </style>
 </head>
 <body>
@@ -55,8 +55,8 @@
             <div id="after-confirm-area" class="hidden">
                 <div class="entry-code-box">
                     <p style="margin:0; color:var(--dark-gold); font-weight:bold;">بطاقة دخولك الشخصية 🎫</p>
-                    <div id="qrcode-img"></div>
-                    <p id="entry-code-text" style="font-weight:bold; letter-spacing: 2px; margin-top:5px;"></p>
+                    <div id="qrcode-container"></div>
+                    <p id="entry-code-text" style="font-weight:bold; letter-spacing: 2px; margin-top:5px; color:var(--black)"></p>
                     <small>يرجى إبراز هذا الكود للمنظم عند الباب</small>
                 </div>
                 <button class="btn-gold" style="margin-top:15px; background:#2c3e50" id="btn-map">📍 موقع المناسبة</button>
@@ -240,16 +240,16 @@
         }
     }
 
-    // وظيفة الـ QR Code المحدثة
+    // وظيفة عرض الـ QR Code المحدثة
     function showEntryPass(id, mapUrl) {
         document.getElementById('guest-actions').classList.add('hidden');
         document.getElementById('after-confirm-area').classList.remove('hidden');
         
-        // تنظيف الحاوية وتوليد QR جديد
-        const qrContainer = document.getElementById("qrcode-img");
+        // تنظيف الحاوية وتوليد QR جديد باستخدام معرف الضيف
+        const qrContainer = document.getElementById("qrcode-container");
         qrContainer.innerHTML = "";
         new QRCode(qrContainer, {
-            text: id,
+            text: id, // المعرف الفريد للضيف
             width: 180,
             height: 180,
             colorDark : "#1a1a1a",
