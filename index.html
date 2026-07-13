@@ -206,18 +206,10 @@
     async function loadClientsList() {
         const snap = await getDocs(collection(db, "v30_data"));
         let h = `<table><tr><th>العميل</th><th>المناسبة</th><th>إدارة</th></tr>`;
-        const sel = document.getElementById('client-select');
-        
-        // تفريغ وتأسيس خيارات قائمة الضيوف
-        sel.innerHTML = "<option value=''>اختر الحفل لعرض الضيوف...</option>";
-        
         snap.forEach(d => {
             const c = d.data();
             h += `<tr><td>${c.name}</td><td>${c.event}</td>
             <td><button class="btn-edit" onclick="window.openEditClient('${d.id}','${c.event}','${c.host}','${c.img}','${c.map}','${c.password}')">تعديل</button></td></tr>`;
-            
-            // تعبئة القائمة المنسدلة للضيوف من نفس البيانات المجلوبة فوراً
-            sel.innerHTML += `<option value="${c.name}">${c.name}</option>`;
         });
         document.getElementById('clients-list-table').innerHTML = h + "</table>";
     }
@@ -247,11 +239,7 @@
     };
 
     async function loadData(cl) {
-        if (!cl) {
-            document.getElementById('data-table').innerHTML = "";
-            resetStats();
-            return;
-        }
+        if (!cl) return;
         const cSnap = await getDocs(query(collection(db, "v30_data"), where("name", "==", cl)));
         let evName = ""; let host = ""; 
         cSnap.forEach(cd => { evName = cd.data().event; host = cd.data().host; });
@@ -281,17 +269,10 @@
         document.getElementById('stat-no').innerText = guestsArr.filter(g => g.status === 'اعتذار').length;
     }
 
-    function resetStats() {
-        document.getElementById('stat-total').innerText = "0";
-        document.getElementById('stat-yes').innerText = "0";
-        document.getElementById('stat-entered').innerText = "0";
-        document.getElementById('stat-no').innerText = "0";
-    }
-
     // --- المعالجات الأساسية ---
     document.getElementById('login-btn').onclick = async () => {
         const u = document.getElementById('user-input').value, p = document.getElementById('pass-input').value;
-        if(u === "admin" && p === "Aa0532956835") { sessionStorage.setItem('role','admin'); sessionStorage.setItem('user',u); location.reload(); }
+        if(u === "admin" && p === "123456") { sessionStorage.setItem('role','admin'); sessionStorage.setItem('user',u); location.reload(); }
         else {
             const snap = await getDocs(query(collection(db, "v30_data"), where("name","==",u), where("password","==",p)));
             if(!snap.empty) { sessionStorage.setItem('role','client'); sessionStorage.setItem('user',u); location.reload(); } else alert("خطأ!");
@@ -299,38 +280,18 @@
     };
 
     document.getElementById('save-client').onclick = async () => {
-        const nameVal = document.getElementById('c-name').value;
-        if(!nameVal) { alert("الرجاء إدخال اسم العميل"); return; }
-        
         await addDoc(collection(db, "v30_data"), { 
-            name: nameVal, password: document.getElementById('c-pass').value, 
+            name: document.getElementById('c-name').value, password: document.getElementById('c-pass').value, 
             event: document.getElementById('c-event').value, host: document.getElementById('c-host').value, 
             img: document.getElementById('c-img').value, map: document.getElementById('c-map').value 
         });
-        
-        // تنظيف الحقول بعد الحفظ
-        document.getElementById('c-name').value = '';
-        document.getElementById('c-pass').value = '';
-        document.getElementById('c-event').value = '';
-        document.getElementById('c-host').value = '';
-        document.getElementById('c-img').value = '';
-        document.getElementById('c-map').value = '';
-        
-        // إعادة تحديث القوائم والجداول بدون شاشات بيضاء أو أخطاء تعليق
-        await loadClientsList();
-        alert("تم إنشاء العميل بنجاح وتحديث القائمة!");
+        location.reload();
     };
 
     document.getElementById('save-guest').onclick = async () => {
         const sel = document.getElementById('client-select').value;
-        if(!sel) { alert("الرجاء اختيار العميل أولاً"); return; }
         let p = document.getElementById('g-phone').value; if(p.startsWith('0')) p = '966' + p.substring(1);
         await addDoc(collection(db, "v30_guests"), { belongsTo: sel, name: document.getElementById('g-name').value, phone: p, status: "انتظار" });
-        
-        // تنظيف المدخلات
-        document.getElementById('g-name').value = '';
-        document.getElementById('g-phone').value = '';
-        
         loadData(sel);
     };
 
@@ -378,8 +339,12 @@
             document.getElementById('welcome-msg').innerText = "لوحة: " + user;
             if(role === 'admin') {
                 document.getElementById('admin-area').classList.remove('hidden');
-                await loadClientsList();
-                document.getElementById('client-select').onchange = (e) => loadData(e.target.value);
+                loadClientsList();
+                const s = await getDocs(collection(db, "v30_data"));
+                const sel = document.getElementById('client-select');
+                sel.innerHTML = "<option value=''>اختر الحفل لعرض الضيوف...</option>";
+                s.forEach(d => sel.innerHTML += `<option value="${d.data().name}">${d.data().name}</option>`);
+                sel.onchange = () => loadData(sel.value);
             } else loadData(user);
         } else document.getElementById('login-section').classList.remove('hidden');
     }
