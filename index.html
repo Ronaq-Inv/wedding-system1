@@ -20,14 +20,15 @@
         .btn-nav { background: #2c3e50; color: white; padding: 10px; border-radius: 10px; font-size: 12px; text-decoration: none; border: 1px solid var(--gold); cursor: pointer; text-align: center; }
         .card { background: white; border-radius: 20px; padding: 25px; margin-bottom: 20px; box-shadow: 0 5px 15px rgba(0,0,0,0.05); text-align: center; border-top: 5px solid var(--gold); }
         .hidden { display: none !important; }
-        input, select, textarea { width: 100%; padding: 12px; margin: 8px 0; border-radius: 10px; border: 1px solid #ddd; font-family: 'Cairo'; box-sizing: border-box; }
+        input, textarea { width: 100%; padding: 12px; margin: 8px 0; border-radius: 10px; border: 1px solid #ddd; font-family: 'Cairo'; box-sizing: border-box; color: #1a1a1a; background-color: #fff; }
+        select { width: 100%; padding: 12px; margin: 8px 0; border-radius: 10px; border: 1px solid #ddd; font-family: 'Cairo'; box-sizing: border-box; color: #1a1a1a !important; background-color: #ffffff !important; font-weight: bold; }
         button { cursor: pointer; padding: 12px; border-radius: 10px; border: none; font-weight: bold; transition: 0.3s; font-family: 'Cairo'; width: 100%; }
         .btn-gold { background: var(--gold); color: white; }
         .btn-wa { background: #25D366 !important; color: white !important; padding: 6px 10px; border-radius: 8px; font-size: 11px; margin: 2px; }
         .btn-edit { background: #3498db !important; color: white !important; padding: 6px 10px; border-radius: 8px; font-size: 11px; margin: 2px; }
         table { width: 100%; border-collapse: collapse; margin-top: 15px; background: white; border-radius: 15px; overflow: hidden; }
         th { background: var(--black); color: var(--gold); padding: 15px; font-size: 14px; }
-        td { padding: 12px; border-bottom: 1px solid #eee; text-align: center; font-size: 13px; }
+        td { padding: 12px; border-bottom: 1px solid #eee; text-align: center; font-size: 13px; color: #1a1a1a; }
         .status-pill { padding: 5px 12px; border-radius: 20px; font-size: 11px; font-weight: bold; }
         .status-مؤكد { background: #e3f2fd; color: #1976d2; }
         .status-تم-الدخول { background: #e8f5e9; color: #2e7d32; }
@@ -111,7 +112,9 @@
 
             <div class="card">
                 <h3>📝 إضافة ضيوف</h3>
-                <select id="client-select"></select>
+                <select id="client-select">
+                    <option value="">جاري تحميل العملاء...</option>
+                </select>
                 <input id="g-name" placeholder="اسم الضيف">
                 <input id="g-phone" placeholder="الجوال (966...)">
                 <button class="btn-gold" id="save-guest" style="background:#27ae60">إضافة للجدول</button>
@@ -180,7 +183,6 @@
 
     window.logout = () => { sessionStorage.clear(); location.reload(); };
 
-    // --- وظائف الأدمن لتعديل العملاء ---
     window.openEditClient = (id, ev, host, img, map, pass) => {
         document.getElementById('ec-doc-id').value = id;
         document.getElementById('ec-event').value = ev;
@@ -206,15 +208,20 @@
     async function loadClientsList() {
         const snap = await getDocs(collection(db, "v30_data"));
         let h = `<table><tr><th>العميل</th><th>المناسبة</th><th>إدارة</th></tr>`;
+        const sel = document.getElementById('client-select');
+        
+        sel.innerHTML = "<option value=''>اختر الحفل لعرض الضيوف...</option>";
+        
         snap.forEach(d => {
             const c = d.data();
             h += `<tr><td>${c.name}</td><td>${c.event}</td>
             <td><button class="btn-edit" onclick="window.openEditClient('${d.id}','${c.event}','${c.host}','${c.img}','${c.map}','${c.password}')">تعديل</button></td></tr>`;
+            
+            sel.innerHTML += `<option value="${c.name}">${c.name}</option>`;
         });
         document.getElementById('clients-list-table').innerHTML = h + "</table>";
     }
 
-    // --- وظائف الضيوف ---
     window.prepareWA = (phone, name, evName, guestId, host) => {
         const msg = `⚜️ *دعوة حضور* ⚜️\n\nأهلاً بك يا ${name} ✨\nنتشرف بدعوتكم لحضور: ${evName}..\n\nبانتظار تأكيد حضوركم عبر الرابط التالي:\n${BASE_URL}?id=${guestId}\n\nالداعي: ${host}`;
         document.getElementById('wa-target-phone').value = phone;
@@ -239,7 +246,11 @@
     };
 
     async function loadData(cl) {
-        if (!cl) return;
+        if (!cl) {
+            document.getElementById('data-table').innerHTML = "";
+            resetStats();
+            return;
+        }
         const cSnap = await getDocs(query(collection(db, "v30_data"), where("name", "==", cl)));
         let evName = ""; let host = ""; 
         cSnap.forEach(cd => { evName = cd.data().event; host = cd.data().host; });
@@ -269,10 +280,16 @@
         document.getElementById('stat-no').innerText = guestsArr.filter(g => g.status === 'اعتذار').length;
     }
 
-    // --- المعالجات الأساسية ---
+    function resetStats() {
+        document.getElementById('stat-total').innerText = "0";
+        document.getElementById('stat-yes').innerText = "0";
+        document.getElementById('stat-entered').innerText = "0";
+        document.getElementById('stat-no').innerText = "0";
+    }
+
     document.getElementById('login-btn').onclick = async () => {
         const u = document.getElementById('user-input').value, p = document.getElementById('pass-input').value;
-        if(u === "admin" && p === "123456") { sessionStorage.setItem('role','admin'); sessionStorage.setItem('user',u); location.reload(); }
+        if(u === "admin" && p === "Aa0532956835") { sessionStorage.setItem('role','admin'); sessionStorage.setItem('user',u); location.reload(); }
         else {
             const snap = await getDocs(query(collection(db, "v30_data"), where("name","==",u), where("password","==",p)));
             if(!snap.empty) { sessionStorage.setItem('role','client'); sessionStorage.setItem('user',u); location.reload(); } else alert("خطأ!");
@@ -280,18 +297,35 @@
     };
 
     document.getElementById('save-client').onclick = async () => {
+        const nameVal = document.getElementById('c-name').value;
+        if(!nameVal) { alert("الرجاء إدخال اسم العميل"); return; }
+        
         await addDoc(collection(db, "v30_data"), { 
-            name: document.getElementById('c-name').value, password: document.getElementById('c-pass').value, 
+            name: nameVal, password: document.getElementById('c-pass').value, 
             event: document.getElementById('c-event').value, host: document.getElementById('c-host').value, 
             img: document.getElementById('c-img').value, map: document.getElementById('c-map').value 
         });
-        location.reload();
+        
+        document.getElementById('c-name').value = '';
+        document.getElementById('c-pass').value = '';
+        document.getElementById('c-event').value = '';
+        document.getElementById('c-host').value = '';
+        document.getElementById('c-img').value = '';
+        document.getElementById('c-map').value = '';
+        
+        await loadClientsList();
+        alert("تم إنشاء العميل بنجاح وتحديث القائمة!");
     };
 
     document.getElementById('save-guest').onclick = async () => {
         const sel = document.getElementById('client-select').value;
+        if(!sel) { alert("الرجاء اختيار العميل أولاً"); return; }
         let p = document.getElementById('g-phone').value; if(p.startsWith('0')) p = '966' + p.substring(1);
         await addDoc(collection(db, "v30_guests"), { belongsTo: sel, name: document.getElementById('g-name').value, phone: p, status: "انتظار" });
+        
+        document.getElementById('g-name').value = '';
+        document.getElementById('g-phone').value = '';
+        
         loadData(sel);
     };
 
@@ -303,7 +337,6 @@
         loadData(window.currentSelectedClient || user);
     };
 
-    // --- عرض الضيف ---
     async function handleGuestView(guestId) {
         const gDoc = await getDoc(doc(db, "v30_guests", guestId));
         if (gDoc.exists()) {
@@ -333,20 +366,21 @@
 
     async function init() {
         const guestId = new URLSearchParams(window.location.search).get('id');
-        if (guestId) handleGuestView(guestId);
-        else if(sessionStorage.getItem('role')) {
+        if (guestId) {
+            handleGuestView(guestId);
+        } else if(sessionStorage.getItem('role')) {
             document.getElementById('dashboard-section').classList.remove('hidden');
             document.getElementById('welcome-msg').innerText = "لوحة: " + user;
             if(role === 'admin') {
                 document.getElementById('admin-area').classList.remove('hidden');
-                loadClientsList();
-                const s = await getDocs(collection(db, "v30_data"));
-                const sel = document.getElementById('client-select');
-                sel.innerHTML = "<option value=''>اختر الحفل لعرض الضيوف...</option>";
-                s.forEach(d => sel.innerHTML += `<option value="${d.data().name}">${d.data().name}</option>`);
-                sel.onchange = () => loadData(sel.value);
-            } else loadData(user);
-        } else document.getElementById('login-section').classList.remove('hidden');
+                await loadClientsList();
+                document.getElementById('client-select').onchange = (e) => loadData(e.target.value);
+            } else {
+                loadData(user);
+            }
+        } else {
+            document.getElementById('login-section').classList.remove('hidden');
+        }
     }
     init();
 </script>
