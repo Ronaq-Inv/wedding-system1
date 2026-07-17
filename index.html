@@ -262,7 +262,7 @@
     const user = sessionStorage.getItem('user');
     let editingGuestId = "";
 
-    window.logout = () => { sessionStorage.clear(); location.reload(); };
+    window.logout = () => {     sessionStorage.clear();     localStorage.removeItem("last_guest_id");     window.location.href = window.location.origin + window.location.pathname; };
 
     // --- وظائف الأدمن لتعديل العملاء ---
     window.openEditClient = (id, ev, host, img, map, pass) => {
@@ -420,7 +420,6 @@
     // --- عرض الضيف ---
     async function handleGuestView(guestId) {
         // حفظ الجلسة في LocalStorage للضيف
-        localStorage.setItem('last_guest_id', guestId);
         
         const gDoc = await getDoc(doc(db, "v30_guests", guestId));
         if (gDoc.exists()) {
@@ -601,9 +600,7 @@
         let guestId = new URLSearchParams(window.location.search).get('id');
         
         // استرجاع جلسة الضيف إذا لم يكن هناك ID في الرابط ولكنه مسجل في المتصفح
-        if(!guestId && localStorage.getItem('last_guest_id') && !sessionStorage.getItem('role')) {
-            guestId = localStorage.getItem('last_guest_id');
-        }
+    
 
         if (guestId) handleGuestView(guestId);
         else if(sessionStorage.getItem('role')) {
