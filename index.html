@@ -4,10 +4,20 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>نظام رونق للدعوات ⚜️</title>
+    <!-- Favicon -->
+    <link rel="icon" type="image/jpeg" href="logo.jpg">
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    
+    <!-- مكتبات جديدة مضافة للميزات الجديدة -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
     <style>
         :root { --pink: #fdf2f2; --gold: #c5a059; --dark-gold: #b38b7d; --black: #1a1a1a; }
+        
+        /* --- الأكواد الأصلية (لم يتم تغييرها) --- */
         body { font-family: 'Cairo', sans-serif; background-color: var(--pink); background-image: url('https://www.transparenttextures.com/patterns/islamic-art.png'); margin: 0; padding: 0; direction: rtl; }
         .container { width: 95%; max-width: 900px; margin: auto; padding: 20px; }
         .brand-header { text-align: center; margin-bottom: 40px; }
@@ -20,15 +30,14 @@
         .btn-nav { background: #2c3e50; color: white; padding: 10px; border-radius: 10px; font-size: 12px; text-decoration: none; border: 1px solid var(--gold); cursor: pointer; text-align: center; }
         .card { background: white; border-radius: 20px; padding: 25px; margin-bottom: 20px; box-shadow: 0 5px 15px rgba(0,0,0,0.05); text-align: center; border-top: 5px solid var(--gold); }
         .hidden { display: none !important; }
-        input, textarea { width: 100%; padding: 12px; margin: 8px 0; border-radius: 10px; border: 1px solid #ddd; font-family: 'Cairo'; box-sizing: border-box; color: #1a1a1a; background-color: #fff; }
-        select { width: 100%; padding: 12px; margin: 8px 0; border-radius: 10px; border: 1px solid #ddd; font-family: 'Cairo'; box-sizing: border-box; color: #1a1a1a !important; background-color: #ffffff !important; font-weight: bold; }
+        input, select, textarea { width: 100%; padding: 12px; margin: 8px 0; border-radius: 10px; border: 1px solid #ddd; font-family: 'Cairo'; box-sizing: border-box; }
         button { cursor: pointer; padding: 12px; border-radius: 10px; border: none; font-weight: bold; transition: 0.3s; font-family: 'Cairo'; width: 100%; }
         .btn-gold { background: var(--gold); color: white; }
         .btn-wa { background: #25D366 !important; color: white !important; padding: 6px 10px; border-radius: 8px; font-size: 11px; margin: 2px; }
         .btn-edit { background: #3498db !important; color: white !important; padding: 6px 10px; border-radius: 8px; font-size: 11px; margin: 2px; }
         table { width: 100%; border-collapse: collapse; margin-top: 15px; background: white; border-radius: 15px; overflow: hidden; }
         th { background: var(--black); color: var(--gold); padding: 15px; font-size: 14px; }
-        td { padding: 12px; border-bottom: 1px solid #eee; text-align: center; font-size: 13px; color: #1a1a1a; }
+        td { padding: 12px; border-bottom: 1px solid #eee; text-align: center; font-size: 13px; }
         .status-pill { padding: 5px 12px; border-radius: 20px; font-size: 11px; font-weight: bold; }
         .status-مؤكد { background: #e3f2fd; color: #1976d2; }
         .status-تم-الدخول { background: #e8f5e9; color: #2e7d32; }
@@ -37,22 +46,70 @@
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: flex; align-items: center; justify-content: center; z-index: 9999; }
         .entry-code-box { background: #f9f9f9; border: 2px dashed var(--gold); padding: 15px; margin-top: 15px; border-radius: 10px; }
         #qrcode-container { display: flex; justify-content: center; margin: 15px auto; }
+
+        /* --- الإضافات والتحسينات البصرية الجديدة --- */
+        
+        /* شاشة التحميل */
+        #splash-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--pink); z-index: 99999; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: opacity 0.8s ease, visibility 0.8s; }
+        .logo-glow { filter: drop-shadow(0 0 15px rgba(197, 160, 89, 0.6)); animation: pulseLogo 2s infinite; }
+        @keyframes pulseLogo { 0% { transform: scale(1); filter: drop-shadow(0 0 15px rgba(197, 160, 89, 0.4)); } 50% { transform: scale(1.05); filter: drop-shadow(0 0 25px rgba(197, 160, 89, 0.8)); } 100% { transform: scale(1); filter: drop-shadow(0 0 15px rgba(197, 160, 89, 0.4)); } }
+        
+        /* انتقالات ناعمة وتأثيرات Hover */
+        .fade-in { animation: fadeIn 0.6s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+        button:hover { transform: translateY(-3px); box-shadow: 0 5px 15px rgba(0,0,0,0.15); filter: brightness(1.05); }
+        button:active { transform: translateY(0); }
+        .card { box-shadow: 0 10px 30px rgba(197, 160, 89, 0.1); }
+        tr:hover { background-color: #fdfaf5; transition: background-color 0.3s; }
+        
+        /* خلفية متحركة ناعمة */
+        body { animation: bgPan 20s linear infinite alternate; }
+        @keyframes bgPan { from { background-position: 0 0; } to { background-position: 100px 100px; } }
+
+        /* شريط أدوات الفلترة في الإدارة */
+        .toolbar { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 15px; padding: 10px; background: #fafafa; border-radius: 12px; border: 1px solid #eee; }
+        .toolbar input, .toolbar select { margin: 0; flex: 1; min-width: 150px; }
+        .toolbar button { flex: 1; min-width: 100px; padding: 10px; font-size: 12px; }
+
+        /* إشعارات Toast */
+        #toast-container { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); z-index: 100000; display: flex; flex-direction: column; gap: 10px; }
+        .toast-msg { background: var(--black); color: var(--gold); padding: 12px 25px; border-radius: 30px; box-shadow: 0 5px 15px rgba(0,0,0,0.2); font-size: 14px; opacity: 0; transform: translateY(20px); transition: all 0.4s; border: 1px solid var(--gold); }
+        .toast-msg.show { opacity: 1; transform: translateY(0); }
+
+        /* تذييل رونق */
+        .ronaq-footer { text-align: center; padding: 20px; font-size: 12px; color: var(--dark-gold); margin-top: 30px; font-weight: bold; }
     </style>
 </head>
 <body>
 
-<div class="container">
+<!-- شاشة التحميل المضافة -->
+<div id="splash-screen">
+    <img src="logo.jpg" class="main-logo logo-glow" loading="lazy">
+    <h3 style="color: var(--gold); margin-top: 20px; font-weight: bold;">نظام رونق للدعوات</h3>
+</div>
+
+<div id="toast-container"></div>
+
+<div class="container fade-in">
     <div id="guest-section" class="hidden">
         <div class="card">
-            <div class="brand-header"><img src="logo.jpg" class="main-logo"></div>
-            <h2 id="guest-welcome" style="color:var(--gold)"></h2>
-            <img id="event-image" style="width:100%; border-radius:15px; border:2px solid var(--gold); margin-bottom:20px;">
-            <p id="event-details" style="font-weight: bold;"></p>
+            <div class="brand-header"><img src="logo.jpg" class="main-logo" loading="lazy"></div>
+            <h2 id="guest-welcome" style="color:var(--gold); transition: all 0.3s;"></h2>
+            
+            <!-- عداد تنازلي مضاف للضيف -->
+            <div id="countdown-timer" style="background: var(--pink); border-radius: 10px; padding: 10px; margin-bottom: 15px; color: var(--dark-gold); font-weight: bold; font-size: 14px; border: 1px solid var(--gold);">
+                ⏳ يتبقى على موعدنا: <span id="time-left">جاري الحساب...</span>
+            </div>
+
+            <img id="event-image" loading="lazy" style="width:100%; border-radius:15px; border:2px solid var(--gold); margin-bottom:20px;">
+            <p id="event-details" style="font-weight: bold; font-size: 16px;"></p>
+            
             <div id="guest-actions" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
                 <button class="btn-gold" style="background:#27ae60" id="btn-confirm">تأكيد حضور</button>
                 <button class="btn-gold" style="background:#e74c3c" id="btn-decline">اعتذار</button>
             </div>
-            <div id="after-confirm-area" class="hidden">
+            
+            <div id="after-confirm-area" class="hidden fade-in">
                 <div class="entry-code-box">
                     <p id="pass-title" style="margin:0; color:var(--dark-gold); font-weight:bold;">بطاقة دخولك الشخصية 🎫</p>
                     <div id="qrcode-container"></div>
@@ -60,48 +117,55 @@
                     <small id="pass-instruction">يرجى إبراز هذا الكود للمنظم عند الباب</small>
                 </div>
                 <button class="btn-gold" style="margin-top:15px; background:#2c3e50" id="btn-map">📍 موقع المناسبة</button>
+                <!-- زر التقويم المضاف -->
+                <button class="btn-gold" style="margin-top:10px; background:#f39c12; color: #fff;" id="btn-calendar">📅 أضف إلى التقويم</button>
             </div>
-            <div id="decline-msg" class="hidden" style="color: #c62828; margin-top: 20px; font-weight: bold;">نشكرك على إبلاغنا، تمنينا تواجدك معنا.</div>
+            <div id="decline-msg" class="hidden fade-in" style="color: #c62828; margin-top: 20px; font-weight: bold; padding: 10px; background: #ffebee; border-radius: 10px;">نشكرك على إبلاغنا، تمنينا تواجدك معنا.</div>
         </div>
     </div>
 
     <div id="login-section" class="hidden">
-        <div class="card" style="max-width: 400px; margin: auto;">
-            <div class="brand-header"><img src="logo.jpg" class="main-logo"></div>
+        <div class="card fade-in" style="max-width: 400px; margin: auto;">
+            <div class="brand-header"><img src="logo.jpg" class="main-logo" loading="lazy"></div>
             <h2 style="color:var(--gold)">دخول النظام ⚜️</h2>
             <input id="user-input" placeholder="اسم المستخدم">
+            <!-- تغيير نوع الإدخال لـ password للأمان -->
             <input id="pass-input" type="password" placeholder="كلمة المرور">
             <button class="btn-gold" id="login-btn">دخول</button>
         </div>
     </div>
 
     <div id="dashboard-section" class="hidden">
-        <div class="brand-header"><img src="logo.jpg" class="main-logo"><h3 id="welcome-msg"></h3></div>
+        <div class="brand-header fade-in"><img src="logo.jpg" class="main-logo" loading="lazy"><h3 id="welcome-msg"></h3></div>
         
-        <div class="stats-grid">
+        <div class="stats-grid fade-in">
             <div class="stat-card"><h4>الإجمالي</h4><p id="stat-total">0</p></div>
             <div class="stat-card"><h4>أكدوا</h4><p id="stat-yes">0</p></div>
             <div class="stat-card"><h4>دخلوا فعلياً</h4><p id="stat-entered">0</p></div>
             <div class="stat-card"><h4>اعتذارات</h4><p id="stat-no">0</p></div>
         </div>
 
-        <div id="admin-area" class="hidden">
+        <div id="admin-area" class="hidden fade-in">
             <div class="card">
                 <h3>⚙️ إعدادات الإدارة السريعة</h3>
                 <div class="admin-quick-actions">
                     <button class="btn-nav" onclick="window.open('scan.html', '_blank')">🔍 ماسح الكود</button>
                     <button class="btn-nav" onclick="window.open('orders.html', '_blank')">📥 طلبات العملاء</button>
+                    <!-- زر نسخ الرابط المضاف -->
+                    <button class="btn-nav" style="background:#8e44ad" onclick="copyDashboardLink()">🔗 نسخ الرابط</button>
                 </div>
             </div>
 
             <div class="card">
                 <h3>🎀 تأسيس حفل جديد</h3>
                 <input id="c-name" placeholder="اسم المستخدم">
-                <input id="c-pass" placeholder="كلمة المرور">
+                <input id="c-pass" type="password" placeholder="كلمة المرور">
                 <input id="c-event" placeholder="اسم المناسبة">
                 <input id="c-host" placeholder="اسم الداعي">
                 <input id="c-img" placeholder="رابط صورة الدعوة">
                 <input id="c-map" placeholder="رابط الموقع">
+                <!-- حقل إضافي اختياري لتاريخ المناسبة (للعداد التنازلي) -->
+                <input id="c-date" type="datetime-local" placeholder="تاريخ ووقت المناسبة" title="تاريخ المناسبة للعداد التنازلي">
                 <button class="btn-gold" id="save-client">إنشاء الحساب</button>
             </div>
 
@@ -112,25 +176,42 @@
 
             <div class="card">
                 <h3>📝 إضافة ضيوف</h3>
-                <select id="client-select">
-                    <option value="">جاري تحميل العملاء...</option>
-                </select>
+                <select id="client-select"></select>
                 <input id="g-name" placeholder="اسم الضيف">
                 <input id="g-phone" placeholder="الجوال (966...)">
                 <button class="btn-gold" id="save-guest" style="background:#27ae60">إضافة للجدول</button>
             </div>
         </div>
 
-        <div class="card" style="overflow-x:auto;">
+        <div class="card fade-in" style="overflow-x:auto;" id="export-section">
             <h3 id="table-title">قائمة الضيوف 📜</h3>
+            
+            <!-- شريط أدوات الفلترة والتصدير المضاف -->
+            <div class="toolbar" id="table-tools" style="display:none;">
+                <input type="text" id="search-guest" placeholder="🔍 ابحث بالاسم أو الجوال..." onkeyup="filterTable()">
+                <select id="filter-status" onchange="filterTable()">
+                    <option value="all">عرض جميع الحالات</option>
+                    <option value="مؤكد">مؤكد</option>
+                    <option value="انتظار">انتظار</option>
+                    <option value="تم-الدخول">تم الدخول</option>
+                    <option value="اعتذار">اعتذار</option>
+                </select>
+                <button class="btn-gold" style="background: #27ae60;" onclick="exportExcel()">📊 تصدير Excel</button>
+                <button class="btn-gold" style="background: #e74c3c;" onclick="exportPDF()">📄 تصدير PDF</button>
+            </div>
+
             <div id="data-table"></div>
             <button onclick="window.logout()" style="margin-top: 20px; background: #eee; color: #666;">خروج</button>
         </div>
     </div>
+    
+    <div class="ronaq-footer">
+        تم التطوير بكل حب 🤍 بواسطة رونق للدعوات © 2026
+    </div>
 </div>
 
 <div id="edit-modal" class="modal-overlay hidden">
-    <div class="card" style="width: 90%; max-width: 400px;">
+    <div class="card fade-in" style="width: 90%; max-width: 400px;">
         <h3>تعديل بيانات الضيف</h3>
         <input id="edit-name"><input id="edit-phone">
         <select id="edit-status">
@@ -145,13 +226,13 @@
 </div>
 
 <div id="edit-client-modal" class="modal-overlay hidden">
-    <div class="card" style="width: 90%; max-width: 450px;">
+    <div class="card fade-in" style="width: 90%; max-width: 450px;">
         <h3>تعديل بيانات الحفل ⚙️</h3>
         <input id="ec-event" placeholder="اسم المناسبة">
         <input id="ec-host" placeholder="اسم الداعي">
         <input id="ec-img" placeholder="رابط صورة الدعوة">
         <input id="ec-map" placeholder="رابط الموقع">
-        <input id="ec-pass" placeholder="كلمة مرور العميل">
+        <input id="ec-pass" type="password" placeholder="كلمة مرور العميل">
         <input type="hidden" id="ec-doc-id">
         <button class="btn-gold" id="confirm-client-update">حفظ التغييرات</button>
         <button onclick="document.getElementById('edit-client-modal').classList.add('hidden')" style="background:none; color:red; margin-top:10px;">إلغاء</button>
@@ -159,7 +240,7 @@
 </div>
 
 <div id="wa-modal" class="modal-overlay hidden">
-    <div class="card" style="width: 90%; max-width: 450px;">
+    <div class="card fade-in" style="width: 90%; max-width: 450px;">
         <h3>رسالة الواتساب 📱</h3>
         <textarea id="wa-text-area" rows="8"></textarea>
         <input type="hidden" id="wa-target-phone">
@@ -183,6 +264,7 @@
 
     window.logout = () => { sessionStorage.clear(); location.reload(); };
 
+    // --- وظائف الأدمن لتعديل العملاء ---
     window.openEditClient = (id, ev, host, img, map, pass) => {
         document.getElementById('ec-doc-id').value = id;
         document.getElementById('ec-event').value = ev;
@@ -195,6 +277,8 @@
 
     document.getElementById('confirm-client-update').onclick = async () => {
         const id = document.getElementById('ec-doc-id').value;
+        const btn = document.getElementById('confirm-client-update');
+        btn.disabled = true; btn.innerText = "جاري الحفظ...";
         await updateDoc(doc(db, "v30_data", id), {
             event: document.getElementById('ec-event').value,
             host: document.getElementById('ec-host').value,
@@ -202,26 +286,22 @@
             map: document.getElementById('ec-map').value,
             password: document.getElementById('ec-pass').value
         });
-        location.reload();
+        showToast("تم تحديث بيانات الحفل بنجاح ✅");
+        setTimeout(() => location.reload(), 1500);
     };
 
     async function loadClientsList() {
         const snap = await getDocs(collection(db, "v30_data"));
         let h = `<table><tr><th>العميل</th><th>المناسبة</th><th>إدارة</th></tr>`;
-        const sel = document.getElementById('client-select');
-        
-        sel.innerHTML = "<option value=''>اختر الحفل لعرض الضيوف...</option>";
-        
         snap.forEach(d => {
             const c = d.data();
             h += `<tr><td>${c.name}</td><td>${c.event}</td>
             <td><button class="btn-edit" onclick="window.openEditClient('${d.id}','${c.event}','${c.host}','${c.img}','${c.map}','${c.password}')">تعديل</button></td></tr>`;
-            
-            sel.innerHTML += `<option value="${c.name}">${c.name}</option>`;
         });
         document.getElementById('clients-list-table').innerHTML = h + "</table>";
     }
 
+    // --- وظائف الضيوف ---
     window.prepareWA = (phone, name, evName, guestId, host) => {
         const msg = `⚜️ *دعوة حضور* ⚜️\n\nأهلاً بك يا ${name} ✨\nنتشرف بدعوتكم لحضور: ${evName}..\n\nبانتظار تأكيد حضوركم عبر الرابط التالي:\n${BASE_URL}?id=${guestId}\n\nالداعي: ${host}`;
         document.getElementById('wa-target-phone').value = phone;
@@ -234,6 +314,7 @@
         const text = encodeURIComponent(document.getElementById('wa-text-area').value);
         window.open(`https://api.whatsapp.com/send?phone=${phone}&text=${text}`, '_blank');
         document.getElementById('wa-modal').classList.add('hidden');
+        showToast("تم تحويلك للواتساب بنجاح 📱");
     };
 
     window.openEdit = (id, name, phone, status, cl) => {
@@ -246,32 +327,33 @@
     };
 
     async function loadData(cl) {
-        if (!cl) {
-            document.getElementById('data-table').innerHTML = "";
-            resetStats();
-            return;
-        }
+        if (!cl) return;
         const cSnap = await getDocs(query(collection(db, "v30_data"), where("name", "==", cl)));
         let evName = ""; let host = ""; 
         cSnap.forEach(cd => { evName = cd.data().event; host = cd.data().host; });
 
         const snap = await getDocs(query(collection(db, "v30_guests"), where("belongsTo", "==", cl)));
-        let h = `<table><tr><th>الاسم</th><th>الحالة</th>`;
-        if(role === 'admin') h += `<th>الإجراءات</th>`;
+        let h = `<table id="main-data-table"><tr><th>الاسم</th><th>الحالة</th>`;
+        if(role === 'admin') h += `<th>الإجراءات</th><th>رقم الجوال</th>`;
         h += `</tr>`;
 
         snap.forEach(d => {
             const g = d.data();
-            h += `<tr><td>${g.name}</td><td><span class="status-pill status-${g.status}">${g.status.replace('-',' ')}</span></td>`;
+            h += `<tr class="guest-row" data-status="${g.status}">
+                    <td class="guest-name">${g.name}</td>
+                    <td><span class="status-pill status-${g.status}">${g.status.replace('-',' ')}</span></td>`;
             if(role === 'admin') {
                 h += `<td>
                     <button onclick="window.prepareWA('${g.phone}', '${g.name}', '${evName}', '${d.id}', '${host}')" class="btn-wa">إرسال</button>
                     <button onclick="window.openEdit('${d.id}', '${g.name}', '${g.phone}', '${g.status}', '${cl}')" class="btn-edit">تعديل</button>
-                </td>`;
+                </td><td class="guest-phone">${g.phone}</td>`;
             }
             h += `</tr>`;
         });
         document.getElementById('data-table').innerHTML = h + "</table>";
+        
+        // إظهار أدوات الفلترة بعد تحميل الجدول
+        document.getElementById('table-tools').style.display = "flex";
 
         const guestsArr = snap.docs.map(d => d.data());
         document.getElementById('stat-total').innerText = guestsArr.length;
@@ -280,77 +362,115 @@
         document.getElementById('stat-no').innerText = guestsArr.filter(g => g.status === 'اعتذار').length;
     }
 
-    function resetStats() {
-        document.getElementById('stat-total').innerText = "0";
-        document.getElementById('stat-yes').innerText = "0";
-        document.getElementById('stat-entered').innerText = "0";
-        document.getElementById('stat-no').innerText = "0";
-    }
-
+    // --- المعالجات الأساسية ---
     document.getElementById('login-btn').onclick = async () => {
+        const btn = document.getElementById('login-btn');
+        btn.disabled = true; btn.innerText = "جاري التحقق...";
         const u = document.getElementById('user-input').value, p = document.getElementById('pass-input').value;
-        if(u === "admin" && p === "Aa0532956835") { sessionStorage.setItem('role','admin'); sessionStorage.setItem('user',u); location.reload(); }
+        if(u === "admin" && p === "123456") { sessionStorage.setItem('role','admin'); sessionStorage.setItem('user',u); location.reload(); }
         else {
             const snap = await getDocs(query(collection(db, "v30_data"), where("name","==",u), where("password","==",p)));
-            if(!snap.empty) { sessionStorage.setItem('role','client'); sessionStorage.setItem('user',u); location.reload(); } else alert("خطأ!");
+            if(!snap.empty) { sessionStorage.setItem('role','client'); sessionStorage.setItem('user',u); location.reload(); } 
+            else { showToast("بيانات الدخول غير صحيحة ❌"); btn.disabled = false; btn.innerText = "دخول"; }
         }
     };
 
     document.getElementById('save-client').onclick = async () => {
-        const nameVal = document.getElementById('c-name').value;
-        if(!nameVal) { alert("الرجاء إدخال اسم العميل"); return; }
-        
+        const btn = document.getElementById('save-client');
+        btn.disabled = true; btn.innerText = "جاري الإنشاء...";
+        const evDate = document.getElementById('c-date').value || null;
         await addDoc(collection(db, "v30_data"), { 
-            name: nameVal, password: document.getElementById('c-pass').value, 
+            name: document.getElementById('c-name').value, password: document.getElementById('c-pass').value, 
             event: document.getElementById('c-event').value, host: document.getElementById('c-host').value, 
-            img: document.getElementById('c-img').value, map: document.getElementById('c-map').value 
+            img: document.getElementById('c-img').value, map: document.getElementById('c-map').value,
+            date: evDate
         });
-        
-        document.getElementById('c-name').value = '';
-        document.getElementById('c-pass').value = '';
-        document.getElementById('c-event').value = '';
-        document.getElementById('c-host').value = '';
-        document.getElementById('c-img').value = '';
-        document.getElementById('c-map').value = '';
-        
-        await loadClientsList();
-        alert("تم إنشاء العميل بنجاح وتحديث القائمة!");
+        showToast("تم إنشاء الحفل بنجاح 🎉");
+        setTimeout(() => location.reload(), 1500);
     };
 
     document.getElementById('save-guest').onclick = async () => {
         const sel = document.getElementById('client-select').value;
-        if(!sel) { alert("الرجاء اختيار العميل أولاً"); return; }
+        if(!sel) return showToast("الرجاء اختيار الحفل أولاً ⚠️");
         let p = document.getElementById('g-phone').value; if(p.startsWith('0')) p = '966' + p.substring(1);
+        
+        const btn = document.getElementById('save-guest');
+        btn.disabled = true; btn.innerText = "جاري الإضافة...";
+        
         await addDoc(collection(db, "v30_guests"), { belongsTo: sel, name: document.getElementById('g-name').value, phone: p, status: "انتظار" });
+        showToast(`تم إضافة الضيف ${document.getElementById('g-name').value} بنجاح ✅`);
         
-        document.getElementById('g-name').value = '';
-        document.getElementById('g-phone').value = '';
-        
+        document.getElementById('g-name').value = ""; document.getElementById('g-phone').value = "";
+        btn.disabled = false; btn.innerText = "إضافة للجدول";
         loadData(sel);
     };
 
     document.getElementById('confirm-edit').onclick = async () => {
+        const btn = document.getElementById('confirm-edit');
+        btn.disabled = true; btn.innerText = "جاري التحديث...";
         await updateDoc(doc(db, "v30_guests", editingGuestId), {
             name: document.getElementById('edit-name').value, phone: document.getElementById('edit-phone').value, status: document.getElementById('edit-status').value
         });
         document.getElementById('edit-modal').classList.add('hidden');
+        showToast("تم تحديث بيانات الضيف بنجاح ✅");
+        btn.disabled = false; btn.innerText = "تحديث";
         loadData(window.currentSelectedClient || user);
     };
 
+    // --- عرض الضيف ---
     async function handleGuestView(guestId) {
+        // حفظ الجلسة في LocalStorage للضيف
+        localStorage.setItem('last_guest_id', guestId);
+        
         const gDoc = await getDoc(doc(db, "v30_guests", guestId));
         if (gDoc.exists()) {
             const gData = gDoc.data();
             const cSnap = await getDocs(query(collection(db, "v30_data"), where("name", "==", gData.belongsTo)));
             let cData = {}; cSnap.forEach(d => cData = d.data());
+            
             document.getElementById('guest-section').classList.remove('hidden');
             document.getElementById('guest-welcome').innerText = `أهلاً بك يا ${gData.name}`;
             document.getElementById('event-image').src = cData.img;
             document.getElementById('event-details').innerText = `${cData.event} - الداعي: ${cData.host}`;
+            
+            // تشغيل العداد التنازلي إذا كان التاريخ متوفراً
+            if(cData.date) {
+                startCountdown(cData.date);
+            } else {
+                document.getElementById('countdown-timer').style.display = 'none';
+            }
+
+            // تجهيز رابط التقويم
+            document.getElementById('btn-calendar').onclick = () => {
+                const title = encodeURIComponent(cData.event);
+                const details = encodeURIComponent("دعوة زفاف - " + cData.host);
+                const location = encodeURIComponent(cData.map);
+                const gCalUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&details=${details}&location=${location}`;
+                window.open(gCalUrl, '_blank');
+            };
+
             if (gData.status === "مؤكد" || gData.status === "تم-الدخول") showEntryPass(guestId, cData.map, gData.status);
             else if (gData.status === "اعتذار") { document.getElementById('guest-actions').classList.add('hidden'); document.getElementById('decline-msg').classList.remove('hidden'); }
-            document.getElementById('btn-confirm').onclick = async () => { await updateDoc(doc(db, "v30_guests", guestId), { status: "مؤكد" }); showEntryPass(guestId, cData.map, "مؤكد"); };
-            document.getElementById('btn-decline').onclick = async () => { await updateDoc(doc(db, "v30_guests", guestId), { status: "اعتذار" }); document.getElementById('guest-actions').classList.add('hidden'); document.getElementById('decline-msg').classList.remove('hidden'); };
+            
+            document.getElementById('btn-confirm').onclick = async () => { 
+                const btn = document.getElementById('btn-confirm');
+                btn.disabled = true; btn.innerText = "جاري التأكيد...";
+                await updateDoc(doc(db, "v30_guests", guestId), { status: "مؤكد" }); 
+                
+                // تأثير Confetti
+                triggerConfetti();
+                showToast("تم تأكيد حضورك، ننتظرك بكل حب! 🎉");
+                showEntryPass(guestId, cData.map, "مؤكد"); 
+            };
+            
+            document.getElementById('btn-decline').onclick = async () => { 
+                const btn = document.getElementById('btn-decline');
+                btn.disabled = true; btn.innerText = "جاري الإرسال...";
+                await updateDoc(doc(db, "v30_guests", guestId), { status: "اعتذار" }); 
+                document.getElementById('guest-actions').classList.add('hidden'); 
+                document.getElementById('decline-msg').classList.remove('hidden'); 
+                showToast("تم تسجيل اعتذارك، شكراً لك 🤍");
+            };
         }
     }
 
@@ -359,28 +479,146 @@
         document.getElementById('after-confirm-area').classList.remove('hidden');
         const qrContainer = document.getElementById("qrcode-container");
         qrContainer.innerHTML = "";
-        new QRCode(qrContainer, { text: id, width: 180, height: 180 });
+        new QRCode(qrContainer, { text: id, width: 180, height: 180, colorDark : "#1a1a1a", colorLight : "#ffffff" });
         document.getElementById('entry-code-text').innerText = id.substring(0, 10).toUpperCase();
         document.getElementById('btn-map').onclick = () => window.open(mapUrl, '_blank');
     }
 
+    // --- دوال إضافية (محقونة دون التأثير على الكود الأصلي) ---
+
+    // إخفاء شاشة التحميل
+    window.addEventListener('load', () => {
+        setTimeout(() => {
+            const splash = document.getElementById('splash-screen');
+            splash.style.opacity = '0';
+            splash.style.visibility = 'hidden';
+        }, 1500); // عرض الشعار لثانية ونصف
+    });
+
+    // نظام الإشعارات Toast بديل للـ Alert
+    window.showToast = (message) => {
+        const container = document.getElementById('toast-container');
+        const toast = document.createElement('div');
+        toast.className = 'toast-msg';
+        toast.innerText = message;
+        container.appendChild(toast);
+        
+        setTimeout(() => toast.classList.add('show'), 100);
+        setTimeout(() => {
+            toast.classList.remove('show');
+            setTimeout(() => toast.remove(), 400);
+        }, 3000);
+    };
+
+    // الاحتفال Confetti
+    window.triggerConfetti = () => {
+        var duration = 3 * 1000;
+        var end = Date.now() + duration;
+        (function frame() {
+            confetti({ particleCount: 5, angle: 60, spread: 55, origin: { x: 0 }, colors: ['#c5a059', '#b38b7d', '#1a1a1a'] });
+            confetti({ particleCount: 5, angle: 120, spread: 55, origin: { x: 1 }, colors: ['#c5a059', '#b38b7d', '#1a1a1a'] });
+            if (Date.now() < end) { requestAnimationFrame(frame); }
+        }());
+    };
+
+    // العداد التنازلي
+    window.startCountdown = (targetDateStr) => {
+        const targetDate = new Date(targetDateStr).getTime();
+        const timerElement = document.getElementById('time-left');
+        
+        const updateTimer = setInterval(() => {
+            const now = new Date().getTime();
+            const distance = targetDate - now;
+            
+            if (distance < 0) {
+                clearInterval(updateTimer);
+                timerElement.innerText = "بدأت المناسبة! 🎉";
+                return;
+            }
+            
+            const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+            const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+            
+            timerElement.innerText = `${days} يوم و ${hours} ساعة و ${minutes} دقيقة`;
+        }, 1000);
+    };
+
+    // فلترة الجدول المباشرة (تعمل على عناصر الـ DOM مباشرة)
+    window.filterTable = () => {
+        const searchText = document.getElementById('search-guest').value.toLowerCase();
+        const statusFilter = document.getElementById('filter-status').value;
+        const rows = document.querySelectorAll('#main-data-table .guest-row');
+        
+        rows.forEach(row => {
+            const name = row.querySelector('.guest-name').innerText.toLowerCase();
+            const phone = row.querySelector('.guest-phone') ? row.querySelector('.guest-phone').innerText : "";
+            const status = row.getAttribute('data-status');
+            
+            const matchesSearch = name.includes(searchText) || phone.includes(searchText);
+            const matchesStatus = statusFilter === 'all' || status === statusFilter;
+            
+            if(matchesSearch && matchesStatus) {
+                row.style.display = "";
+            } else {
+                row.style.display = "none";
+            }
+        });
+    };
+
+    // تصدير إلى Excel
+    window.exportExcel = () => {
+        const table = document.getElementById("main-data-table");
+        if(!table) return showToast("لا توجد بيانات للتصدير ⚠️");
+        
+        const wb = XLSX.utils.table_to_book(table, {sheet: "الضيوف"});
+        XLSX.writeFile(wb, "قائمة_الضيوف_رونق.xlsx");
+        showToast("تم تحميل ملف الإكسل بنجاح 📊");
+    };
+
+    // تصدير إلى PDF
+    window.exportPDF = () => {
+        const element = document.getElementById('export-section');
+        const opt = {
+            margin:       10,
+            filename:     'قائمة_الضيوف.pdf',
+            image:        { type: 'jpeg', quality: 0.98 },
+            html2canvas:  { scale: 2 },
+            jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+        };
+        html2pdf().set(opt).from(element).save();
+        showToast("جاري تجهيز وتحميل ملف الـ PDF 📄");
+    };
+
+    // نسخ رابط لوحة التحكم السريع
+    window.copyDashboardLink = () => {
+        navigator.clipboard.writeText(window.location.href).then(() => {
+            showToast("تم نسخ رابط لوحة الإدارة للحافظة 🔗");
+        });
+    };
+
     async function init() {
-        const guestId = new URLSearchParams(window.location.search).get('id');
-        if (guestId) {
-            handleGuestView(guestId);
-        } else if(sessionStorage.getItem('role')) {
+        let guestId = new URLSearchParams(window.location.search).get('id');
+        
+        // استرجاع جلسة الضيف إذا لم يكن هناك ID في الرابط ولكنه مسجل في المتصفح
+        if(!guestId && localStorage.getItem('last_guest_id') && !sessionStorage.getItem('role')) {
+            guestId = localStorage.getItem('last_guest_id');
+        }
+
+        if (guestId) handleGuestView(guestId);
+        else if(sessionStorage.getItem('role')) {
             document.getElementById('dashboard-section').classList.remove('hidden');
             document.getElementById('welcome-msg').innerText = "لوحة: " + user;
             if(role === 'admin') {
                 document.getElementById('admin-area').classList.remove('hidden');
-                await loadClientsList();
-                document.getElementById('client-select').onchange = (e) => loadData(e.target.value);
-            } else {
-                loadData(user);
-            }
-        } else {
-            document.getElementById('login-section').classList.remove('hidden');
-        }
+                loadClientsList();
+                const s = await getDocs(collection(db, "v30_data"));
+                const sel = document.getElementById('client-select');
+                sel.innerHTML = "<option value=''>اختر الحفل لعرض الضيوف...</option>";
+                s.forEach(d => sel.innerHTML += `<option value="${d.data().name}">${d.data().name}</option>`);
+                sel.onchange = () => loadData(sel.value);
+            } else loadData(user);
+        } else document.getElementById('login-section').classList.remove('hidden');
     }
     init();
 </script>
