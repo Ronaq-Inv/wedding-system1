@@ -285,13 +285,14 @@
         const id = document.getElementById('ec-doc-id').value;
         const btn = document.getElementById('confirm-client-update');
         btn.disabled = true; btn.innerText = "جاري الحفظ...";
-        await updateDoc(doc(db, "v30_data", id), {
-            event: document.getElementById('ec-event').value,
-            host: document.getElementById('ec-host').value,
-            img: document.getElementById('ec-img').value,
-            map: document.getElementById('ec-map').value,
-            password: document.getElementById('ec-pass').value
-        });
+     await updateDoc(doc(db, "v30_data", id), {
+    event: document.getElementById('ec-event').value,
+    host: document.getElementById('ec-host').value,
+    img: document.getElementById('ec-img').value,
+    map: document.getElementById('ec-map').value,
+    password: document.getElementById('ec-pass').value,
+    date: document.getElementById('ec-date').value || null
+});
         showToast("تم تحديث بيانات الحفل بنجاح ✅");
         setTimeout(() => location.reload(), 1500);
     };
