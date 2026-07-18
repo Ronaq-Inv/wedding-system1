@@ -270,7 +270,7 @@
     window.logout = () => {     sessionStorage.clear();     localStorage.removeItem("last_guest_id");     window.location.href = window.location.origin + window.location.pathname; };
 
     // --- وظائف الأدمن لتعديل العملاء ---
-    window.openEditClient = (id, ev, host, img, map, pass) => {
+   window.openEditClient = (id, ev, host, img, map, pass, date) => {
         document.getElementById('ec-doc-id').value = id;
         document.getElementById('ec-event').value = ev;
         document.getElementById('ec-host').value = host;
