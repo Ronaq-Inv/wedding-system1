@@ -302,7 +302,7 @@
         snap.forEach(d => {
             const c = d.data();
             h += `<tr><td>${c.name}</td><td>${c.event}</td>
-            <td><button class="btn-edit" onclick="window.openEditClient('${d.id}','${c.event}','${c.host}','${c.img}','${c.map}','${c.password}')">تعديل</button></td></tr>`;
+            <td><button class="btn-edit" onclick="window.openEditClient('${d.id}','${c.event}','${c.host}','${c.img}','${c.map}','${c.password}','${c.date || ""}')">تعديل</button></td></tr>`;
         });
         document.getElementById('clients-list-table').innerHTML = h + "</table>";
     }
