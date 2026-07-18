@@ -323,14 +323,23 @@
         showToast("تم تحويلك للواتساب بنجاح 📱");
     };
 
-    window.deleteGuest = async (id, clientName) => {     if (!confirm("هل أنت متأكد من حذف هذا الضيف؟")) return;      await deleteDoc(doc(db, "v30_guests", id));      showToast("تم حذف الضيف بنجاح 🗑️");     loadData(clientName); };
-        editingGuestId = id;
-        document.getElementById('edit-name').value = name;
-        document.getElementById('edit-phone').value = phone;
-        document.getElementById('edit-status').value = status;
-        document.getElementById('edit-modal').classList.remove('hidden');
-        window.currentSelectedClient = cl;
-    };
+window.deleteGuest = async (id, clientName) => {
+    if (!confirm("هل أنت متأكد من حذف هذا الضيف؟")) return;
+
+    await deleteDoc(doc(db, "v30_guests", id));
+
+    showToast("تم حذف الضيف بنجاح 🗑️");
+    loadData(clientName);
+};
+
+window.openEdit = (id, name, phone, status, cl) => {
+    editingGuestId = id;
+    document.getElementById('edit-name').value = name;
+    document.getElementById('edit-phone').value = phone;
+    document.getElementById('edit-status').value = status;
+    document.getElementById('edit-modal').classList.remove('hidden');
+    window.currentSelectedClient = cl;
+};
 
     async function loadData(cl) {
         if (!cl) return;
