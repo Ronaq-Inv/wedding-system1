@@ -133,8 +133,15 @@
         <h2 style="color:var(--gold)">دخول النظام ⚜️</h2>
         <input id="user-input" placeholder="اسم المستخدم">
         <!-- تغيير نوع الإدخال لـ password للأمان -->
-        <input id="pass-input" type="password" placeholder="كلمة المرور">
-        <button class="btn-gold" id="login-btn">دخول</button>
+     <input id="pass-input" type="password" placeholder="كلمة المرور">
+
+<div style="text-align:left;margin:8px 0;">
+    <a href="#" id="forgot-password" style="color:#c5a059;text-decoration:none;font-size:14px;">
+        نسيت كلمة المرور؟
+    </a>
+</div>
+
+<button class="btn-gold" id="login-btn">دخول</button>
     </div>
 </div>
 
@@ -649,6 +656,29 @@ if (!check.empty) {
             } else loadData(user);
         } else document.getElementById('login-section').classList.remove('hidden');
     }
+    document.getElementById("forgot-password").onclick = async (e) => {
+    e.preventDefault();
+
+    const username = prompt("أدخل اسم المستخدم");
+
+    if (!username) return;
+
+    const snap = await getDocs(
+        query(collection(db, "v30_data"), where("name", "==", username))
+    );
+
+    if (snap.empty) {
+        showToast("اسم المستخدم غير موجود");
+        return;
+    }
+
+    const data = snap.docs[0].data();
+
+    alert(
+        "للتواصل مع الدعم واستعادة كلمة المرور:\n\n" +
+        "رقم الجوال: " + data.phone
+    );
+};
     init();
 </script>
 
