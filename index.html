@@ -665,7 +665,7 @@ if (!checkPhone.empty) {
         showToast("جاري تجهيز وتحميل ملف الـ PDF 📄");
     };
 window.copyInviteLink = (guestId) => {
-    const link = BASE_URL + "?id=" + guestId;
+    const link = `${window.location.origin}${window.location.pathname}?id=${guestId}`;
     navigator.clipboard.writeText(link);
     showToast("✅ تم نسخ رابط الدعوة");
 };
