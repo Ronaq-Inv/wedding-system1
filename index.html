@@ -623,7 +623,7 @@ for (let i = 0; i < namesArr.length; i++) {
                 compArea.classList.add('hidden');
                 triggerConfetti();
                 showToast("تم تأكيد حضورك وحجز المقاعد بنجاح! 🎉");
-                showMultiPass(guestId, gData.name, namesArr, cData.map); 
+                const updatedGuest = await getDoc(doc(db, "v30_guests", guestId));  showMultiPass(     guestId,     gData.name,     updatedGuest.data().companionNames || [],     cData.map ); 
             };
             
             document.getElementById('btn-decline').onclick = async () => { 
