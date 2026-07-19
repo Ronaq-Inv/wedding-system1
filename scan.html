@@ -46,11 +46,10 @@
         resultDiv.innerText = "جاري التحقق من الكود...";
 
         try {
-            // حل المشكلة هنا: نقوم بتنظيف النص المقروء وفصل الزيادات البصرية (-m1) الخاصة بالمرافقين
-            const cleanedGuestId = decodedText.split('-')[0].trim();
+          // استخدام الكود كامل بدون حذف أي جزء
+const cleanedGuestId = decodedText.trim();
 
-            // الاستعلام والبحث عن المعرف النقي المستخرج
-            const guestRef = doc(db, "v30_guests", cleanedGuestId);
+const guestRef = doc(db, "v30_guests", cleanedGuestId);
             const guestSnap = await getDoc(guestRef);
 
             if (guestSnap.exists()) {
