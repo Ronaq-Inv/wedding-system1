@@ -184,7 +184,7 @@
             <div id="clients-list-table"></div>
         </div>
 
-        <div class="card">
+       <div class="card" id="guest-add-card">
             <h3>📝 إضافة ضيوف</h3>
             <select id="client-select"></select>
             <input id="g-name" placeholder="اسم الضيف">
@@ -392,14 +392,6 @@ window.openEdit = (id, name, phone, status, cl) => {
         const guestsArr = snap.docs.map(d => d.data());
         document.getElementById("table-title").innerHTML =
 `قائمة الضيوف 📜
-<br><br>
-👥 ${guestsArr.length}
-&nbsp;&nbsp;|&nbsp;&nbsp;
-✅ ${guestsArr.filter(g=>g.status==="مؤكد").length}
-&nbsp;&nbsp;|&nbsp;&nbsp;
-🚪 ${guestsArr.filter(g=>g.status==="تم-الدخول").length}
-&nbsp;&nbsp;|&nbsp;&nbsp;
-❌ ${guestsArr.filter(g=>g.status==="اعتذار").length}`;
         document.getElementById('stat-total').innerText = guestsArr.length;
         document.getElementById('stat-yes').innerText = guestsArr.filter(g => g.status === 'مؤكد' || g.status === 'تم-الدخول').length;
         document.getElementById('stat-entered').innerText = guestsArr.filter(g => g.status === 'تم-الدخول').length;
@@ -686,9 +678,22 @@ window.copyInviteLink = (guestId) => {
         else if(sessionStorage.getItem('role')) {
             document.getElementById('dashboard-section').classList.remove('hidden');
             document.getElementById('welcome-msg').innerText = "لوحة: " + user;
-            if(role === 'admin') {
-                document.getElementById('admin-area').classList.remove('hidden');
-                loadClientsList();
+          if(role === 'admin') {
+    document.getElementById('admin-area').classList.remove('hidden');
+    document.getElementById('guest-add-card').style.display = "block";
+
+    loadClientsList();
+
+    const s = await getDocs(collection(db, "v30_data"));
+    const sel = document.getElementById('client-select');
+    sel.innerHTML = "<option value=''>اختر الحفل لعرض الضيوف...</option>";
+    s.forEach(d => sel.innerHTML += `<option value="${d.data().name}">${d.data().name}</option>`);
+    sel.onchange = () => loadData(sel.value);
+
+} else {
+    document.getElementById('guest-add-card').style.display = "none";
+    loadData(user);
+}
                 const s = await getDocs(collection(db, "v30_data"));
                 const sel = document.getElementById('client-select');
                 sel.innerHTML = "<option value=''>اختر الحفل لعرض الضيوف...</option>";
