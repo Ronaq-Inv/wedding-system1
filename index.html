@@ -190,6 +190,10 @@
             <input id="g-name" placeholder="اسم الضيف">
             <input id="g-phone" placeholder="الجوال (966...)">
             <button class="btn-gold" id="save-guest" style="background:#27ae60">إضافة للجدول</button>
+            <input type="file" id="excel-file" accept=".xlsx,.xls" style="margin-top:10px;">
+<button class="btn-gold" id="import-excel" style="background:#8e44ad;margin-top:10px;">
+📥 استيراد الضيوف من Excel
+</button>
         </div>
     </div>
 
@@ -383,6 +387,16 @@ window.openEdit = (id, name, phone, status, cl) => {
         document.getElementById('table-tools').style.display = "flex";
 
         const guestsArr = snap.docs.map(d => d.data());
+        document.getElementById("table-title").innerHTML =
+`قائمة الضيوف 📜
+<br><br>
+👥 ${guestsArr.length}
+&nbsp;&nbsp;|&nbsp;&nbsp;
+✅ ${guestsArr.filter(g=>g.status==="مؤكد").length}
+&nbsp;&nbsp;|&nbsp;&nbsp;
+🚪 ${guestsArr.filter(g=>g.status==="تم-الدخول").length}
+&nbsp;&nbsp;|&nbsp;&nbsp;
+❌ ${guestsArr.filter(g=>g.status==="اعتذار").length}`;
         document.getElementById('stat-total').innerText = guestsArr.length;
         document.getElementById('stat-yes').innerText = guestsArr.filter(g => g.status === 'مؤكد' || g.status === 'تم-الدخول').length;
         document.getElementById('stat-entered').innerText = guestsArr.filter(g => g.status === 'تم-الدخول').length;
@@ -436,7 +450,13 @@ if (!check.empty) {
         const btn = document.getElementById('save-guest');
         btn.disabled = true; btn.innerText = "جاري الإضافة...";
         
-        await addDoc(collection(db, "v30_guests"), { belongsTo: sel, name: document.getElementById('g-name').value, phone: p, status: "انتظار" });
+        await addDoc(collection(db, "v30_guests"), {
+    belongsTo: sel,
+    name: document.getElementById('g-name').value,
+    phone: p,
+    status: "انتظار",
+    invites: 1
+});
         showToast(`تم إضافة الضيف ${document.getElementById('g-name').value} بنجاح ✅`);
         
         document.getElementById('g-name').value = ""; document.getElementById('g-phone').value = "";
