@@ -575,10 +575,31 @@
                 }
 
                 btn.disabled = true; btn.innerText = "جاري التأكيد...";
-              await updateDoc(doc(db, "v30_guests", guestId), { 
+      await updateDoc(doc(db, "v30_guests", guestId), { 
     status: "مؤكد",
-    companions: selectedCompanions,
-    companionNames: namesArr
+    companions: selectedCompanions
+});
+
+let companionIds = [];
+
+for (let i = 0; i < namesArr.length; i++) {
+
+    const companionDoc = await addDoc(collection(db, "v30_guests"), {
+        belongsTo: gData.belongsTo,
+        name: namesArr[i],
+        phone: gData.phone,
+        status: "مؤكد",
+        companions: 0,
+        maxCompanions: 0,
+        isCompanion: true,
+        parentGuest: guestId
+    });
+
+    companionIds.push(companionDoc.id);
+}
+
+await updateDoc(doc(db, "v30_guests", guestId), {
+    companionNames: companionIds
 });
 
 // إنشاء بطاقات مستقلة للمرافقين
