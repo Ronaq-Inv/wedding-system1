@@ -422,7 +422,7 @@ window.openEdit = (id, name, phone, status, cl) => {
     document.getElementById('save-client').onclick = async () => {
         const btn = document.getElementById('save-client');
         btn.disabled = true; btn.innerText = "جاري الإنشاء...";
-        const evDate = document.getElementById('c-date').value || null;
+        const dateInput = document.getElementById('c-date'); const evDate = dateInput ? dateInput.value : null;
         const phone = document.getElementById('c-phone').value.trim();
 
 const check = await getDocs(
