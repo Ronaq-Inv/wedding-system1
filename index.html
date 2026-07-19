@@ -694,7 +694,7 @@ window.copyInviteLink = (guestId) => {
                 sel.innerHTML = "<option value=''>اختر الحفل لعرض الضيوف...</option>";
                 s.forEach(d => sel.innerHTML += `<option value="${d.data().name}">${d.data().name}</option>`);
                 sel.onchange = () => loadData(sel.value);
-            } else loadData(user);
+            } else {     loadData(user);      document.querySelector('#table-title').innerText = "قائمة ضيوفك 📜";      const exportSection = document.getElementById('export-section'); }
         } else document.getElementById('login-section').classList.remove('hidden');
     }
     document.getElementById("forgot-password").onclick = async (e) => {
