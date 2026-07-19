@@ -333,7 +333,7 @@
     };
 
 window.deleteGuest = async (id, clientName) => {
-    if (!confirm("هل أنت متأكد من حذف هذا الضيف؟")) return;
+if (!confirm("⚠️ هل أنت متأكد من حذف هذا الضيف؟\n\nلا يمكن التراجع عن الحذف بعد التأكيد.")) return;
 
     await deleteDoc(doc(db, "v30_guests", id));
 
