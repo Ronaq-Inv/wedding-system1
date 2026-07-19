@@ -649,14 +649,19 @@ for (let i = 0; i < namesArr.length; i++) {
         createCardMarkup(targetContainer, guestId, mainCleanCode, mainGuestName, "الضيف الأساسي");
 
         // 2. كروت المرافقين المستقلة (يتم تركيب كود مميز يعرض رقم المرافق بوضوح وبصرياً مثل WVOF5Y6DSV-C1)
-        companionNamesArray.forEach((name, index) => {
-            const companionSuffix = `-C${index + 1}`;
-            const companionDatabaseCode = `${guestId}${companionSuffix}`; // القيمة الممررة للباركود عند المسح بالماسك
-            const companionDisplayCode = `${mainCleanCode}${companionSuffix}`; // النص الظاهر أسفل الباركود
-            
-            createCardMarkup(targetContainer, companionDatabaseCode, companionDisplayCode, name, `مرافق الضيف: ${mainGuestName} (${index + 1})`);
-        });
+    companionNamesArray.forEach((companionId, index) => {
 
+    const companionDisplayCode = companionId.substring(0,10).toUpperCase();
+
+    createCardMarkup(
+        targetContainer,
+        companionId,
+        companionDisplayCode,
+        "مرافق",
+        `مرافق الضيف: ${mainGuestName} (${index + 1})`
+    );
+
+});
         document.getElementById('btn-map').onclick = () => window.open(mapUrl, '_blank');
     }
 
