@@ -35,6 +35,7 @@
     .btn-gold { background: var(--gold); color: white; }
     .btn-wa { background: #25D366 !important; color: white !important; padding: 6px 10px; border-radius: 8px; font-size: 11px; margin: 2px; }
     .btn-edit { background: #3498db !important; color: white !important; padding: 6px 10px; border-radius: 8px; font-size: 11px; margin: 2px; }
+    .btn-delete { background: #e74c3c !important; color: white !important; padding: 6px 10px; border-radius: 8px; font-size: 11px; margin: 2px; }
     table { width: 100%; border-collapse: collapse; margin-top: 15px; background: white; border-radius: 15px; overflow: hidden; }
     th { background: var(--black); color: var(--gold); padding: 15px; font-size: 14px; }
     td { padding: 12px; border-bottom: 1px solid #eee; text-align: center; font-size: 13px; }
@@ -71,6 +72,7 @@
     .toast-msg.show { opacity: 1; transform: translateY(0); }
 
     .ronaq-footer { text-align: center; padding: 20px; font-size: 12px; color: var(--dark-gold); margin-top: 30px; font-weight: bold; }
+    .modal-label { display: block; text-align: right; font-size: 13px; font-weight: bold; color: var(--black); margin-top: 10px; margin-bottom: 2px; }
 </style>
 
 </head>
@@ -221,36 +223,60 @@
     <div class="ronaq-footer">تم التطوير بكل حب 🤍 بواسطة رونق للدعوات © 2026</div>
 </div>
 
+<!-- تم تحديث هذا القسم: إضافة مسميات الخانات لتعديل بيانات الضيف -->
 <div id="edit-modal" class="modal-overlay hidden">
     <div class="card fade-in" style="width: 90%; max-width: 400px;">
-        <h3>تعديل بيانات الضيف</h3>
-        <input id="edit-name"><input id="edit-phone">
+        <h3>تعديل بيانات الضيف 📝</h3>
+        
+        <label class="modal-label">👤 اسم الضيف:</label>
+        <input id="edit-name" placeholder="أدخل اسم الضيف">
+        
+        <label class="modal-label">📱 رقم الجوال:</label>
+        <input id="edit-phone" placeholder="أدخل رقم الجوال">
+        
+        <label class="modal-label">📌 حالة الضيف:</label>
         <select id="edit-status">
             <option value="انتظار">انتظار</option>
             <option value="مؤكد">مؤكد</option>
             <option value="تم-الدخول">تم الدخول</option>
             <option value="اعتذار">اعتذار</option>
         </select>
-        <!-- تعديل عدد مرافقين الضيف من الإدارة -->
+        
+        <label class="modal-label">👥 عدد المرافقين:</label>
         <input type="number" id="edit-companions" placeholder="عدد المرافقين" min="0" max="10">
-        <button class="btn-gold" id="confirm-edit">تحديث</button>
-        <button onclick="document.getElementById('edit-modal').classList.add('hidden')" style="background:none; color:red;">إلغاء</button>
+        
+        <button class="btn-gold" id="confirm-edit" style="margin-top:15px;">تحديث</button>
+        <button onclick="document.getElementById('edit-modal').classList.add('hidden')" style="background:none; color:red; margin-top:5px;">إلغاء</button>
     </div>
 </div>
 
+<!-- تم تحديث هذا القسم: إضافة مسميات الخانات لتعديل بيانات الحفل والعميل -->
 <div id="edit-client-modal" class="modal-overlay hidden">
     <div class="card fade-in" style="width: 90%; max-width: 450px;">
         <h3>تعديل بيانات الحفل ⚙️</h3>
-        <input id="ec-event" placeholder="اسم المناسبة">
-        <input id="ec-host" placeholder="اسم الداعي">
-        <input id="ec-img" placeholder="رابط صورة الدعوة">
-        <input id="ec-map" placeholder="رابط الموقع">
-        <input id="ec-date" type="datetime-local" placeholder="تاريخ ووقت المناسبة">
-        <input id="ec-pass" type="password" placeholder="كلمة مرور العميل">
+        
+        <label class="modal-label">🎀 اسم المناسبة:</label>
+        <input id="ec-event" placeholder="مثال: حفل زفاف فلان">
+        
+        <label class="modal-label">👑 اسم الداعي:</label>
+        <input id="ec-host" placeholder="أدخل اسم الداعي">
+        
+        <label class="modal-label">🖼️ رابط صورة الدعوة:</label>
+        <input id="ec-img" placeholder="ضع رابط الصورة هنا">
+        
+        <label class="modal-label">📍 رابط موقع القاعة:</label>
+        <input id="ec-map" placeholder="رابط خرائط جوجل">
+        
+        <label class="modal-label">📅 تاريخ ووقت المناسبة:</label>
+        <input id="ec-date" type="datetime-local">
+        
+        <label class="modal-label">🔒 كلمة مرور العميل الجديدة:</label>
+        <input id="ec-pass" type="password" placeholder="اتركها كما هي إذا لم ترغب بتغييرها">
+        
         <input type="hidden" id="ec-phone">
         <input type="hidden" id="ec-doc-id">
-        <button class="btn-gold" id="confirm-client-update">حفظ التغييرات</button>
-        <button onclick="document.getElementById('edit-client-modal').classList.add('hidden')" style="background:none; color:red; margin-top:10px;">إلغاء</button>
+        <button class="btn-gold" id="confirm-client-update" style="margin-top:15px;">حفظ التغييرات</button>
+        <button onclick="document.getElementById('edit-client-modal').classList.add('hidden')" style="background:none; color:red; margin-top:5px;">إلغاء</button>
     </div>
 </div>
 
@@ -279,7 +305,7 @@
 
     window.logout = () => { sessionStorage.clear(); localStorage.removeItem("last_guest_id"); window.location.href = window.location.origin + window.location.pathname; };
 
-    // --- وظائف الأدمن لتعديل العملاء ---
+    // --- وظائف الأدمن لتعديل العملاء وحذفهم ---
     window.openEditClient = (id, ev, host, img, map, pass, date, phone = "") => {
         document.getElementById('ec-doc-id').value = id;
         document.getElementById('ec-event').value = ev;
@@ -309,13 +335,32 @@
         setTimeout(() => location.reload(), 1500);
     };
 
+    // ميزة مضافة: حذف العميل بالكامل مع نافذة تأكيد
+    window.deleteClient = async (id, clientName) => {
+        if (!confirm(`⚠️ تنبيه هام جداً!\n\nهل أنت متأكد من حذف حساب العميل والمسؤل عن حفل (${clientName})؟\nلا يمكن استرجاع البيانات بعد الحذف.`)) return;
+        try {
+            await deleteDoc(doc(db, "v30_data", id));
+            showToast(`تم حذف حفل العميل ${clientName} بنجاح 🗑️`);
+            setTimeout(() => location.reload(), 1500);
+        } catch (error) {
+            console.error(error);
+            showToast("حدث خطأ أثناء الحذف ❌");
+        }
+    };
+
     async function loadClientsList() {
         const snap = await getDocs(collection(db, "v30_data"));
-        let h = `<table><tr><th>العميل</th><th>المناسبة</th><th>إدارة</th></tr>`;
+        let h = `<table><tr><th>العميل</th><th>المناسبة</th><th>إدارة العمليات</th></tr>`;
         snap.forEach(d => {
             const c = d.data();
-            h += `<tr><td>${c.name}</td><td>${c.event}</td>
-            <td><button class="btn-edit" onclick="window.openEditClient('${d.id}','${c.event}','${c.host}','${c.img}','${c.map}','${c.password}','${c.date || ""}','${c.phone || ""}')">تعديل</button></td></tr>`;
+            h += `<tr>
+                <td>${c.name}</td>
+                <td>${c.event}</td>
+                <td>
+                    <button class="btn-edit" onclick="window.openEditClient('${d.id}','${c.event}','${c.host}','${c.img}','${c.map}','${c.password}','${c.date || ""}','${c.phone || ""}')">تعديل</button>
+                    <button class="btn-edit" style="background:#e74c3c !important;" onclick="window.deleteClient('${d.id}','${c.name}')">🗑️ حذف</button>
+                </td>
+            </tr>`;
         });
         document.getElementById('clients-list-table').innerHTML = h + "</table>";
     }
@@ -356,11 +401,21 @@
     async function loadData(cl) {
         if (!cl) return;
         const cSnap = await getDocs(query(collection(db, "v30_data"), where("name", "==", cl)));
-        let evName = ""; let host = ""; 
-        cSnap.forEach(cd => { evName = cd.data().event; host = cd.data().host; });
+        let evName = ""; let host = ""; let evDateStr = "غير محدد";
+        cSnap.forEach(cd => { 
+            const clientInfo = cd.data();
+            evName = clientInfo.event; 
+            host = clientInfo.host;
+            // تنسيق التاريخ ليظهر بشكل مقروء وجميل للعميل والإدارة
+            if(clientInfo.date) {
+                const d = new Date(clientInfo.date);
+                evDateStr = d.toLocaleDateString('ar-SA', { year: 'numeric', month: 'numeric', day: 'numeric' }) + " " + d.toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' });
+            }
+        });
 
         const snap = await getDocs(query(collection(db, "v30_guests"), where("belongsTo", "==", cl)));
-        let h = `<table id="main-data-table"><tr><th>الاسم</th><th>الحالة</th><th>المرافقين</th>`;
+        // ميزة مضافة: تضمين عمود تاريخ الحفل للآدمن وللعميل
+        let h = `<table id="main-data-table"><tr><th>الاسم</th><th>الحالة</th><th>المرافقين</th><th>🗓️ تاريخ ووقت الحفل</th>`;
         if(role === 'admin') h += `<th>الإجراءات</th><th>رقم الجوال</th>`;
         h += `</tr>`;
 
@@ -370,7 +425,8 @@
             h += `<tr class="guest-row" data-status="${g.status}">
                     <td class="guest-name">${g.name}</td>
                     <td><span class="status-pill status-${g.status}">${g.status.replace('-',' ')}</span></td>
-                    <td>${comps}</td>`;
+                    <td>${comps}</td>
+                    <td style="color: var(--dark-gold); font-weight: bold;">${evDateStr}</td>`;
             if(role === 'admin') {
                 h += `<td>
                     <button onclick="window.prepareWA('${g.phone}', '${g.name}', '${evName}', '${d.id}', '${host}')" class="btn-wa">إرسال</button>
@@ -565,7 +621,6 @@
 
     // --- عرض الضيف وحفظ الجلسة تلقائياً ---
     async function handleGuestView(guestId) {
-        // ميزة الـ Auto-Login: حفظ معرف الضيف في ذاكرة المتصفح المحلية عند زيارته أول مرة
         localStorage.setItem("last_guest_id", guestId);
 
         const gDoc = await getDoc(doc(db, "v30_guests", guestId));
@@ -593,7 +648,6 @@
                 window.open(gCalUrl, '_blank');
             };
 
-            // إذا كان الضيف قد أكد مسبقاً، نظهر بطاقته مباشرة مع عدد مرافقيه المختار
             if (gData.status === "مؤكد" || gData.status === "تم-الدخول") {
                 document.getElementById('companions-area').style.display = 'none';
                 showEntryPass(guestId, cData.map, gData.status, gData.companions || 0);
@@ -609,7 +663,6 @@
                 const selectedCompanions = parseInt(compSelect.value) || 0;
 
                 btn.disabled = true; btn.innerText = "جاري التأكيد...";
-                // حفظ التغييرات مع عدد المرافقين في Firestore
                 await updateDoc(doc(db, "v30_guests", guestId), { 
                     status: "مؤكد",
                     companions: selectedCompanions
@@ -641,7 +694,6 @@
         new QRCode(qrContainer, { text: id, width: 180, height: 180, colorDark : "#1a1a1a", colorLight : "#ffffff" });
         document.getElementById('entry-code-text').innerText = id.substring(0, 10).toUpperCase();
         
-        // عرض نص تأكيد عدد المقاعد المحجوزة
         const passCompElement = document.getElementById('pass-companions-count');
         if(companionsCount > 0) {
             passCompElement.innerText = `🎫 تم حجز مقعد لك و لـ (${companionsCount}) من مرافقيك`;
@@ -765,7 +817,6 @@
     async function init() {
         let guestId = new URLSearchParams(window.location.search).get('id');
         
-        // ميزة الـ Auto-Login للضيوف: إذا لم يتوفر مُعرف بالرابط، يبحث عنه في ذاكرة المتصفح
         if (!guestId) {
             guestId = localStorage.getItem("last_guest_id");
         }
