@@ -664,7 +664,11 @@ if (!checkPhone.empty) {
         html2pdf().set(opt).from(element).save();
         showToast("جاري تجهيز وتحميل ملف الـ PDF 📄");
     };
-
+window.copyInviteLink = (guestId) => {
+    const link = BASE_URL + "?id=" + guestId;
+    navigator.clipboard.writeText(link);
+    showToast("✅ تم نسخ رابط الدعوة");
+};
     // نسخ رابط لوحة التحكم السريع
     window.copyDashboardLink = () => {
         navigator.clipboard.writeText(window.location.href).then(() => {
