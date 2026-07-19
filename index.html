@@ -575,9 +575,29 @@
                 }
 
                 btn.disabled = true; btn.innerText = "جاري التأكيد...";
-                await updateDoc(doc(db, "v30_guests", guestId), { 
-                    status: "مؤكد", companions: selectedCompanions, companionNames: namesArr
-                }); 
+              await updateDoc(doc(db, "v30_guests", guestId), { 
+    status: "مؤكد",
+    companions: selectedCompanions,
+    companionNames: namesArr
+});
+
+// إنشاء بطاقات مستقلة للمرافقين
+for (let i = 0; i < namesArr.length; i++) {
+
+    await addDoc(collection(db, "v30_guests"), {
+        belongsTo: gData.belongsTo,
+        name: namesArr[i],
+        phone: gData.phone,
+        status: "مؤكد",
+        parentGuest: guestId,
+        isCompanion: true,
+        companionNumber: i + 1,
+        invites: 1,
+        companions: 0,
+        maxCompanions: 0
+    });
+
+}
                 
                 compArea.classList.add('hidden');
                 triggerConfetti();
