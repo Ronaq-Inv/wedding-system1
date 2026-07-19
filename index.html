@@ -223,7 +223,7 @@
     <div class="ronaq-footer">تم التطوير بكل حب 🤍 بواسطة رونق للدعوات © 2026</div>
 </div>
 
-<!-- تم تحديث هذا القسم: إضافة مسميات الخانات لتعديل بيانات الضيف -->
+<!-- مودال تعديل بيانات الضيف -->
 <div id="edit-modal" class="modal-overlay hidden">
     <div class="card fade-in" style="width: 90%; max-width: 400px;">
         <h3>تعديل بيانات الضيف 📝</h3>
@@ -250,7 +250,7 @@
     </div>
 </div>
 
-<!-- تم تحديث هذا القسم: إضافة مسميات الخانات لتعديل بيانات الحفل والعميل -->
+<!-- مودال تعديل بيانات الحفل والعميل -->
 <div id="edit-client-modal" class="modal-overlay hidden">
     <div class="card fade-in" style="width: 90%; max-width: 450px;">
         <h3>تعديل بيانات الحفل ⚙️</h3>
@@ -335,7 +335,6 @@
         setTimeout(() => location.reload(), 1500);
     };
 
-    // ميزة مضافة: حذف العميل بالكامل مع نافذة تأكيد
     window.deleteClient = async (id, clientName) => {
         if (!confirm(`⚠️ تنبيه هام جداً!\n\nهل أنت متأكد من حذف حساب العميل والمسؤل عن حفل (${clientName})؟\nلا يمكن استرجاع البيانات بعد الحذف.`)) return;
         try {
@@ -406,7 +405,6 @@
             const clientInfo = cd.data();
             evName = clientInfo.event; 
             host = clientInfo.host;
-            // تنسيق التاريخ ليظهر بشكل مقروء وجميل للعميل والإدارة
             if(clientInfo.date) {
                 const d = new Date(clientInfo.date);
                 evDateStr = d.toLocaleDateString('ar-SA', { year: 'numeric', month: 'numeric', day: 'numeric' }) + " " + d.toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' });
@@ -414,7 +412,6 @@
         });
 
         const snap = await getDocs(query(collection(db, "v30_guests"), where("belongsTo", "==", cl)));
-        // ميزة مضافة: تضمين عمود تاريخ الحفل للآدمن وللعميل
         let h = `<table id="main-data-table"><tr><th>الاسم</th><th>الحالة</th><th>المرافقين</th><th>🗓️ تاريخ ووقت الحفل</th>`;
         if(role === 'admin') h += `<th>الإجراءات</th><th>رقم الجوال</th>`;
         h += `</tr>`;
@@ -443,7 +440,6 @@
 
         const guestsArr = snap.docs.map(d => d.data());
         
-        // حساب إحصائيات متقدمة تشمل الضيوف والمرافقين الفعليين
         let totalCards = guestsArr.length;
         let actualAttendees = 0;
         let actualEntered = 0;
@@ -452,7 +448,7 @@
         guestsArr.forEach(g => {
             let comps = parseInt(g.companions || 0);
             if (g.status === 'مؤكد' || g.status === 'تم-الدخول') {
-                actualAttendees += (1 + comps); // الضيف نفسه + مرافقيه
+                actualAttendees += (1 + comps);
             }
             if (g.status === 'تم-الدخول') {
                 actualEntered += (1 + comps);
@@ -562,10 +558,9 @@
                 let importedCount = 0;
                 let skippedCount = 0;
                 
-                // بدء القراءة من السطر الثاني لتجاوز العناوين
                 for(let i = 1; i < jsonData.length; i++) {
                     const row = jsonData[i];
-                    if(!row[0]) continue; // تخطي السطور الفارغة
+                    if(!row[0]) continue; 
                     
                     let name = String(row[0]).trim();
                     let phone = row[1] ? String(row[1]).replace(/\D/g, '') : "";
@@ -573,7 +568,6 @@
                     if(phone.startsWith('0')) phone = '966' + phone.substring(1);
                     if(!phone.startsWith('966')) phone = '966' + phone;
                     
-                    // فحص إذا كان الرقم مسجل مسبقاً في هذا الحفل لمنع التكرار
                     const checkPhone = await getDocs(query(collection(db, "v30_guests"), where("belongsTo", "==", sel), where("phone", "==", phone)));
                     
                     if(checkPhone.empty) {
@@ -621,8 +615,6 @@
 
     // --- عرض الضيف وحفظ الجلسة تلقائياً ---
     async function handleGuestView(guestId) {
-        localStorage.setItem("last_guest_id", guestId);
-
         const gDoc = await getDoc(doc(db, "v30_guests", guestId));
         if (gDoc.exists()) {
             const gData = gDoc.data();
@@ -809,21 +801,20 @@
     };
 
     window.copyDashboardLink = () => {
-        navigator.clipboard.writeText(window.location.href).then(() => {
-            showToast("تم نسخ رابط لوحة الإدارة للحافظة 🔗");
+        navigator.clipboard.writeText(window.location.origin + window.location.pathname).then(() => {
+            showToast("تم نسخ الرابط الأساسي للوحة الإدارة للحافظة 🔗");
         });
     };
 
     async function init() {
+        // تم التعديل هنا: جلب الـ ID فقط وفقط من المعلمات المباشرة للرابط العلوي الحالي (URL)
         let guestId = new URLSearchParams(window.location.search).get('id');
         
-        if (!guestId) {
-            guestId = localStorage.getItem("last_guest_id");
-        }
-        
         if (guestId) {
+            // إذا كان الرابط يحتوي على معرّف ضيف صريح، يفتح كرت الدعوة الخاص به فوراً
             handleGuestView(guestId);
         } else if(sessionStorage.getItem('role')) {
+            // إذا لم يكن ضيفاً وهناك جلسة مسجلة مسبقاً (أدمن أو عميل)، يفتح لوحة التحكم
             document.getElementById('dashboard-section').classList.remove('hidden');
             document.getElementById('welcome-msg').innerText = "لوحة: " + user;
             
@@ -843,6 +834,7 @@
                 loadData(user);
             }
         } else {
+            // إذا لم يكن ضيفاً ولا توجد جلسة إدارية مفتوحة، يوجهه مباشرة لصفحة تسجيل دخول النظام
             document.getElementById('login-section').classList.remove('hidden');
         }
     }
