@@ -387,7 +387,7 @@ window.openEdit = (id, name, phone, status, cl) => {
         document.getElementById('data-table').innerHTML = h + "</table>";
         
         // إظهار أدوات الفلترة بعد تحميل الجدول
-        document.getElementById('table-tools').style.display = "flex";
+        if (role === "admin") {     document.getElementById('table-tools').style.display = "flex"; } else {     document.getElementById('table-tools').style.display = "none"; }
 
         const guestsArr = snap.docs.map(d => d.data());
         document.getElementById("table-title").innerHTML =
