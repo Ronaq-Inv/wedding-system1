@@ -446,6 +446,20 @@ if (!check.empty) {
         const sel = document.getElementById('client-select').value;
         if(!sel) return showToast("الرجاء اختيار الحفل أولاً ⚠️");
         let p = document.getElementById('g-phone').value; if(p.startsWith('0')) p = '966' + p.substring(1);
+        const checkPhone = await getDocs(
+    query(
+        collection(db, "v30_guests"),
+        where("belongsTo", "==", sel),
+        where("phone", "==", p)
+    )
+);
+
+if (!checkPhone.empty) {
+    showToast("⚠️ هذا الرقم مسجل مسبقاً في هذا الحفل");
+    btn.disabled = false;
+    btn.innerText = "إضافة للجدول";
+    return;
+}
         
         const btn = document.getElementById('save-guest');
         btn.disabled = true; btn.innerText = "جاري الإضافة...";
