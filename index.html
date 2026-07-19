@@ -6,7 +6,7 @@
     <title>نظام رونق للدعوات ⚜️</title>
     <!-- Favicon -->
     <link rel="icon" type="image/jpeg" href="logo.jpg">
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght=400;700&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 
     <!-- مكتبات مضافة للميزات الجديدة -->
@@ -45,9 +45,8 @@
     .status-انتظار { background: #fff8e1; color: #f9a825; }
     .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: flex; align-items: center; justify-content: center; z-index: 9999; }
     
-    /* تصاميم كروت الباركود المتعددة والمرافقة */
+    /* تصاميم كروت الباركود المتعددة */
     .entry-code-box { background: #f9f9f9; border: 2px dashed var(--gold); padding: 15px; margin-top: 15px; border-radius: 10px; }
-    .qrcode-wrapper { display: inline-block; background: white; padding: 10px; border: 1px solid #ddd; border-radius: 10px; margin: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
     .qrcode-container-div { display: flex; justify-content: center; margin: 10px auto; }
     
     #splash-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--pink); z-index: 99999; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: opacity 0.8s ease, visibility 0.8s; }
@@ -94,7 +93,6 @@
             <img id="event-image" loading="lazy" style="width:100%; border-radius:15px; border:2px solid var(--gold); margin-bottom:20px;">
             <p id="event-details" style="font-weight: bold; font-size: 16px;"></p>
             
-            <!-- تم تعديل مساحة المرافقين هنا لتصبح ديناميكية بناء على ما حددته الإدارة -->
             <div id="companions-area" class="hidden" style="margin-bottom: 15px; text-align: right;">
                 <label for="guest-companions" style="font-weight: bold; color: var(--dark-gold); font-size: 14px;">👥 تحديد الحضور والمرافقين:</label>
                 <select id="guest-companions" style="margin-top: 5px;"></select>
@@ -108,7 +106,7 @@
             
             <div id="after-confirm-area" class="hidden fade-in">
                 <p id="pass-title" style="margin:15px 0 5px; color:var(--dark-gold); font-weight:bold; font-size:16px;">بطاقات الدخول المعتمدة 🎫</p>
-                <!-- هنا سيتم عرض كروت الباركود المنفصلة لكل مرافق -->
+                <!-- حاوية كروت الباركود المتعددة والمحسنة للعمل بأكواد متطابقة -->
                 <div id="multicard-qrcode-container"></div>
                 <button class="btn-gold" style="margin-top:15px; background:#2c3e50" id="btn-map">📍 موقع المناسبة</button>
                 <button class="btn-gold" style="margin-top:10px; background:#f39c12; color: #fff;" id="btn-calendar">📅 أضف إلى التقويم</button>
@@ -171,7 +169,6 @@
                 <select id="client-select"></select>
                 <input id="g-name" placeholder="اسم الضيف">
                 <input id="g-phone" placeholder="الجوال (966...)">
-                <!-- تم إضافة حقل تحديد الحد الأقصى للمرافقين المسموح به للضيف الجديد -->
                 <input type="number" id="g-max-companions" placeholder="الحد الأقصى للمرافقين المسموح به (0 = بدون)" min="0" max="10" value="0">
                 <button class="btn-gold" id="save-guest" style="background:#27ae60">إضافة للجدول</button>
                 <input type="file" id="excel-file" accept=".xlsx,.xls" style="margin-top:10px;">
@@ -219,7 +216,6 @@
         <label class="modal-label">👥 الحد الأقصى للمرافقين المسموح به له:</label>
         <input type="number" id="edit-max-companions" min="0" max="10">
         
-        <!-- حقل مخفي للاستخدام الداخلي لعدد الذين تم حجزهم فعلاً -->
         <input type="hidden" id="edit-companions">
         <button class="btn-gold" id="confirm-edit" style="margin-top:15px;">تحديث</button>
         <button onclick="document.getElementById('edit-modal').classList.add('hidden')" style="background:none; color:red; margin-top:5px;">إلغاء</button>
@@ -291,13 +287,7 @@
         const btn = document.getElementById('confirm-client-update');
         btn.disabled = true; btn.innerText = "جاري الحفظ...";
         await updateDoc(doc(db, "v30_data", id), {
-            event: document.getElementById('ec-event').value,
-            host: document.getElementById('ec-host').value,
-            img: document.getElementById('ec-img').value,
-            map: document.getElementById('ec-map').value,
-            phone: document.getElementById('ec-phone').value,
-            password: document.getElementById('ec-pass').value,
-            date: document.getElementById('ec-date').value || null
+            event: document.getElementById('ec-event').value, host: document.getElementById('ec-host').value, img: document.getElementById('ec-img').value, map: document.getElementById('ec-map').value, phone: document.getElementById('ec-phone').value, password: document.getElementById('ec-pass').value, date: document.getElementById('ec-date').value || null
         });
         showToast("تم تحديث بيانات الحفل بنجاح ✅");
         setTimeout(() => location.reload(), 1500);
@@ -440,9 +430,7 @@
         const check = await getDocs(query(collection(db, "v30_data"), where("phone", "==", phone)));
         if (!check.empty) { showToast("❌ رقم الجوال مستخدم مسبقًا"); btn.disabled = false; btn.innerText = "إنشاء الحساب"; return; }
         await addDoc(collection(db, "v30_data"), { 
-            name: document.getElementById('c-name').value, phone: phone, password: document.getElementById('c-pass').value, 
-            event: document.getElementById('c-event').value, host: document.getElementById('c-host').value, 
-            img: document.getElementById('c-img').value, map: document.getElementById('c-map').value, date: evDate
+            name: document.getElementById('c-name').value, phone: phone, password: document.getElementById('c-pass').value, event: document.getElementById('c-event').value, host: document.getElementById('c-host').value, img: document.getElementById('c-img').value, map: document.getElementById('c-map').value, date: evDate
         });
         showToast("تم إنشاء الحفل بنجاح 🎉");
         setTimeout(() => location.reload(), 1500);
@@ -493,7 +481,7 @@
                     if(!row[0]) continue;
                     let name = String(row[0]).trim();
                     let phone = row[1] ? String(row[1]).replace(/\D/g, '') : "";
-                    let allowedComps = row[2] ? parseInt(row[2]) || 0 : 0; // العمود الثالث يمثل الحد الأقصى للمرافقين بالإكسل
+                    let allowedComps = row[2] ? parseInt(row[2]) || 0 : 0;
                     
                     if(phone.startsWith('0')) phone = '966' + phone.substring(1);
                     if(!phone.startsWith('966')) phone = '966' + phone;
@@ -520,10 +508,7 @@
         btn.disabled = true; btn.innerText = "جاري التحديث...";
         const maxCompVal = parseInt(document.getElementById('edit-max-companions').value) || 0;
         await updateDoc(doc(db, "v30_guests", editingGuestId), {
-            name: document.getElementById('edit-name').value, 
-            phone: document.getElementById('edit-phone').value, 
-            status: document.getElementById('edit-status').value,
-            maxCompanions: maxCompVal
+            name: document.getElementById('edit-name').value, phone: document.getElementById('edit-phone').value, status: document.getElementById('edit-status').value, maxCompanions: maxCompVal
         });
         document.getElementById('edit-modal').classList.add('hidden');
         showToast("تم التحديث بنجاح ✅");
@@ -546,7 +531,6 @@
             
             if(cData.date) startCountdown(cData.date); else document.getElementById('countdown-timer').style.display = 'none';
 
-            // ميزة: بناء خيارات المرافقين بناء على الحد الأقصى المسموح به من الإدارة
             const maxAllowed = gData.maxCompanions || 0;
             const compArea = document.getElementById('companions-area');
             const compSelect = document.getElementById('guest-companions');
@@ -558,7 +542,6 @@
                     compSelect.innerHTML += `<option value="${i}">سأحضر برفقة (${i}) من المرافقين</option>`;
                 }
                 
-                // توليد حقول لكتابة أسماء المرافقين بشكل فوري عند التغيير
                 compSelect.onchange = () => {
                     const count = parseInt(compSelect.value);
                     const container = document.getElementById('companion-names-container');
@@ -585,7 +568,6 @@
                 const btn = document.getElementById('btn-confirm');
                 const selectedCompanions = parseInt(compSelect.value) || 0;
                 
-                // تجميع أسماء المرافقين المكتوبة
                 let namesArr = [];
                 for(let k = 1; k <= selectedCompanions; k++) {
                     const nameField = document.getElementById(`comp-name-${k}`);
@@ -614,7 +596,7 @@
         }
     }
 
-    // توليد باركود وبطاقة مستقلة لكل مرافق باسمه
+    // تم التعديل هنا لتعمل جميع كروت الباركود على نفس كود الضيف الرئيسي الأساسي (guestId)
     function showMultiPass(guestId, mainGuestName, companionNamesArray, mapUrl) {
         document.getElementById('guest-actions').classList.add('hidden');
         document.getElementById('after-confirm-area').classList.remove('hidden');
@@ -622,35 +604,35 @@
         const targetContainer = document.getElementById('multicard-qrcode-container');
         targetContainer.innerHTML = "";
 
-        // 1. كرت الضيف الأساسي
+        // 1. كرت الضيف الأساسي (يحمل كود الضيف الرئيسي)
         createCardMarkup(targetContainer, guestId, mainGuestName, "الضيف الأساسي");
 
-        // 2. كروت المرافقين المستقلة
+        // 2. كروت المرافقين المستقلة (تحمل أيضاً كود الضيف الرئيسي عينه للتطابق التام مع قاعدة البيانات)
         companionNamesArray.forEach((name, index) => {
-            // كود فرعي مميز للمرافق يتم قراءته بالماسح بسهولة
-            const subCode = `${guestId}_مرافق_${index + 1}`;
-            createCardMarkup(targetContainer, subCode, name, `مرافق الضيف: ${mainGuestName}`);
+            createCardMarkup(targetContainer, guestId, name, `مرافق الضيف: ${mainGuestName} (${index + 1})`);
         });
 
         document.getElementById('btn-map').onclick = () => window.open(mapUrl, '_blank');
     }
 
-    function createCardMarkup(parentContainer, uniqueCode, displayName, labelType) {
+    // دالة إنشاء الكروت ورسم الباركود الموحد بداخل معرف عشوائي فرعي في الـ HTML لمنع تكرار الـ ID
+    function createCardMarkup(parentContainer, qrDatabaseCode, displayName, labelType) {
+        const uniqueBoxId = "qr-box-" + Math.random().toString(36).substring(2, 9);
         const wrapper = document.createElement('div');
         wrapper.className = "entry-code-box";
         wrapper.style.marginBottom = "20px";
         wrapper.innerHTML = `
             <span style="font-size:11px; font-weight:bold; background:var(--gold); color:white; padding:2px 10px; border-radius:10px;">${labelType}</span>
-            <h4 style="margin:8px 0 2px 0; color:var(--black);">${displayName}</h4>
-            <div class="qrcode-container-div" id="qr-box-${uniqueCode}"></div>
-            <p style="font-weight:bold; font-size:12px; letter-spacing:1px; margin:2px 0; color:#555;">CODE: ${uniqueCode.substring(0, 12).toUpperCase()}</p>
-            <small style="color:#777; font-size:11px;">يرجى إبراز هذا الباركود المنفصل للمنظم عند الباب 🎫</small>
+            <h4 style="margin:8px 0 2px 0; color:var(--black); font-weight: bold;">${displayName}</h4>
+            <div class="qrcode-container-div" id="${uniqueBoxId}"></div>
+            <p style="font-weight:bold; font-size:12px; letter-spacing:1px; margin:2px 0; color:#555;">CODE: ${qrDatabaseCode.substring(0, 10).toUpperCase()}</p>
+            <small style="color:#777; font-size:11px;">يرجى إبراز هذا الباركود للمنظم عند الباب 🎫</small>
         `;
         parentContainer.appendChild(wrapper);
         
-        // رسم الباركود داخل الصندوق المخصص له فوراً
-        new QRCode(document.getElementById(`qr-box-${uniqueCode}`), {
-            text: uniqueCode, width: 140, height: 140, colorDark : "#1a1a1a", colorLight : "#ffffff"
+        // رسم الباركود بقيمة الكود الأساسي المتطابق
+        new QRCode(document.getElementById(uniqueBoxId), {
+            text: qrDatabaseCode, width: 140, height: 140, colorDark : "#1a1a1a", colorLight : "#ffffff"
         });
     }
 
