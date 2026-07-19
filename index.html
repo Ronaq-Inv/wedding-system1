@@ -161,7 +161,7 @@
 
         <div class="card">
             <h3>🎀 تأسيس حفل جديد</h3>
-            <input id="c-name" placeholder="اسم المستخدم">
+            <input id="c-phone" placeholder="رقم جوال العميل (966xxxxxxxxx)"> <input id="c-name" placeholder="اسم المستخدم">
             <input id="c-pass" type="password" placeholder="كلمة المرور">
             <input id="c-event" placeholder="اسم المناسبة">
             <input id="c-host" placeholder="اسم الداعي">
@@ -290,6 +290,7 @@
     host: document.getElementById('ec-host').value,
     img: document.getElementById('ec-img').value,
     map: document.getElementById('ec-map').value,
+    phone: document.getElementById('ec-phone').value,
     password: document.getElementById('ec-pass').value,
     date: document.getElementById('ec-date').value || null
 });
@@ -398,8 +399,20 @@ window.openEdit = (id, name, phone, status, cl) => {
         const btn = document.getElementById('save-client');
         btn.disabled = true; btn.innerText = "جاري الإنشاء...";
         const evDate = document.getElementById('c-date').value || null;
+        const phone = document.getElementById('c-phone').value.trim();
+
+const check = await getDocs(
+    query(collection(db, "v30_data"), where("phone", "==", phone))
+);
+
+if (!check.empty) {
+    showToast("❌ رقم الجوال مستخدم مسبقًا");
+    btn.disabled = false;
+    btn.innerText = "إنشاء الحساب";
+    return;
+}
         await addDoc(collection(db, "v30_data"), { 
-            name: document.getElementById('c-name').value, password: document.getElementById('c-pass').value, 
+            name: document.getElementById('c-name').value, phone: phone, password: document.getElementById('c-pass').value, 
             event: document.getElementById('c-event').value, host: document.getElementById('c-host').value, 
             img: document.getElementById('c-img').value, map: document.getElementById('c-map').value,
             date: evDate
