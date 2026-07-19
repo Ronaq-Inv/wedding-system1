@@ -106,7 +106,6 @@
             
             <div id="after-confirm-area" class="hidden fade-in">
                 <p id="pass-title" style="margin:15px 0 5px; color:var(--dark-gold); font-weight:bold; font-size:16px;">بطاقات الدخول المعتمدة 🎫</p>
-                <!-- حاوية كروت الباركود المتعددة والمحسنة للعمل بأكواد متطابقة -->
                 <div id="multicard-qrcode-container"></div>
                 <button class="btn-gold" style="margin-top:15px; background:#2c3e50" id="btn-map">📍 موقع المناسبة</button>
                 <button class="btn-gold" style="margin-top:10px; background:#f39c12; color: #fff;" id="btn-calendar">📅 أضف إلى التقويم</button>
@@ -596,7 +595,7 @@
         }
     }
 
-    // تم التعديل هنا لتعمل جميع كروت الباركود على نفس كود الضيف الرئيسي الأساسي (guestId)
+    // تعديل الدالة لإبراز الكود بشكل مختلف تماماً ومميز لكل مرافق
     function showMultiPass(guestId, mainGuestName, companionNamesArray, mapUrl) {
         document.getElementById('guest-actions').classList.add('hidden');
         document.getElementById('after-confirm-area').classList.remove('hidden');
@@ -604,19 +603,24 @@
         const targetContainer = document.getElementById('multicard-qrcode-container');
         targetContainer.innerHTML = "";
 
-        // 1. كرت الضيف الأساسي (يحمل كود الضيف الرئيسي)
-        createCardMarkup(targetContainer, guestId, mainGuestName, "الضيف الأساسي");
+        // 1. كرت الضيف الأساسي (يقتطع أول 10 أحرف من الـ ID الأساسي)
+        const mainCleanCode = guestId.substring(0, 10).toUpperCase();
+        createCardMarkup(targetContainer, guestId, mainCleanCode, mainGuestName, "الضيف الأساسي");
 
-        // 2. كروت المرافقين المستقلة (تحمل أيضاً كود الضيف الرئيسي عينه للتطابق التام مع قاعدة البيانات)
+        // 2. كروت المرافقين المستقلة (يتم تركيب كود مميز يعرض رقم المرافق بوضوح وبصرياً مثل WVOF5Y6DSV-C1)
         companionNamesArray.forEach((name, index) => {
-            createCardMarkup(targetContainer, guestId, name, `مرافق الضيف: ${mainGuestName} (${index + 1})`);
+            const companionSuffix = `-C${index + 1}`;
+            const companionDatabaseCode = `${guestId}${companionSuffix}`; // القيمة الممررة للباركود عند المسح بالماسك
+            const companionDisplayCode = `${mainCleanCode}${companionSuffix}`; // النص الظاهر أسفل الباركود
+            
+            createCardMarkup(targetContainer, companionDatabaseCode, companionDisplayCode, name, `مرافق الضيف: ${mainGuestName} (${index + 1})`);
         });
 
         document.getElementById('btn-map').onclick = () => window.open(mapUrl, '_blank');
     }
 
-    // دالة إنشاء الكروت ورسم الباركود الموحد بداخل معرف عشوائي فرعي في الـ HTML لمنع تكرار الـ ID
-    function createCardMarkup(parentContainer, qrDatabaseCode, displayName, labelType) {
+    // دالة إنشاء الكروت ورسم الباركود الموحد بداخل معرف فرعي فريد
+    function createCardMarkup(parentContainer, qrCodeTextValue, codeLabelToDisplay, displayName, labelType) {
         const uniqueBoxId = "qr-box-" + Math.random().toString(36).substring(2, 9);
         const wrapper = document.createElement('div');
         wrapper.className = "entry-code-box";
@@ -625,14 +629,14 @@
             <span style="font-size:11px; font-weight:bold; background:var(--gold); color:white; padding:2px 10px; border-radius:10px;">${labelType}</span>
             <h4 style="margin:8px 0 2px 0; color:var(--black); font-weight: bold;">${displayName}</h4>
             <div class="qrcode-container-div" id="${uniqueBoxId}"></div>
-            <p style="font-weight:bold; font-size:12px; letter-spacing:1px; margin:2px 0; color:#555;">CODE: ${qrDatabaseCode.substring(0, 10).toUpperCase()}</p>
+            <p style="font-weight:bold; font-size:13px; letter-spacing:1px; margin:2px 0; color:#c5a059;">CODE: ${codeLabelToDisplay}</p>
             <small style="color:#777; font-size:11px;">يرجى إبراز هذا الباركود للمنظم عند الباب 🎫</small>
         `;
         parentContainer.appendChild(wrapper);
         
-        // رسم الباركود بقيمة الكود الأساسي المتطابق
+        // رسم الباركود بالقيمة الفريدة
         new QRCode(document.getElementById(uniqueBoxId), {
-            text: qrDatabaseCode, width: 140, height: 140, colorDark : "#1a1a1a", colorLight : "#ffffff"
+            text: qrCodeTextValue, width: 140, height: 140, colorDark : "#1a1a1a", colorLight : "#ffffff"
         });
     }
 
