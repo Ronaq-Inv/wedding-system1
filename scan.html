@@ -35,20 +35,22 @@
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
-    // متغير للتحكم في عملية المسح (منع التكرار)
     let isProcessing = false;
 
     async function onScanSuccess(decodedText) {
-        // إذا كان النظام مشغولاً بمعالجة كود حالياً، تجاهل المسحة الجديدة
         if (isProcessing) return;
 
-        isProcessing = true; // تفعيل وضع المعالجة (قفل المسح)
+        isProcessing = true; 
         const resultDiv = document.getElementById('result');
         resultDiv.className = 'scanning';
         resultDiv.innerText = "جاري التحقق من الكود...";
 
         try {
-            const guestRef = doc(db, "v30_guests", decodedText);
+            // حل المشكلة هنا: نقوم بتنظيف النص المقروء وفصل الزيادات البصرية (-m1) الخاصة بالمرافقين
+            const cleanedGuestId = decodedText.split('-')[0].trim();
+
+            // الاستعلام والبحث عن المعرف النقي المستخرج
+            const guestRef = doc(db, "v30_guests", cleanedGuestId);
             const guestSnap = await getDoc(guestRef);
 
             if (guestSnap.exists()) {
@@ -58,12 +60,10 @@
                     resultDiv.className = 'error';
                     resultDiv.innerText = `⚠️ تنبيه: ${guestData.name} مسجل دخوله مسبقاً!`;
                 } else {
-                    // تحديث الحالة إلى "تم-الدخول"
                     await updateDoc(guestRef, { status: "تم-الدخول" });
                     resultDiv.className = 'success';
                     resultDiv.innerText = `✅ تم دخول: ${guestData.name} بنجاح`;
                     
-                    // إصدار صوت تنبيه بسيط (اختياري)
                     const audio = new Audio('https://www.soundjay.com/buttons/sounds/button-3.mp3');
                     audio.play();
                 }
@@ -77,7 +77,6 @@
             console.error(error);
         }
 
-        // الانتظار لمدة 3 ثوانٍ قبل السماح بمسح كود جديد (الهدوء المطلوب)
         setTimeout(() => {
             isProcessing = false;
             if(resultDiv.className !== 'success') {
@@ -87,9 +86,8 @@
         }, 3000); 
     }
 
-    // إعداد الماسح الضوئي
     const html5QrcodeScanner = new Html5QrcodeScanner("reader", { 
-        fps: 10, // عدد الفريمات في الثانية
+        fps: 10, 
         qrbox: { width: 250, height: 250 } 
     });
     
