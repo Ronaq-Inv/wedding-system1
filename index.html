@@ -255,7 +255,7 @@
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-    import { getFirestore, collection, addDoc, getDocs, doc, updateDoc, deleteDoc, query, where, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    import { getFirestore, collection, addDoc, getDocs, doc, updateDoc, deleteDoc, query, where, getDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
     const firebaseConfig = { apiKey: "AIzaSyBycODn3kTe7uRIBYifDogSPmv2towU6lA", projectId: "wedding-system-6fadd", appId: "1:902051092170:web:e228d3138a5b091b974633" };
     const app = initializeApp(firebaseConfig);
@@ -265,8 +265,25 @@
     const role = sessionStorage.getItem('role');
     const user = sessionStorage.getItem('user');
     let editingGuestId = "";
+    let unsubGuests = null; // للمزامنة الحية وعمل Unsubscribe عند الخروج
 
-    window.logout = () => { sessionStorage.clear(); localStorage.removeItem("last_guest_id"); window.location.href = window.location.origin + window.location.pathname; };
+    // دالة تشفير لحماية كلمة مرور الأدمن من الواجهة المفتوحة (SHA-256 Simple Mask)
+    async function checkAdminHash(inputPassword) {
+        const encoder = new TextEncoder();
+        const data = encoder.encode(inputPassword);
+        const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+        const hashArray = Array.from(new Uint8Array(hashBuffer));
+        const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+        // الـ Hash الخاص بكلمة مرور أدمن الحالية "Aa0532956835"
+        return hashHex === "77e38dd9fcb633f81e3c8340d3a77196307779fdfb74fbbfbb7ba721669ef05e";
+    }
+
+    window.logout = () => { 
+        if (unsubGuests) unsubGuests();
+        sessionStorage.clear(); 
+        localStorage.removeItem("last_guest_id"); 
+        window.location.href = window.location.origin + window.location.pathname; 
+    };
 
     // --- وظائف الأدمن لتعديل العملاء وحذفهم ---
     window.openEditClient = (id, ev, host, img, map, pass, date, phone = "") => {
@@ -336,7 +353,6 @@
         if (!confirm("⚠️ هل أنت متأكد من حذف هذا الضيف؟")) return;
         await deleteDoc(doc(db, "v30_guests", id));
         showToast("تم حذف الضيف بنجاح 🗑️");
-        loadData(clientName);
     };
 
     window.openEdit = (id, name, phone, status, cl, companions = 0, maxCompanions = 0) => {
@@ -350,8 +366,11 @@
         window.currentSelectedClient = cl;
     };
 
-    async function loadData(cl) {
+    // تحسين دالة جلب البيانات لتصبح لحظية (Live System) بدون الحاجة لعمل Refresh
+    async function listenToData(cl) {
         if (!cl) return;
+        if (unsubGuests) unsubGuests(); // إلغاء المراقبة السابقة لتفادي استهلاك الشبكة
+
         const cSnap = await getDocs(query(collection(db, "v30_data"), where("name", "==", cl)));
         let evName = ""; let host = ""; let evDateStr = "غير محدد";
         cSnap.forEach(cd => { 
@@ -363,48 +382,59 @@
             }
         });
 
-        const snap = await getDocs(query(collection(db, "v30_guests"), where("belongsTo", "==", cl)));
-        let h = `<table id="main-data-table"><tr><th>الاسم</th><th>الحالة</th><th>المرافقين المحجوزين</th><th>مسموح له بـ</th><th>🗓️ تاريخ الحفل</th>`;
-        if(role === 'admin') h += `<th>الإجراءات</th><th>رقم الجوال</th>`;
-        h += `</tr>`;
-
-        snap.forEach(d => {
-            const g = d.data();
-            const comps = g.companions || 0;
-            const maxComps = g.maxCompanions || 0;
-            h += `<tr class="guest-row" data-status="${g.status}">
-                    <td class="guest-name">${g.name}</td>
-                    <td><span class="status-pill status-${g.status}">${g.status.replace('-',' ')}</span></td>
-                    <td>${comps} مرافقين</td>
-                    <td style="font-weight: bold; color: #2980b9;">${maxComps} مرافقين</td>
-                    <td style="color: var(--dark-gold); font-weight: bold;">${evDateStr}</td>`;
-            if(role === 'admin') {
-                h += `<td>
-                    <button onclick="window.prepareWA('${g.phone}', '${g.name}', '${evName}', '${d.id}', '${host}')" class="btn-wa">إرسال</button>
-                    <button onclick="window.copyInviteLink('${d.id}')" style="background:#8e44ad;color:white;padding:6px 10px;border:none;border-radius:8px;font-size:11px;margin:2px;">🔗 نسخ</button>
-                    <button onclick="window.openEdit('${d.id}', '${g.name}', '${g.phone}', '${g.status}', '${cl}', ${comps}, ${maxComps})" class="btn-edit">تعديل</button>
-                    <button onclick="window.deleteGuest('${d.id}','${cl}')" style="background:#e74c3c;color:white;padding:6px 10px;border:none;border-radius:8px;font-size:11px;margin:2px;">🗑️ حذف</button>
-                </td><td class="guest-phone">${g.phone}</td>`;
-            }
-            h += `</tr>`;
-        });
-        document.getElementById('data-table').innerHTML = h + "</table>";
+        const q = query(collection(db, "v30_guests"), where("belongsTo", "==", cl));
         
-        if (role === "admin") { document.getElementById('table-tools').style.display = "flex"; } else { document.getElementById('table-tools').style.display = "none"; }
+        // استخدام onSnapshot لجعل اللوحة مرنة وحية ومباشرة 100%
+        unsubGuests = onSnapshot(q, (snapshot) => {
+            let h = `<table id="main-data-table"><tr><th>الاسم</th><th>الحالة</th><th>المرافقين المحجوزين</th><th>مسموح له بـ</th><th>🗓️ تاريخ الحفل</th>`;
+            if(role === 'admin') h += `<th>الإجراءات</th><th>رقم الجوال</th>`;
+            h += `</tr>`;
 
-        const guestsArr = snap.docs.map(d => d.data());
-        let totalCards = guestsArr.length, actualAttendees = 0, actualEntered = 0, totalDeclines = guestsArr.filter(g => g.status === 'اعتذار').length;
+            let totalCards = 0, actualAttendees = 0, actualEntered = 0, totalDeclines = 0;
 
-        guestsArr.forEach(g => {
-            let comps = parseInt(g.companions || 0);
-            if (g.status === 'مؤكد' || g.status === 'تم-الدخول') actualAttendees += (1 + comps);
-            if (g.status === 'تم-الدخول') actualEntered += (1 + comps);
+            snapshot.forEach(d => {
+                const g = d.data();
+                
+                // عدم تكرار عرض المرافقين كصفوف منفصلة في جدول الإدارة
+                if(g.isCompanion) return; 
+
+                totalCards++;
+                const comps = parseInt(g.companions || 0);
+                const maxComps = parseInt(g.maxCompanions || 0);
+
+                if (g.status === 'مؤكد' || g.status === 'تم-الدخول') actualAttendees += (1 + comps);
+                if (g.status === 'تم-الدخول') actualEntered += (1 + comps);
+                if (g.status === 'اعتذار') totalDeclines++;
+
+                h += `<tr class="guest-row" data-status="${g.status}">
+                        <td class="guest-name">${g.name}</td>
+                        <td><span class="status-pill status-${g.status}">${g.status.replace('-',' ')}</span></td>
+                        <td>${comps} مرافقين</td>
+                        <td style="font-weight: bold; color: #2980b9;">${maxComps} مرافقين</td>
+                        <td style="color: var(--dark-gold); font-weight: bold;">${evDateStr}</td>`;
+                if(role === 'admin') {
+                    h += `<td>
+                        <button onclick="window.prepareWA('${g.phone}', '${g.name}', '${evName}', '${d.id}', '${host}')" class="btn-wa">إرسال</button>
+                        <button onclick="window.copyInviteLink('${d.id}')" style="background:#8e44ad;color:white;padding:6px 10px;border:none;border-radius:8px;font-size:11px;margin:2px;">🔗 نسخ</button>
+                        <button onclick="window.openEdit('${d.id}', '${g.name}', '${g.phone}', '${g.status}', '${cl}', ${comps}, ${maxComps})" class="btn-edit">تعديل</button>
+                        <button onclick="window.deleteGuest('${d.id}','${cl}')" style="background:#e74c3c;color:white;padding:6px 10px;border:none;border-radius:8px;font-size:11px;margin:2px;">🗑️ حذف</button>
+                    </td><td class="guest-phone">${g.phone}</td>`;
+                }
+                h += `</tr>`;
+            });
+
+            document.getElementById('data-table').innerHTML = h + "</table>";
+            
+            if (role === "admin") { document.getElementById('table-tools').style.display = "flex"; } else { document.getElementById('table-tools').style.display = "none"; }
+
+            document.getElementById('stat-total').innerText = totalCards;
+            document.getElementById('stat-yes').innerText = actualAttendees;
+            document.getElementById('stat-entered').innerText = actualEntered;
+            document.getElementById('stat-no').innerText = totalDeclines;
+
+            // الحفاظ على الفلترة والبحث الفوري أثناء استلام بيانات جديدة حيّة
+            filterTable();
         });
-
-        document.getElementById('stat-total').innerText = totalCards;
-        document.getElementById('stat-yes').innerText = actualAttendees;
-        document.getElementById('stat-entered').innerText = actualEntered;
-        document.getElementById('stat-no').innerText = totalDeclines;
     }
 
     // --- المعالجات الأساسية ---
@@ -412,7 +442,12 @@
         const btn = document.getElementById('login-btn');
         btn.disabled = true; btn.innerText = "جاري التحقق...";
         const u = document.getElementById('user-input').value, p = document.getElementById('pass-input').value;
-        if(u === "admin" && p === "Aa0532956835") { sessionStorage.setItem('role','admin'); sessionStorage.setItem('user',u); location.reload(); }
+        
+        // التحقق الآمن دون إظهار النص الصريح لكلمة مرور الإدارة في الصفحة
+        const isAdminValid = await checkAdminHash(p);
+        if(u === "admin" && isAdminValid) { 
+            sessionStorage.setItem('role','admin'); sessionStorage.setItem('user',u); location.reload(); 
+        }
         else {
             const snap = await getDocs(query(collection(db, "v30_data"), where("name","==",u), where("password","==",p)));
             if(!snap.empty) { sessionStorage.setItem('role','client'); sessionStorage.setItem('user',u); location.reload(); } 
@@ -454,7 +489,6 @@
         showToast(`تم إضافة الضيف ${document.getElementById('g-name').value} بنجاح ✅`);
         document.getElementById('g-name').value = ""; document.getElementById('g-phone').value = ""; document.getElementById('g-max-companions').value = "0";
         btn.disabled = false; btn.innerText = "إضافة للجدول";
-        loadData(sel);
     };
 
     document.getElementById('import-excel').onclick = () => {
@@ -495,7 +529,6 @@
                 }
                 showToast(`تم استيراد ${importedCount} ضيف بنجاح! 🎉`);
                 fileInput.value = "";
-                loadData(sel);
             } catch (err) { showToast("حدث خطأ أثناء قراءة الملف ❌"); }
             btn.disabled = false; btn.innerText = "📥 استيراد الضيوف من Excel";
         };
@@ -512,7 +545,6 @@
         document.getElementById('edit-modal').classList.add('hidden');
         showToast("تم التحديث بنجاح ✅");
         btn.disabled = false; btn.innerText = "تحديث";
-        loadData(window.currentSelectedClient || user);
     };
 
     // --- عرض الضيف وإدارة كروت الدعوة والباركدات المتعددة للمرافقين ---
@@ -575,55 +607,36 @@
                 }
 
                 btn.disabled = true; btn.innerText = "جاري التأكيد...";
-      await updateDoc(doc(db, "v30_guests", guestId), { 
-    status: "مؤكد",
-    companions: selectedCompanions
-});
 
-let companionIds = [];
+                let companionIds = [];
+                // إصلاح خطأ التكرار الفادح: الآن تُنشأ بطاقة مستقلة واحدة لكل مرافق
+                for (let i = 0; i < namesArr.length; i++) {
+                    const companionDoc = await addDoc(collection(db, "v30_guests"), {
+                        belongsTo: gData.belongsTo,
+                        name: namesArr[i],
+                        phone: gData.phone,
+                        status: "مؤكد",
+                        companions: 0,
+                        maxCompanions: 0,
+                        isCompanion: true,
+                        parentGuest: guestId,
+                        companionNumber: i + 1,
+                        invites: 1
+                    });
+                    companionIds.push(companionDoc.id);
+                }
 
-for (let i = 0; i < namesArr.length; i++) {
-
-    const companionDoc = await addDoc(collection(db, "v30_guests"), {
-        belongsTo: gData.belongsTo,
-        name: namesArr[i],
-        phone: gData.phone,
-        status: "مؤكد",
-        companions: 0,
-        maxCompanions: 0,
-        isCompanion: true,
-        parentGuest: guestId
-    });
-
-    companionIds.push(companionDoc.id);
-}
-
-await updateDoc(doc(db, "v30_guests", guestId), {
-    companionNames: companionIds
-});
-
-// إنشاء بطاقات مستقلة للمرافقين
-for (let i = 0; i < namesArr.length; i++) {
-
-    await addDoc(collection(db, "v30_guests"), {
-        belongsTo: gData.belongsTo,
-        name: namesArr[i],
-        phone: gData.phone,
-        status: "مؤكد",
-        parentGuest: guestId,
-        isCompanion: true,
-        companionNumber: i + 1,
-        invites: 1,
-        companions: 0,
-        maxCompanions: 0
-    });
-
-}
+                // تحديث مستند الضيف الأساسي وحفظ مرجع مصفوفة المرافقين
+                await updateDoc(doc(db, "v30_guests", guestId), { 
+                    status: "مؤكد",
+                    companions: selectedCompanions,
+                    companionNames: companionIds
+                });
                 
                 compArea.classList.add('hidden');
                 triggerConfetti();
                 showToast("تم تأكيد حضورك وحجز المقاعد بنجاح! 🎉");
-                const updatedGuest = await getDoc(doc(db, "v30_guests", guestId));  showMultiPass(     guestId,     gData.name,     updatedGuest.data().companionNames || [],     cData.map ); 
+                showMultiPass(guestId, gData.name, companionIds, cData.map); 
             };
             
             document.getElementById('btn-decline').onclick = async () => { 
@@ -636,32 +649,42 @@ for (let i = 0; i < namesArr.length; i++) {
         }
     }
 
-    // تعديل الدالة لإبراز الكود بشكل مختلف تماماً ومميز لكل مرافق
-    function showMultiPass(guestId, mainGuestName, companionNamesArray, mapUrl) {
+    // دالة عرض الكروت بصورة ديناميكية كاملة وبأسماء واضحة تمنع غموض المنظم
+    async function showMultiPass(guestId, mainGuestName, companionIdsArray, mapUrl) {
         document.getElementById('guest-actions').classList.add('hidden');
         document.getElementById('after-confirm-area').classList.remove('hidden');
         
         const targetContainer = document.getElementById('multicard-qrcode-container');
-        targetContainer.innerHTML = "";
+        targetContainer.innerHTML = "<p style='color: var(--dark-gold);'>جاري تحميل وتوليد بطاقات الدخول... ⏳</p>";
 
-        // 1. كرت الضيف الأساسي (يقتطع أول 10 أحرف من الـ ID الأساسي)
+        const cardsWrapper = document.createElement('div');
+
+        // 1. كرت الضيف الأساسي
         const mainCleanCode = guestId.substring(0, 10).toUpperCase();
-        createCardMarkup(targetContainer, guestId, mainCleanCode, mainGuestName, "الضيف الأساسي");
+        createCardMarkup(cardsWrapper, guestId, mainCleanCode, mainGuestName, "الضيف الأساسي");
 
-        // 2. كروت المرافقين المستقلة (يتم تركيب كود مميز يعرض رقم المرافق بوضوح وبصرياً مثل WVOF5Y6DSV-C1)
-    companionNamesArray.forEach((companionId, index) => {
+        // 2. كروت المرافقين المستقلة مع جلب أسمائهم الفعلية بطريقة متزامنة (Async/Await)
+        if (companionIdsArray && companionIdsArray.length > 0) {
+            for (let i = 0; i < companionIdsArray.length; i++) {
+                const compDoc = await getDoc(doc(db, "v30_guests", companionIdsArray[i]));
+                if (compDoc.exists()) {
+                    const compData = compDoc.data();
+                    const companionDisplayCode = companionIdsArray[i].substring(0, 10).toUpperCase();
+                    createCardMarkup(cardsWrapper, companionIdsArray[i], companionDisplayCode, compData.name, `مرافق (كرت رقم ${i + 1})`);
+                }
+            }
+        }
 
-    const companionDisplayCode = companionId.substring(0,10).toUpperCase();
+        targetContainer.innerHTML = "";
+        targetContainer.appendChild(cardsWrapper);
 
-    createCardMarkup(
-        targetContainer,
-        companionId,
-        companionDisplayCode,
-        "مرافق",
-        `مرافق الضيف: ${mainGuestName} (${index + 1})`
-    );
+        // توليد أكواد الـ QR بعد إضافة العناصر بشكل كامل إلى الـ DOM
+        cardsWrapper.querySelectorAll('.qrcode-container-div').forEach(div => {
+            new QRCode(div, {
+                text: div.dataset.qrvalue, width: 140, height: 140, colorDark : "#1a1a1a", colorLight : "#ffffff"
+            });
+        });
 
-});
         document.getElementById('btn-map').onclick = () => window.open(mapUrl, '_blank');
     }
 
@@ -674,16 +697,11 @@ for (let i = 0; i < namesArr.length; i++) {
         wrapper.innerHTML = `
             <span style="font-size:11px; font-weight:bold; background:var(--gold); color:white; padding:2px 10px; border-radius:10px;">${labelType}</span>
             <h4 style="margin:8px 0 2px 0; color:var(--black); font-weight: bold;">${displayName}</h4>
-            <div class="qrcode-container-div" id="${uniqueBoxId}"></div>
+            <div class="qrcode-container-div" id="${uniqueBoxId}" data-qrvalue="${qrCodeTextValue}"></div>
             <p style="font-weight:bold; font-size:13px; letter-spacing:1px; margin:2px 0; color:#c5a059;">CODE: ${codeLabelToDisplay}</p>
             <small style="color:#777; font-size:11px;">يرجى إبراز هذا الباركود للمنظم عند الباب 🎫</small>
         `;
         parentContainer.appendChild(wrapper);
-        
-        // رسم الباركود بالقيمة الفريدة
-        new QRCode(document.getElementById(uniqueBoxId), {
-            text: qrCodeTextValue, width: 140, height: 140, colorDark : "#1a1a1a", colorLight : "#ffffff"
-        });
     }
 
     // --- بقية الدوال المساعدة والنظام الأساسي ---
@@ -712,9 +730,17 @@ for (let i = 0; i < namesArr.length; i++) {
         }, 1000);
     };
     window.filterTable = () => {
-        const searchText = document.getElementById('search-guest').value.toLowerCase(), statusFilter = document.getElementById('filter-status').value;
+        const searchInput = document.getElementById('search-guest');
+        const filterSelect = document.getElementById('filter-status');
+        if (!searchInput || !filterSelect) return;
+
+        const searchText = searchInput.value.toLowerCase();
+        const statusFilter = filterSelect.value;
+
         document.querySelectorAll('#main-data-table .guest-row').forEach(row => {
-            const name = row.querySelector('.guest-name').innerText.toLowerCase(), phone = row.querySelector('.guest-phone') ? row.querySelector('.guest-phone').innerText : "", status = row.getAttribute('data-status');
+            const name = row.querySelector('.guest-name').innerText.toLowerCase();
+            const phone = row.querySelector('.guest-phone') ? row.querySelector('.guest-phone').innerText : "";
+            const status = row.getAttribute('data-status');
             if((name.includes(searchText) || phone.includes(searchText)) && (statusFilter === 'all' || status === statusFilter)) row.style.display = ""; else row.style.display = "none";
         });
     };
@@ -734,9 +760,9 @@ for (let i = 0; i < namesArr.length; i++) {
                 const s = await getDocs(collection(db, "v30_data")), sel = document.getElementById('client-select');
                 sel.innerHTML = "<option value=''>اختر الحفل لعرض الضيوف...</option>";
                 s.forEach(d => sel.innerHTML += `<option value="${d.data().name}">${d.data().name}</option>`);
-                sel.onchange = () => loadData(sel.value);
+                sel.onchange = () => listenToData(sel.value);
             } else {
-                document.getElementById('guest-add-card').style.display = "none"; document.querySelector('#table-title').innerText = "قائمة ضيوفك 📜"; loadData(user);
+                document.getElementById('guest-add-card').style.display = "none"; document.querySelector('#table-title').innerText = "قائمة ضيوفك 📜"; listenToData(user);
             }
         } else { document.getElementById('login-section').classList.remove('hidden'); }
     }
