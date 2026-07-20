@@ -5,22 +5,27 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ماسح الدخول 🔍</title>
     <script src="https://unpkg.com/html5-qrcode"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght=400;700&display=swap" rel="stylesheet">
     <style>
         body { font-family: 'Cairo', sans-serif; background: #1a1a1a; color: white; text-align: center; margin: 0; padding: 20px; }
-        #reader { width: 100%; max-width: 500px; margin: auto; border: 2px solid #c5a059; border-radius: 15px; overflow: hidden; background: #000; }
-        #result { margin-top: 20px; padding: 15px; border-radius: 10px; font-weight: bold; font-size: 18px; }
-        .success { background: #27ae60; color: white; }
-        .error { background: #e74c3c; color: white; }
-        .scanning { background: #34495e; color: #fff; }
+        .scanner-container { max-width: 500px; margin: auto; padding: 10px; }
+        #reader { width: 100%; border: 2px solid #c5a059; border-radius: 15px; overflow: hidden; background: #000; box-shadow: 0 10px 30px rgba(197,160,89,0.2); }
+        #result { margin-top: 20px; padding: 18px; border-radius: 12px; font-weight: bold; font-size: 18px; transition: all 0.3s ease; }
+        .success { background: #27ae60; color: white; border: 2px solid #2ecc71; }
+        .error { background: #e74c3c; color: white; border: 2px solid #c0392b; }
+        .scanning { background: #34495e; color: #fff; border: 2px solid #2c3e50; }
+        .btn-reload { margin-top: 20px; padding: 12px 25px; border-radius: 8px; cursor: pointer; border: 1px solid #c5a059; background: #2c3e50; color: #fff; font-family: 'Cairo'; font-weight: bold; transition: 0.3s; }
+        .btn-reload:hover { background: #c5a059; color: #1a1a1a; }
     </style>
 </head>
 <body>
 
-    <h2 style="color:#c5a059">نظام رونق - ماسح الدخول ⚜️</h2>
-    <div id="reader"></div>
-    <div id="result" class="scanning">بانتظار مسح الكود...</div>
-    <button onclick="location.reload()" style="margin-top:20px; padding:10px; border-radius:8px; cursor:pointer;">إعادة تشغيل الكاميرا</button>
+    <div class="scanner-container">
+        <h2 style="color:#c5a059; margin-bottom: 25px;">نظام رونق - ماسح الدخول ⚜️</h2>
+        <div id="reader"></div>
+        <div id="result" class="scanning">بانتظار مسح الكود...</div>
+        <button class="btn-reload" onclick="location.reload()">🔄 إعادة تشغيل الكاميرا</button>
+    </div>
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
@@ -37,19 +42,34 @@
 
     let isProcessing = false;
 
+    // دالة ذكية مضافة لاستخراج المعرف حتى لو تم مسح رابط الدعوة الكامل بالخطأ
+    function extractGuestId(scannedText) {
+        const trimmed = scannedText.trim();
+        try {
+            // إذا كان الممسوح عبارة عن رابط يحتوي على معلمة id
+            if (trimmed.includes('?id=') || trimmed.includes('&id=')) {
+                const urlParams = new URLSearchParams(trimmed.substring(trimmed.indexOf('?')));
+                const idFromUrl = urlParams.get('id');
+                if (idFromUrl) return idFromUrl.trim();
+            }
+        } catch (e) {
+            console.error("خطأ أثناء تحليل الرابط:", e);
+        }
+        return trimmed; // العودة للكود الافتراضي إذا لم يكن رابطاً
+    }
+
     async function onScanSuccess(decodedText) {
         if (isProcessing) return;
 
         isProcessing = true; 
         const resultDiv = document.getElementById('result');
         resultDiv.className = 'scanning';
-        resultDiv.innerText = "جاري التحقق من الكود...";
+        resultDiv.innerText = "جاري التحقق من الكود وقاعدة البيانات... 🔄";
+
+        const cleanedGuestId = extractGuestId(decodedText);
 
         try {
-          // استخدام الكود كامل بدون حذف أي جزء
-const cleanedGuestId = decodedText.trim();
-
-const guestRef = doc(db, "v30_guests", cleanedGuestId);
+            const guestRef = doc(db, "v30_guests", cleanedGuestId);
             const guestSnap = await getDoc(guestRef);
 
             if (guestSnap.exists()) {
@@ -58,36 +78,54 @@ const guestRef = doc(db, "v30_guests", cleanedGuestId);
                 if (guestData.status === "تم-الدخول") {
                     resultDiv.className = 'error';
                     resultDiv.innerText = `⚠️ تنبيه: ${guestData.name} مسجل دخوله مسبقاً!`;
+                    playAudio('https://actions.google.com/sounds/v1/alarms/digital_watch_alarm_long.ogg');
+                } else if (guestData.status === "اعتذار") {
+                    resultDiv.className = 'error';
+                    resultDiv.innerText = `❌ تنبيه: هذا الضيف (${guestData.name}) قد سجل اعتذاره عن الحضور سابقا!`;
+                    playAudio('https://actions.google.com/sounds/v1/alarms/digital_watch_alarm_long.ogg');
                 } else {
+                    // تحديث الحالة بنجاح (متوافق مع الضيوف والمرافقين على حد سواء)
                     await updateDoc(guestRef, { status: "تم-الدخول" });
                     resultDiv.className = 'success';
-                    resultDiv.innerText = `✅ تم دخول: ${guestData.name} بنجاح`;
                     
-                    const audio = new Audio('https://www.soundjay.com/buttons/sounds/button-3.mp3');
-                    audio.play();
+                    // إذا كان مرافقاً، نوضح ذلك للمنظم
+                    const label = guestData.isCompanion ? `المرافق: ${guestData.name}` : `الضيف: ${guestData.name}`;
+                    resultDiv.innerText = `✅ تم دخول [ ${label} ] بنجاح`;
+                    
+                    playAudio('https://actions.google.com/sounds/v1/alarms/beep_short.ogg');
                 }
             } else {
                 resultDiv.className = 'error';
-                resultDiv.innerText = "❌ الكود غير صحيح أو غير موجود!";
+                resultDiv.innerText = "❌ الكود غير صحيح أو غير موجود بالنظام!";
+                playAudio('https://actions.google.com/sounds/v1/alarms/digital_watch_alarm_long.ogg');
             }
         } catch (error) {
             resultDiv.className = 'error';
-            resultDiv.innerText = "حدث خطأ أثناء الاتصال بالقاعدة";
+            resultDiv.innerText = "حدث خطأ أثناء الاتصال بالقاعدة 🌐";
             console.error(error);
         }
 
+        // إرجاع الماسح لوضع الاستعداد تلقائياً بعد 3 ثوانٍ لاستقبال الكود التالي فوراً
         setTimeout(() => {
             isProcessing = false;
-            if(resultDiv.className !== 'success') {
-                resultDiv.innerText = "جاهز لمسح كود جديد...";
-                resultDiv.className = 'scanning';
-            }
+            resultDiv.innerText = "جاهز لمسح كود جديد... 🔍";
+            resultDiv.className = 'scanning';
         }, 3000); 
     }
 
+    function playAudio(url) {
+        try {
+            const audio = new Audio(url);
+            audio.play().catch(e => console.log("الصوت يحتاج تفاعل مع الواجهة أولاً"));
+        } catch (e) {
+            console.error(e);
+        }
+    }
+
     const html5QrcodeScanner = new Html5QrcodeScanner("reader", { 
-        fps: 10, 
-        qrbox: { width: 250, height: 250 } 
+        fps: 15, // زيادة الفريمات لسرعة استجابة الكاميرا أثناء التقاط الكود
+        qrbox: { width: 250, height: 250 },
+        rememberLastUsedCamera: true // تذكر الكاميرا الخلفية المستخدمة سابقاً
     });
     
     html5QrcodeScanner.render(onScanSuccess);
