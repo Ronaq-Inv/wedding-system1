@@ -90,7 +90,7 @@
                 ⏳ يتبقى على موعدنا: <span id="time-left">جاري الحساب...</span>
             </div>
 
-            <img id="event-image" loading="lazy" style="width:100%; border-radius:15px; border:2px solid var(--gold); margin-bottom:20px;">
+            <!-- حاوية الوسائط التفاعلية --> <div id="media-container" style="width:100%; border-radius:15px; border:2px solid var(--gold); margin-bottom:20px; overflow:hidden; background:#000; position:relative;">     <!-- خيار 1: الصورة -->     <img id="event-image" loading="lazy" class="hidden" style="width:100%; display:block; object-fit:contain;">          <!-- خيار 2: فيديو MP4 مباشر -->     <video id="event-video" controls class="hidden" style="width:100%; display:block;" playsinline>         Your browser does not support the video tag.     </video>          <!-- خيار 3: فيديو يوتيوب -->     <div id="youtube-wrapper" class="hidden" style="position:relative; padding-bottom:56.25%; height:0;">         <iframe id="event-youtube" style="position:absolute; top:0; left:0; width:100%; height:100%; border:0;" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>     </div> </div>
             <p id="event-details" style="font-weight: bold; font-size: 16px;"></p>
             
             <div id="companions-area" class="hidden" style="margin-bottom: 15px; text-align: right;">
@@ -152,7 +152,7 @@
                 <input id="c-phone" placeholder="رقم جوال العميل (9665XXXXXXXX)">
                 <input id="c-event" placeholder="اسم المناسبة">
                 <input id="c-host" placeholder="اسم الداعي">
-                <input id="c-img" placeholder="رابط صورة الدعوة">
+                <input id="c-img" placeholder="رابط صورة أو فيديو الدعوة (MP4 / YouTube)">
                 <input id="c-map" placeholder="رابط الموقع">
                 <input id="c-date" type="datetime-local" placeholder="تاريخ ووقت المناسبة">
                 <button class="btn-gold" id="save-client">إنشاء الحساب</button>
@@ -230,7 +230,7 @@
         <label class="modal-label">👑 اسم الداعي:</label>
         <input id="ec-host" placeholder="اسم الداعي">
         <label class="modal-label">🖼️ رابط صورة الدعوة:</label>
-        <input id="ec-img" placeholder="رابط صورة الدعوة">
+        <input id="ec-img" placeholder="رابط صورة أو فيديو الدعوة (MP4 / YouTube)">
         <label class="modal-label">📍 رابط موقع القاعة:</label>
         <input id="ec-map" placeholder="رابط الموقع">
         <label class="modal-label">📅 تاريخ ووقت المناسبة:</label>
@@ -557,8 +557,41 @@
             
             document.getElementById('guest-section').classList.remove('hidden');
             document.getElementById('guest-welcome').innerText = `أهلاً بك يا ${gData.name}`;
-            document.getElementById('event-image').src = cData.img;
             document.getElementById('event-details').innerText = `${cData.event} - الداعي: ${cData.host}`;
+
+const mediaUrl = cData.img ? cData.img.trim() : "";
+const imgEl = document.getElementById('event-image');
+const videoEl = document.getElementById('event-video');
+const ytWrapper = document.getElementById('youtube-wrapper');
+const ytEl = document.getElementById('event-youtube');
+
+// إخفاء الكل أولاً لإعادة التعيين
+imgEl.classList.add('hidden');
+videoEl.classList.add('hidden');
+ytWrapper.classList.add('hidden');
+videoEl.pause(); // إيقاف الفيديو السابق لو كان يعمل
+
+if (mediaUrl.includes('youtube.com/') || mediaUrl.includes('youtu.be/')) {
+    // إذا كان الرابط من يوتيوب، تحويله إلى رابط Embed صالح للعرض
+    let videoId = "";
+    if (mediaUrl.includes('v=')) {
+        videoId = mediaUrl.split('v=')[1].split('&')[0];
+    } else if (mediaUrl.includes('youtu.be/')) {
+        videoId = mediaUrl.split('youtu.be/')[1].split('?')[0];
+    }
+    ytEl.src = `https://www.youtube.com/embed/${videoId}`;
+    ytWrapper.classList.remove('hidden');
+} 
+else if (mediaUrl.match(/\.(mp4|webm|ogg|mov)($|\?)/i) || mediaUrl.includes('firebasestorage.googleapis.com')) {
+    // إذا كان الرابط فيديو مباشر (بما في ذلك المرفوع على Firebase Storage)
+    videoEl.src = mediaUrl;
+    videoEl.classList.remove('hidden');
+} 
+else {
+    // الخيار الافتراضي: التعامل معه كصورة ثابتة
+    imgEl.src = mediaUrl || 'logo.jpg'; // صورة افتراضية لو فارغ
+    imgEl.classList.remove('hidden');
+}
             
             if(cData.date) startCountdown(cData.date); else document.getElementById('countdown-timer').style.display = 'none';
 
