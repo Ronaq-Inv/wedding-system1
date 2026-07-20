@@ -90,7 +90,19 @@
                 ⏳ يتبقى على موعدنا: <span id="time-left">جاري الحساب...</span>
             </div>
 
-            <!-- حاوية الوسائط التفاعلية --> <div id="media-container" style="width:100%; border-radius:15px; border:2px solid var(--gold); margin-bottom:20px; overflow:hidden; background:#000; position:relative;">     <!-- خيار 1: الصورة -->     <img id="event-image" loading="lazy" class="hidden" style="width:100%; display:block; object-fit:contain;">          <!-- خيار 2: فيديو MP4 مباشر -->     <video id="event-video" controls class="hidden" style="width:100%; display:block;" playsinline>         Your browser does not support the video tag.     </video>          <!-- خيار 3: فيديو يوتيوب -->     <div id="youtube-wrapper" class="hidden" style="position:relative; padding-bottom:56.25%; height:0;">         <iframe id="event-youtube" style="position:absolute; top:0; left:0; width:100%; height:100%; border:0;" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>     </div> </div>
+            <!-- حاوية الوسائط التفاعلية --> 
+            <div id="media-container" style="width:100%; border-radius:15px; border:2px solid var(--gold); margin-bottom:20px; overflow:hidden; background:#000; position:relative;">     
+                <!-- خيار 1: الصورة -->     
+                <img id="event-image" loading="lazy" class="hidden" style="width:100%; display:block; object-fit:contain;">          
+                <!-- خيار 2: فيديو MP4 مباشر -->     
+                <video id="event-video" controls class="hidden" style="width:100%; display:block;" playsinline>          
+                    Your browser does not support the video tag.     
+                </video>          
+                <!-- خيار 3: فيديو يوتيوب -->     
+                <div id="youtube-wrapper" class="hidden" style="position:relative; padding-bottom:56.25%; height:0;">         
+                    <iframe id="event-youtube" style="position:absolute; top:0; left:0; width:100%; height:100%; border:0;" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>     
+                </div> 
+            </div>
             <p id="event-details" style="font-weight: bold; font-size: 16px;"></p>
             
             <div id="companions-area" class="hidden" style="margin-bottom: 15px; text-align: right;">
@@ -267,17 +279,6 @@
     let editingGuestId = "";
     let unsubGuests = null; // للمزامنة الحية وعمل Unsubscribe عند الخروج
 
-    // دالة تشفير لحماية كلمة مرور الأدمن من الواجهة المفتوحة (SHA-256 Simple Mask)
-    async function checkAdminHash(inputPassword) {
-        const encoder = new TextEncoder();
-        const data = encoder.encode(inputPassword);
-        const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-        const hashArray = Array.from(new Uint8Array(hashBuffer));
-        const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-        // الـ Hash الخاص بكلمة مرور أدمن الحالية "Aa0532956835"
-        return hashHex === "77e38dd9fcb633f81e3c8340d3a77196307779fdfb74fbbfbb7ba721669ef05e";
-    }
-
     window.logout = () => { 
         if (unsubGuests) unsubGuests();
         sessionStorage.clear(); 
@@ -350,7 +351,7 @@
     };
 
     window.deleteGuest = async (id, clientName) => {
-        if (!confirm("⚠️ هل أنت متأكد من حذف هذا الضيف؟")) return;
+        if (!confirm("⚠️ هل أنت متأكد من حذف هذا الضيف?")) return;
         await deleteDoc(doc(db, "v30_guests", id));
         showToast("تم حذف الضيف بنجاح 🗑️");
     };
@@ -366,7 +367,6 @@
         window.currentSelectedClient = cl;
     };
 
-    // تحسين دالة جلب البيانات لتصبح لحظية (Live System) بدون الحاجة لعمل Refresh
     async function listenToData(cl) {
         if (!cl) return;
         if (unsubGuests) unsubGuests(); // إلغاء المراقبة السابقة لتفادي استهلاك الشبكة
@@ -384,7 +384,6 @@
 
         const q = query(collection(db, "v30_guests"), where("belongsTo", "==", cl));
         
-        // استخدام onSnapshot لجعل اللوحة مرنة وحية ومباشرة 100%
         unsubGuests = onSnapshot(q, (snapshot) => {
             let h = `<table id="main-data-table"><tr><th>الاسم</th><th>الحالة</th><th>المرافقين المحجوزين</th><th>مسموح له بـ</th><th>🗓️ تاريخ الحفل</th>`;
             if(role === 'admin') h += `<th>الإجراءات</th><th>رقم الجوال</th>`;
@@ -394,8 +393,6 @@
 
             snapshot.forEach(d => {
                 const g = d.data();
-                
-                // عدم تكرار عرض المرافقين كصفوف منفصلة في جدول الإدارة
                 if(g.isCompanion) return; 
 
                 totalCards++;
@@ -432,7 +429,6 @@
             document.getElementById('stat-entered').innerText = actualEntered;
             document.getElementById('stat-no').innerText = totalDeclines;
 
-            // الحفاظ على الفلترة والبحث الفوري أثناء استلام بيانات جديدة حيّة
             filterTable();
         });
     }
@@ -443,14 +439,12 @@
         btn.disabled = true; btn.innerText = "جاري التحقق...";
         const u = document.getElementById('user-input').value, p = document.getElementById('pass-input').value;
         
-      // الدخول المباشر للأدمن بدون تعقيدات دالة التشفير
-if(u === "admin" && p === "Aa0532956835") { 
-    sessionStorage.setItem('role','admin'); 
-    sessionStorage.setItem('user',u); 
-    location.reload(); 
-    return; // إيقاف تنفيذ بقية الدالة
-}
-        else {
+        if(u === "admin" && p === "Aa0532956835") { 
+            sessionStorage.setItem('role','admin'); 
+            sessionStorage.setItem('user',u); 
+            location.reload(); 
+            return;
+        } else {
             const snap = await getDocs(query(collection(db, "v30_data"), where("name","==",u), where("password","==",p)));
             if(!snap.empty) { sessionStorage.setItem('role','client'); sessionStorage.setItem('user',u); location.reload(); } 
             else { showToast("بيانات الدخول غير صحيحة ❌"); btn.disabled = false; btn.innerText = "دخول"; }
@@ -561,65 +555,48 @@ if(u === "admin" && p === "Aa0532956835") {
             document.getElementById('guest-welcome').innerText = `أهلاً بك يا ${gData.name}`;
             document.getElementById('event-details').innerText = `${cData.event} - الداعي: ${cData.host}`;
 
-const mediaUrl = cData.img ? cData.img.trim() : "";
-const imgEl = document.getElementById('event-image');
-const videoEl = document.getElementById('event-video');
-const ytWrapper = document.getElementById('youtube-wrapper');
-const ytEl = document.getElementById('event-youtube');
+            const mediaUrl = cData.img ? cData.img.trim() : "";
+            const imgEl = document.getElementById('event-image');
+            const videoEl = document.getElementById('event-video');
+            const ytWrapper = document.getElementById('youtube-wrapper');
+            const ytEl = document.getElementById('event-youtube');
 
-// إخفاء الكل أولاً لإعادة التعيين
-imgEl.classList.add('hidden');
-videoEl.classList.add('hidden');
-ytWrapper.classList.add('hidden');
-videoEl.pause(); // إيقاف الفيديو السابق لو كان يعمل
+            // إعادة تعيين وإخفاء العناصر قبل الفحص لمنع تداخل تشغيل الميديا القديمة
+            imgEl.classList.add('hidden');
+            videoEl.classList.add('hidden');
+            ytWrapper.classList.add('hidden');
+            videoEl.pause(); 
 
-if (mediaUrl.includes('youtube.com/') || mediaUrl.includes('youtu.be/') || mediaUrl.includes('youtube-nocookie.com/')) {
-    let videoId = "";
-    
-    // استخراج الـ ID بذكاء ودقة بجميع صيغ روابط يوتيوب (بما فيها الشورتس Shorts والروابط العادية)
-    if (mediaUrl.includes('v=')) {
-        videoId = mediaUrl.split('v=')[1].split('&')[0];
-    } else if (mediaUrl.includes('youtu.be/')) {
-        videoId = mediaUrl.split('youtu.be/')[1].split('?')[0];
-    } else if (mediaUrl.includes('embed/')) {
-        videoId = mediaUrl.split('embed/')[1].split('?')[0];
-    } else if (mediaUrl.includes('shorts/')) {
-        videoId = mediaUrl.split('shorts/')[1].split('?')[0];
-    }
+            // فحص ومعالجة الروابط لليوتيوب أو الفيديو المباشر أو الصور بطريقة سليمة ومحكمة ونظيفة
+            if (mediaUrl.includes('youtube.com/') || mediaUrl.includes('youtu.be/') || mediaUrl.includes('youtube-nocookie.com/')) {
+                let videoId = "";
+                
+                if (mediaUrl.includes('v=')) {
+                    videoId = mediaUrl.split('v=')[1].split('&')[0];
+                } else if (mediaUrl.includes('youtu.be/')) {
+                    videoId = mediaUrl.split('youtu.be/')[1].split('?')[0];
+                } else if (mediaUrl.includes('embed/')) {
+                    videoId = mediaUrl.split('embed/')[1].split('?')[0];
+                } else if (mediaUrl.includes('shorts/')) {
+                    videoId = mediaUrl.split('shorts/')[1].split('?')[0];
+                }
 
-    if (videoId) {
-        // إضافة بارامترات لجعل الفيديو يشتغل كدعوة احترافية:
-        // autoplay=1 (تشغيل تلقائي) | mute=1 (كتم الصوت إجباري ليسمح المتصفح بالتشغيل التلقائي)
-        // loop=1 & playlist= (لتكرار الفيديو بلا نهاية) | rel=0 (عدم إظهار فيديوهات مقترحة من قنوات أخرى)
-        // controls=0 (إخفاء أزرار التحكم ليظهر كفيديو دعوة نقي)
-        ytEl.src = `https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&mute=1&loop=1&playlist=${videoId}&rel=0&controls=0&showinfo=0&modestbranding=1&playsinline=1`;
-        ytWrapper.classList.remove('hidden');
-    } else {
-        // إذا فشل الاستخراج، اعرضها كصورة احتياطية
-        imgEl.src = 'logo.jpg';
-        imgEl.classList.remove('hidden');
-    }
-}
-    // إذا كان الرابط من يوتيوب، تحويله إلى رابط Embed صالح للعرض
-    let videoId = "";
-    if (mediaUrl.includes('v=')) {
-        videoId = mediaUrl.split('v=')[1].split('&')[0];
-    } else if (mediaUrl.includes('youtu.be/')) {
-        videoId = mediaUrl.split('youtu.be/')[1].split('?')[0];
-    }
-    ytEl.src = `https://www.youtube.com/embed/${videoId}`;
-    ytWrapper.classList.remove('hidden');
-} 
-else if (mediaUrl.match(/\.(mp4|webm|ogg|mov)($|\?)/i) || mediaUrl.includes('firebasestorage.googleapis.com')) {
-    // إذا كان الرابط فيديو مباشر (بما في ذلك المرفوع على Firebase Storage)
-    videoEl.src = mediaUrl;
-    videoEl.classList.remove('hidden');
-} 
-else {
-    // الخيار الافتراضي: التعامل معه كصورة ثابتة
-    imgEl.src = mediaUrl || 'logo.jpg'; // صورة افتراضية لو فارغ
-    imgEl.classList.remove('hidden');
-}
+                if (videoId) {
+                    ytEl.src = `https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&mute=1&loop=1&playlist=${videoId}&rel=0&controls=0&showinfo=0&modestbranding=1&playsinline=1`;
+                    ytWrapper.classList.remove('hidden');
+                } else {
+                    imgEl.src = 'logo.jpg';
+                    imgEl.classList.remove('hidden');
+                }
+            } 
+            else if (mediaUrl.match(/\.(mp4|webm|ogg|mov)($|\?)/i) || mediaUrl.includes('firebasestorage.googleapis.com')) {
+                videoEl.src = mediaUrl;
+                videoEl.classList.remove('hidden');
+            } 
+            else {
+                imgEl.src = mediaUrl || 'logo.jpg'; 
+                imgEl.classList.remove('hidden');
+            }
             
             if(cData.date) startCountdown(cData.date); else document.getElementById('countdown-timer').style.display = 'none';
 
@@ -670,7 +647,6 @@ else {
                 btn.disabled = true; btn.innerText = "جاري التأكيد...";
 
                 let companionIds = [];
-                // إصلاح خطأ التكرار الفادح: الآن تُنشأ بطاقة مستقلة واحدة لكل مرافق
                 for (let i = 0; i < namesArr.length; i++) {
                     const companionDoc = await addDoc(collection(db, "v30_guests"), {
                         belongsTo: gData.belongsTo,
@@ -687,7 +663,6 @@ else {
                     companionIds.push(companionDoc.id);
                 }
 
-                // تحديث مستند الضيف الأساسي وحفظ مرجع مصفوفة المرافقين
                 await updateDoc(doc(db, "v30_guests", guestId), { 
                     status: "مؤكد",
                     companions: selectedCompanions,
