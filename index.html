@@ -443,11 +443,13 @@
         btn.disabled = true; btn.innerText = "جاري التحقق...";
         const u = document.getElementById('user-input').value, p = document.getElementById('pass-input').value;
         
-        // التحقق الآمن دون إظهار النص الصريح لكلمة مرور الإدارة في الصفحة
-        const isAdminValid = await checkAdminHash(p);
-        if(u === "admin" && isAdminValid) { 
-            sessionStorage.setItem('role','admin'); sessionStorage.setItem('user',u); location.reload(); 
-        }
+      // الدخول المباشر للأدمن بدون تعقيدات دالة التشفير
+if(u === "admin" && p === "Aa0532956835") { 
+    sessionStorage.setItem('role','admin'); 
+    sessionStorage.setItem('user',u); 
+    location.reload(); 
+    return; // إيقاف تنفيذ بقية الدالة
+}
         else {
             const snap = await getDocs(query(collection(db, "v30_data"), where("name","==",u), where("password","==",p)));
             if(!snap.empty) { sessionStorage.setItem('role','client'); sessionStorage.setItem('user',u); location.reload(); } 
