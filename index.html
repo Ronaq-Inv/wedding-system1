@@ -573,7 +573,33 @@ videoEl.classList.add('hidden');
 ytWrapper.classList.add('hidden');
 videoEl.pause(); // إيقاف الفيديو السابق لو كان يعمل
 
-if (mediaUrl.includes('youtube.com/') || mediaUrl.includes('youtu.be/')) {
+if (mediaUrl.includes('youtube.com/') || mediaUrl.includes('youtu.be/') || mediaUrl.includes('youtube-nocookie.com/')) {
+    let videoId = "";
+    
+    // استخراج الـ ID بذكاء ودقة بجميع صيغ روابط يوتيوب (بما فيها الشورتس Shorts والروابط العادية)
+    if (mediaUrl.includes('v=')) {
+        videoId = mediaUrl.split('v=')[1].split('&')[0];
+    } else if (mediaUrl.includes('youtu.be/')) {
+        videoId = mediaUrl.split('youtu.be/')[1].split('?')[0];
+    } else if (mediaUrl.includes('embed/')) {
+        videoId = mediaUrl.split('embed/')[1].split('?')[0];
+    } else if (mediaUrl.includes('shorts/')) {
+        videoId = mediaUrl.split('shorts/')[1].split('?')[0];
+    }
+
+    if (videoId) {
+        // إضافة بارامترات لجعل الفيديو يشتغل كدعوة احترافية:
+        // autoplay=1 (تشغيل تلقائي) | mute=1 (كتم الصوت إجباري ليسمح المتصفح بالتشغيل التلقائي)
+        // loop=1 & playlist= (لتكرار الفيديو بلا نهاية) | rel=0 (عدم إظهار فيديوهات مقترحة من قنوات أخرى)
+        // controls=0 (إخفاء أزرار التحكم ليظهر كفيديو دعوة نقي)
+        ytEl.src = `https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&mute=1&loop=1&playlist=${videoId}&rel=0&controls=0&showinfo=0&modestbranding=1&playsinline=1`;
+        ytWrapper.classList.remove('hidden');
+    } else {
+        // إذا فشل الاستخراج، اعرضها كصورة احتياطية
+        imgEl.src = 'logo.jpg';
+        imgEl.classList.remove('hidden');
+    }
+}
     // إذا كان الرابط من يوتيوب، تحويله إلى رابط Embed صالح للعرض
     let videoId = "";
     if (mediaUrl.includes('v=')) {
