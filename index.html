@@ -47,7 +47,7 @@
     
     .entry-code-box { background: #f9f9f9; border: 2px dashed var(--gold); padding: 15px; margin-top: 15px; border-radius: 10px; }
     .qrcode-container-div { display: flex; justify-content: center; margin: 10px auto; }
-    .code-text-display { font-family: monospace; font-size: 13px; font-weight: bold; background: #eee; padding: 4px 10px; border-radius: 6px; display: inline-block; margin-top: 5px; color: #333; letter-spacing: 1px; }
+    .code-text-display { font-family: monospace; font-size: 12px; font-weight: bold; background: #eee; padding: 4px 10px; border-radius: 6px; display: inline-block; margin-top: 5px; color: #333; letter-spacing: 0.5px; }
     
     #splash-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--pink); z-index: 99999; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: opacity 0.8s ease, visibility 0.8s; }
     .logo-glow { filter: drop-shadow(0 0 15px rgba(197, 160, 89, 0.6)); animation: pulseLogo 2s infinite; }
@@ -748,7 +748,7 @@
                 document.getElementById('after-confirm-area').classList.remove('hidden');
                 
                 if (inviteType === "barcode") {
-                    renderQRCodes(guestIdParam, guestData);
+                    await renderQRCodes(guestIdParam, guestData);
                 } else {
                     document.getElementById('pass-title').classList.add('hidden');
                     document.getElementById('multicard-qrcode-container').innerHTML = `
@@ -774,10 +774,31 @@
                     });
                 }
 
+                let companionIds = [];
+                // حذف أي مرافقين مسبقين وإعادة إنشائهم ببطاقات مستقلا لـ Scan
+                const oldComps = await getDocs(query(collection(db, "v30_guests"), where("mainGuestId", "==", guestIdParam)));
+                oldComps.forEach(async (cdoc) => {
+                    await deleteDoc(doc(db, "v30_guests", cdoc.id));
+                });
+
+                for (let i = 0; i < compsCount; i++) {
+                    const compName = companionNames[i] || `مرافق ${i + 1} (${guestData.name})`;
+                    const cRef = await addDoc(collection(db, "v30_guests"), {
+                        belongsTo: guestData.belongsTo,
+                        name: compName,
+                        phone: guestData.phone,
+                        status: "مؤكد",
+                        isCompanion: true,
+                        mainGuestId: guestIdParam
+                    });
+                    companionIds.push(cRef.id);
+                }
+
                 await updateDoc(guestDocRef, {
                     status: "مؤكد",
                     companions: compsCount,
-                    companionNames: companionNames
+                    companionNames: companionNames,
+                    companionIds: companionIds
                 });
 
                 if (typeof confetti === 'function') {
@@ -790,7 +811,7 @@
                 document.getElementById('after-confirm-area').classList.remove('hidden');
                 
                 if (inviteType === "barcode") {
-                    renderQRCodes(guestIdParam, { ...guestData, companions: compsCount, companionNames });
+                    await renderQRCodes(guestIdParam, { ...guestData, companions: compsCount, companionNames, companionIds });
                 } else {
                     document.getElementById('pass-title').classList.add('hidden');
                     document.getElementById('multicard-qrcode-container').innerHTML = `
@@ -838,26 +859,35 @@
         document.getElementById('login-section').classList.remove('hidden');
     }
 
-    function renderQRCodes(baseId, data) {
+    async function renderQRCodes(baseId, data) {
         const container = document.getElementById('multicard-qrcode-container');
         container.innerHTML = "";
 
-        const totalPasses = 1 + parseInt(data.companions || 0);
+        const compsCount = parseInt(data.companions || 0);
         const namesList = [data.name, ...(data.companionNames || [])];
+        let companionIds = data.companionIds || [];
+
+        // إذا لم تكن المعرفات موجودة بالفعل، يتم جلب البطاقات الفرعية المسجلة
+        if (compsCount > 0 && companionIds.length < compsCount) {
+            const cSnap = await getDocs(query(collection(db, "v30_guests"), where("mainGuestId", "==", baseId)));
+            companionIds = [];
+            cSnap.forEach(cdoc => companionIds.push(cdoc.id));
+        }
+
+        const totalPasses = 1 + compsCount;
 
         for (let i = 0; i < totalPasses; i++) {
             const passTitle = (i === 0) ? "بطاقة الضيف الرئيسي 🎫" : `بطاقة المرافق رقم ${i} (${namesList[i] || 'مرافق'})`;
             
-            // 1. إنشاء رمز فريد لكل بطاقة لتحديد الضيف والمرافقين بشكل متميز
-            const uniqueCodeText = `${baseId}_pass_${i}`;
+            // كود الـ QR الخاص والفريد المسجل في قاعدة البيانات ليتعرف عليه scan.html
+            const uniqueCodeText = (i === 0) ? baseId : (companionIds[i - 1] || `${baseId}_companion_${i}`);
 
             const cardBox = document.createElement('div');
             cardBox.className = "entry-code-box";
             cardBox.innerHTML = `
                 <p style="font-weight:bold; color:var(--black); margin-bottom:5px; font-size:14px;">${passTitle}</p>
                 <div class="qrcode-container-div" id="qrcode-${i}"></div>
-                <!-- 2. إظهار نص الكود الفريد أسفل الصورة مباشرة -->
-                <div class="code-text-display">رمز البطاقة: ${uniqueCodeText}</div>
+                <div class="code-text-display">كود البطاقة: ${uniqueCodeText}</div>
                 <p style="font-size:11px; color:var(--dark-gold); margin-top:5px;">أبرز هذا الكود عند بوابة القاعة للدخول</p>
             `;
             container.appendChild(cardBox);
