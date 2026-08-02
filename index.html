@@ -127,7 +127,6 @@
             <h2 style="color:var(--gold)">دخول النظام ⚜️</h2>
             <input id="user-input" placeholder="اسم المستخدم">
             <input id="pass-input" type="password" placeholder="كلمة المرور">
-            <div style="text-align:left;margin:8px 0;"><a href="#" id="forgot-password" style="color:#c5a059;text-decoration:none;font-size:14px;">نسيت كلمة المرور؟</a></div>
             <button class="btn-gold" id="login-btn">دخول</button>
         </div>
     </div>
@@ -250,7 +249,7 @@
     </div>
 </div>
 
-<!-- مودال الواتساب مع خيار باركود أو بدون -->
+<!-- مودال الواتساب -->
 <div id="wa-modal" class="modal-overlay hidden">
     <div class="card fade-in" style="width: 90%; max-width: 450px;">
         <h3>رسالة الواتساب وتنسيق الدعوة 📱</h3>
@@ -334,7 +333,6 @@
         document.getElementById('clients-list-table').innerHTML = h + "</table>";
     }
 
-    // --- وظائف الواتساب ---
     let currentWAData = {};
     window.prepareWA = (phone, name, evName, guestId, host) => {
         currentWAData = { phone, name, evName, guestId, host };
@@ -373,7 +371,7 @@
         showToast("تم حفظ الخيار وتحويلك للواتساب بنجاح 📱");
     };
 
-    window.deleteGuest = async (id, clientName) => {
+    window.deleteGuest = async (id) => {
         if (!confirm("⚠️ هل أنت متأكد من حذف هذا الضيف?")) return;
         await deleteDoc(doc(db, "v30_guests", id));
         showToast("تم حذف الضيف بنجاح 🗑️");
@@ -437,7 +435,7 @@
                         <button onclick="window.prepareWA('${g.phone}', '${g.name}', '${evName}', '${d.id}', '${host}')" class="btn-wa">إرسال</button>
                         <button onclick="window.copyInviteLink('${d.id}')" style="background:#8e44ad;color:white;padding:6px 10px;border:none;border-radius:8px;font-size:11px;margin:2px;">🔗 نسخ</button>
                         <button onclick="window.openEdit('${d.id}', '${g.name}', '${g.phone}', '${g.status}', '${cl}', ${comps}, ${maxComps})" class="btn-edit">تعديل</button>
-                        <button onclick="window.deleteGuest('${d.id}','${cl}')" style="background:#e74c3c;color:white;padding:6px 10px;border:none;border-radius:8px;font-size:11px;margin:2px;">🗑️ حذف</button>
+                        <button onclick="window.deleteGuest('${d.id}')" style="background:#e74c3c;color:white;padding:6px 10px;border:none;border-radius:8px;font-size:11px;margin:2px;">🗑️ حذف</button>
                     </td><td class="guest-phone">${g.phone}</td>`;
                 }
                 h += `</tr>`;
@@ -459,7 +457,7 @@
     document.getElementById('login-btn').onclick = async () => {
         const btn = document.getElementById('login-btn');
         btn.disabled = true; btn.innerText = "جاري التحقق...";
-        const u = document.getElementById('user-input').value, p = document.getElementById('pass-input').value;
+        const u = document.getElementById('user-input').value.trim(), p = document.getElementById('pass-input').value.trim();
         
         if(u === "admin" && p === "Aa0532956835") { 
             sessionStorage.setItem('role','admin'); 
@@ -468,8 +466,15 @@
             return;
         } else {
             const snap = await getDocs(query(collection(db, "v30_data"), where("name","==",u), where("password","==",p)));
-            if(!snap.empty) { sessionStorage.setItem('role','client'); sessionStorage.setItem('user',u); location.reload(); } 
-            else { showToast("بيانات الدخول غير صحيحة ❌"); btn.disabled = false; btn.innerText = "دخول"; }
+            if(!snap.empty) { 
+                sessionStorage.setItem('role','client'); 
+                sessionStorage.setItem('user',u); 
+                location.reload(); 
+            } else { 
+                showToast("بيانات الدخول غير صحيحة ❌"); 
+                btn.disabled = false; 
+                btn.innerText = "دخول"; 
+            }
         }
     };
 
@@ -482,7 +487,7 @@
         const check = await getDocs(query(collection(db, "v30_data"), where("phone", "==", phone)));
         if (!check.empty) { showToast("❌ رقم الجوال مستخدم مسبقًا"); btn.disabled = false; btn.innerText = "إنشاء الحساب"; return; }
         await addDoc(collection(db, "v30_data"), { 
-            name: document.getElementById('c-name').value, phone: phone, password: document.getElementById('c-pass').value, event: document.getElementById('c-event').value, host: document.getElementById('c-host').value, img: document.getElementById('c-img').value, map: document.getElementById('c-map').value, date: evDate
+            name: document.getElementById('c-name').value.trim(), phone: phone, password: document.getElementById('c-pass').value.trim(), event: document.getElementById('c-event').value, host: document.getElementById('c-host').value, img: document.getElementById('c-img').value, map: document.getElementById('c-map').value, date: evDate
         });
         showToast("تم إنشاء الحفل بنجاح 🎉");
         setTimeout(() => location.reload(), 1500);
@@ -841,8 +846,8 @@
 
         for (let i = 0; i < totalPasses; i++) {
             const passTitle = (i === 0) ? "بطاقة الضيف الرئيسي 🎫" : `بطاقة المرافق رقم ${i} (${namesList[i] || 'مرافق'})`;
-            // صيغة الكود الفريدة لكل فرد (الضيف والمرافقين)
-            const uniqueCodeText = `${baseId}_pass_${i}`;
+            // المعرف المطلوب المتوافق مع الماسح (scan.html)
+            const uniqueCodeText = baseId;
 
             const cardBox = document.createElement('div');
             cardBox.className = "entry-code-box";
