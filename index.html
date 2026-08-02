@@ -334,7 +334,7 @@
         document.getElementById('clients-list-table').innerHTML = h + "</table>";
     }
 
-    // --- وظائف الواتساب (محدثة مع خيار باركود / بدون) ---
+    // --- وظائف الواتساب (مع خيار باركود أو بدون وحفظ الخيار بقاعدة البيانات) ---
     let currentWAData = {};
     window.prepareWA = (phone, name, evName, guestId, host) => {
         currentWAData = { phone, name, evName, guestId, host };
@@ -357,12 +357,21 @@
         document.getElementById('wa-text-area').value = msg;
     };
 
-    window.finalSendWA = () => {
+    window.finalSendWA = async () => {
         const phone = document.getElementById('wa-target-phone').value.replace(/\D/g, '');
+        const type = document.getElementById('wa-invite-type').value;
         const text = encodeURIComponent(document.getElementById('wa-text-area').value);
+
+        // حفظ خيار نوع الدعوة للضيف لكي يتطابق سلوك التأكيد لاحقاً
+        if (currentWAData.guestId) {
+            await updateDoc(doc(db, "v30_guests", currentWAData.guestId), {
+                inviteType: type
+            });
+        }
+
         window.open(`https://api.whatsapp.com/send?phone=${phone}&text=${text}`, '_blank');
         document.getElementById('wa-modal').classList.add('hidden');
-        showToast("تم تحويلك للواتساب بنجاح 📱");
+        showToast("تم حفظ الخيار وتحويلك للواتساب بنجاح 📱");
     };
 
     window.deleteGuest = async (id, clientName) => {
@@ -494,7 +503,7 @@
         
         btn.innerText = "جاري الإضافة...";
         await addDoc(collection(db, "v30_guests"), {
-            belongsTo: sel, name: document.getElementById('g-name').value, phone: p, status: "انتظار", invites: 1, companions: 0, maxCompanions: maxComps
+            belongsTo: sel, name: document.getElementById('g-name').value, phone: p, status: "انتظار", invites: 1, companions: 0, maxCompanions: maxComps, inviteType: "barcode"
         });
         showToast(`تم إضافة الضيف ${document.getElementById('g-name').value} بنجاح ✅`);
         document.getElementById('g-name').value = ""; document.getElementById('g-phone').value = ""; document.getElementById('g-max-companions').value = "0";
@@ -535,7 +544,8 @@
                             status: "انتظار",
                             invites: 1,
                             companions: 0,
-                            maxCompanions: parseInt(maxComps) || 0
+                            maxCompanions: parseInt(maxComps) || 0,
+                            inviteType: "barcode"
                         });
                         count++;
                     }
@@ -725,11 +735,24 @@
                 };
             }
 
+            const inviteType = guestData.inviteType || "barcode";
+
             if (guestData.status === 'مؤكد' || guestData.status === 'تم-الدخول') {
                 document.getElementById('guest-actions').classList.add('hidden');
                 document.getElementById('companions-area').classList.add('hidden');
                 document.getElementById('after-confirm-area').classList.remove('hidden');
-                renderQRCodes(guestIdParam, guestData);
+                
+                if (inviteType === "barcode") {
+                    renderQRCodes(guestIdParam, guestData);
+                } else {
+                    // إذا كان نوع الدعوة بدون باركود، لا نظهر بطاقات QR بل رسالة تأكيد فقط
+                    document.getElementById('pass-title').classList.add('hidden');
+                    document.getElementById('multicard-qrcode-container').innerHTML = `
+                        <div style="background: #e8f5e9; color: #2e7d32; padding: 15px; border-radius: 10px; font-weight: bold; font-size: 14px;">
+                            تم تسجيل تأكيد حضورك بنجاح ✅<br>نشكرك لتأكيد تواجدك معنا في الحفل.
+                        </div>
+                    `;
+                }
             } else if (guestData.status === 'اعتذار') {
                 document.getElementById('guest-actions').classList.add('hidden');
                 document.getElementById('companions-area').classList.add('hidden');
@@ -761,7 +784,17 @@
                 document.getElementById('guest-actions').classList.add('hidden');
                 document.getElementById('companions-area').classList.add('hidden');
                 document.getElementById('after-confirm-area').classList.remove('hidden');
-                renderQRCodes(guestIdParam, { ...guestData, companions: compsCount, companionNames });
+                
+                if (inviteType === "barcode") {
+                    renderQRCodes(guestIdParam, { ...guestData, companions: compsCount, companionNames });
+                } else {
+                    document.getElementById('pass-title').classList.add('hidden');
+                    document.getElementById('multicard-qrcode-container').innerHTML = `
+                        <div style="background: #e8f5e9; color: #2e7d32; padding: 15px; border-radius: 10px; font-weight: bold; font-size: 14px;">
+                            تم تسجيل تأكيد حضورك بنجاح ✅<br>نشكرك لتأكيد تواجدك معنا في الحفل.
+                        </div>
+                    `;
+                }
             };
 
             document.getElementById('btn-decline').onclick = async () => {
@@ -810,6 +843,7 @@
 
         for (let i = 0; i < totalPasses; i++) {
             const passTitle = (i === 0) ? "بطاقة الضيف الرئيسي 🎫" : `بطاقة المرافق رقم ${i} (${namesList[i] || 'مرافق'})`;
+            // إرجاع قيمة الباركود للنظام السابق تماماً ليقرأه الماسح (scan.html) بدقة
             const uniqueCodeText = `${baseId}_pass_${i}`;
 
             const cardBox = document.createElement('div');
