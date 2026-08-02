@@ -47,6 +47,7 @@
     
     .entry-code-box { background: #f9f9f9; border: 2px dashed var(--gold); padding: 15px; margin-top: 15px; border-radius: 10px; }
     .qrcode-container-div { display: flex; justify-content: center; margin: 10px auto; }
+    .code-text-display { font-family: monospace; font-size: 13px; font-weight: bold; background: #eee; padding: 4px 10px; border-radius: 6px; display: inline-block; margin-top: 5px; color: #333; letter-spacing: 1px; }
     
     #splash-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--pink); z-index: 99999; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: opacity 0.8s ease, visibility 0.8s; }
     .logo-glow { filter: drop-shadow(0 0 15px rgba(197, 160, 89, 0.6)); animation: pulseLogo 2s infinite; }
@@ -846,14 +847,17 @@
 
         for (let i = 0; i < totalPasses; i++) {
             const passTitle = (i === 0) ? "بطاقة الضيف الرئيسي 🎫" : `بطاقة المرافق رقم ${i} (${namesList[i] || 'مرافق'})`;
-            // المعرف المطلوب المتوافق مع الماسح (scan.html)
-            const uniqueCodeText = baseId;
+            
+            // 1. إنشاء رمز فريد لكل بطاقة لتحديد الضيف والمرافقين بشكل متميز
+            const uniqueCodeText = `${baseId}_pass_${i}`;
 
             const cardBox = document.createElement('div');
             cardBox.className = "entry-code-box";
             cardBox.innerHTML = `
                 <p style="font-weight:bold; color:var(--black); margin-bottom:5px; font-size:14px;">${passTitle}</p>
                 <div class="qrcode-container-div" id="qrcode-${i}"></div>
+                <!-- 2. إظهار نص الكود الفريد أسفل الصورة مباشرة -->
+                <div class="code-text-display">رمز البطاقة: ${uniqueCodeText}</div>
                 <p style="font-size:11px; color:var(--dark-gold); margin-top:5px;">أبرز هذا الكود عند بوابة القاعة للدخول</p>
             `;
             container.appendChild(cardBox);
