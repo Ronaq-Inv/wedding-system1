@@ -197,7 +197,7 @@
                 <button class="btn-gold" style="background: #e74c3c;" onclick="exportPDF()">📄 تصدير PDF</button>
             </div>
             <div id="data-table"></div>
-            <button id="change-password-btn" class="btn-gold" style="margin-top:20px;background:#3498db;"> 🔒 تغيير كلمة المرور </button> 
+            <button id="change-password-btn" class="btn-gold" style="margin-top:20px;background:#3498db;"> 🔒 تغيير كلمة المرور </button>  
             <button onclick="window.logout()" style="margin-top:10px;background:#eee;color:#666;"> خروج </button>
         </div>
     </div>
@@ -250,9 +250,15 @@
     </div>
 </div>
 
+<!-- مودال الواتساب مع خيار باركود أو بدون -->
 <div id="wa-modal" class="modal-overlay hidden">
     <div class="card fade-in" style="width: 90%; max-width: 450px;">
-        <h3>رسالة الواتساب 📱</h3>
+        <h3>رسالة الواتساب وتنسيق الدعوة 📱</h3>
+        <label class="modal-label">📌 نوع إرسال الدعوة عبر الواتساب:</label>
+        <select id="wa-invite-type" onchange="updateWAMessageTemplate()" style="margin-bottom: 12px;">
+            <option value="barcode">دعوة مع باركود دخول (تأكيد مسبق)</option>
+            <option value="nobarcode">دعوة عادية بدون باركود دخول</option>
+        </select>
         <textarea id="wa-text-area" rows="8"></textarea>
         <input type="hidden" id="wa-target-phone">
         <button class="btn-gold" onclick="window.finalSendWA()" style="background:#25D366">إرسال ✅</button>
@@ -328,11 +334,27 @@
         document.getElementById('clients-list-table').innerHTML = h + "</table>";
     }
 
+    // --- وظائف الواتساب (محدثة مع خيار باركود / بدون) ---
+    let currentWAData = {};
     window.prepareWA = (phone, name, evName, guestId, host) => {
-        const msg = `⚜️ *دعوة حضور* ⚜️\n\nأهلاً بك يا ${name} ✨\nنتشرف بدعوتكم لحضور: ${evName}..\n\nبانتظار تأكيد حضوركم عبر الرابط التالي:\n${BASE_URL}?id=${guestId}\n\nالداعي: ${host}`;
+        currentWAData = { phone, name, evName, guestId, host };
         document.getElementById('wa-target-phone').value = phone;
-        document.getElementById('wa-text-area').value = msg;
+        document.getElementById('wa-invite-type').value = "barcode";
+        updateWAMessageTemplate();
         document.getElementById('wa-modal').classList.remove('hidden');
+    };
+
+    window.updateWAMessageTemplate = () => {
+        const type = document.getElementById('wa-invite-type').value;
+        const { name, evName, guestId, host } = currentWAData;
+        let msg = "";
+
+        if (type === "barcode") {
+            msg = `⚜️ *بطاقة دعوة رسمية مع باركود* ⚜️\n\nأهلاً بك يا ${name} ✨\nيسعدنا جداً حضوركم حفل: ${evName}..\n\nللاطلاع على بطاقات الدخول الخاصة بك ومرافقيك عبر الرابط:\n${BASE_URL}?id=${guestId}\n\nالداعي: ${host}`;
+        } else {
+            msg = `⚜️ *دعوة حضور مباركة* ⚜️\n\nأهلاً بك يا ${name} ✨\nنتشرف بدعوتكم لحضور حفل: ${evName}..\n\nننتظر تواجدكم وتشريفكم لنا.\n\nالداعي: ${host}`;
+        }
+        document.getElementById('wa-text-area').value = msg;
     };
 
     window.finalSendWA = () => {
@@ -492,426 +514,349 @@
         reader.onload = async (e) => {
             try {
                 const data = new Uint8Array(e.target.result);
-                const workbook = XLSX.read(data, {type: 'array'});
-                const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
-                const rows = XLSX.utils.sheet_to_json(firstSheet);
+                const workbook = XLSX.read(data, { type: 'array' });
+                const firstSheet = workbook.SheetNames[0];
+                const rows = XLSX.utils.sheet_to_json(workbook.Sheets[firstSheet]);
                 
                 let count = 0;
-                for (let r of rows) {
-                    let name = r['الاسم'] || r['name'] || r['اسم الضيف'];
-                    let phone = String(r['الجوال'] || r['phone'] || r['رقم الجوال'] || '');
-                    let maxComps = parseInt(r['المرافقين'] || r['maxCompanions'] || r['الحد الأقصى'] || 0);
+                for (let row of rows) {
+                    let name = row['الاسم'] || row['Name'] || row['اسم الضيف'];
+                    let phone = row['الجوال'] || row['Phone'] || row['رقم الجوال'] || row['رقم'];
+                    let maxComps = row['المرافقين'] || row['maxCompanions'] || row['الحد الأقصى'] || 0;
                     
-                    if (phone.startsWith('0')) phone = '966' + phone.substring(1);
-                    if (!phone.startsWith('966')) phone = '966' + phone;
-
-                    if (name) {
+                    if (name && phone) {
+                        phone = String(phone).trim();
+                        if (phone.startsWith('0')) phone = '966' + phone.substring(1);
+                        
                         await addDoc(collection(db, "v30_guests"), {
-                            belongsTo: sel, 
-                            name: name, 
-                            phone: phone, 
-                            status: "انتظار", 
-                            invites: 1, 
-                            companions: 0, 
-                            maxCompanions: maxComps
+                            belongsTo: sel,
+                            name: String(name).trim(),
+                            phone: phone,
+                            status: "انتظار",
+                            invites: 1,
+                            companions: 0,
+                            maxCompanions: parseInt(maxComps) || 0
                         });
                         count++;
                     }
                 }
-                showToast(`تم استيراد ${count} ضيف بنجاح 📥`);
-                btn.disabled = false; btn.innerText = "📥 استيراد الضيوف من Excel";
+                showToast(`تم استيراد ${count} ضيف بنجاح 🎉`);
+                fileInput.value = "";
             } catch (err) {
-                showToast("حدث خطأ في قراءة ملف الإكسل ❌");
-                btn.disabled = false; btn.innerText = "📥 استيراد الضيوف من Excel";
+                showToast("حدث خطأ أثناء قراءة الملف ❌");
+            } finally {
+                btn.disabled = false;
+                btn.innerText = "📥 استيراد الضيوف من Excel";
             }
         };
         reader.readAsArrayBuffer(file);
     };
 
     document.getElementById('confirm-edit').onclick = async () => {
-        if (!editingGuestId) return;
         const btn = document.getElementById('confirm-edit');
         btn.disabled = true; btn.innerText = "جاري التحديث...";
-        
         await updateDoc(doc(db, "v30_guests", editingGuestId), {
             name: document.getElementById('edit-name').value,
             phone: document.getElementById('edit-phone').value,
             status: document.getElementById('edit-status').value,
             maxCompanions: parseInt(document.getElementById('edit-max-companions').value) || 0
         });
-        
         showToast("تم تحديث بيانات الضيف بنجاح ✅");
         document.getElementById('edit-modal').classList.add('hidden');
         btn.disabled = false; btn.innerText = "تحديث";
     };
 
+    window.filterTable = () => {
+        const queryText = document.getElementById('search-guest').value.toLowerCase();
+        const selectedStatus = document.getElementById('filter-status').value;
+        const rows = document.querySelectorAll('.guest-row');
+
+        rows.forEach(row => {
+            const name = row.querySelector('.guest-name').innerText.toLowerCase();
+            const phoneEl = row.querySelector('.guest-phone');
+            const phone = phoneEl ? phoneEl.innerText.toLowerCase() : "";
+            const status = row.getAttribute('data-status');
+
+            const matchesSearch = name.includes(queryText) || phone.includes(queryText);
+            const matchesStatus = (selectedStatus === 'all' || status === selectedStatus);
+
+            if (matchesSearch && matchesStatus) {
+                row.style.display = "";
+            } else {
+                row.style.display = "none";
+            }
+        });
+    };
+
+    window.exportExcel = () => {
+        const table = document.getElementById('main-data-table');
+        if (!table) return showToast("لا توجد بيانات للتصدير ⚠️");
+        const wb = XLSX.utils.table_to_book(table, { sheet: "الضيوف" });
+        XLSX.writeFile(wb, "ronaq_guests_report.xlsx");
+        showToast("تم تصدير ملف Excel بنجاح 📊");
+    };
+
+    window.exportPDF = () => {
+        const element = document.getElementById('data-table');
+        if (!element) return showToast("لا توجد بيانات للتصدير ⚠️");
+        const opt = {
+            margin: 10,
+            filename: 'ronaq_guests_report.pdf',
+            image: { type: 'jpeg', quality: 0.98 },
+            html2canvas: { scale: 2 },
+            jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' }
+        };
+        html2pdf().from(element).set(opt).save();
+        showToast("جاري تجهيز وتنزيل ملف PDF 📄");
+    };
+
+    window.copyInviteLink = (id) => {
+        const link = `${BASE_URL}?id=${id}`;
+        navigator.clipboard.writeText(link);
+        showToast("تم نسخ رابط الدعوة بنجاح 🔗");
+    };
+
+    window.copyDashboardLink = () => {
+        navigator.clipboard.writeText(BASE_URL);
+        showToast("تم نسخ رابط النظام الأساسي بنجاح 🔗");
+    };
+
     const urlParams = new URLSearchParams(window.location.search);
     const guestIdParam = urlParams.get('id');
 
+    setTimeout(() => {
+        const splash = document.getElementById('splash-screen');
+        if (splash) {
+            splash.style.opacity = '0';
+            setTimeout(() => splash.remove(), 800);
+        }
+    }, 1000);
+
     if (guestIdParam) {
-        document.getElementById('splash-screen').style.display = "none";
         document.getElementById('guest-section').classList.remove('hidden');
-        loadGuestView(guestIdParam);
-    } else if (role === 'admin') {
-        document.getElementById('splash-screen').style.display = "none";
+        
+        const guestDocRef = doc(db, "v30_guests", guestIdParam);
+        const guestSnap = await getDoc(guestDocRef);
+
+        if (!guestSnap.exists()) {
+            document.getElementById('guest-welcome').innerText = "عذراً، بطاقة الدعوة غير صالحة أو تم حذفها ❌";
+            document.getElementById('guest-actions').classList.add('hidden');
+        } else {
+            const guestData = guestSnap.data();
+            document.getElementById('guest-welcome').innerText = `أهلاً بك يا ${guestData.name} ✨`;
+
+            const clientSnap = await getDocs(query(collection(db, "v30_data"), where("name", "==", guestData.belongsTo)));
+            let clientData = {};
+            clientSnap.forEach(cd => { clientData = cd.data(); });
+
+            if (clientData.event) {
+                document.getElementById('event-details').innerText = `نتشرف بدعوتكم لحضور (${clientData.event})\nالداعي: ${clientData.host}`;
+                
+                const imgUrl = clientData.img || "";
+                const imgEl = document.getElementById('event-image');
+                const videoEl = document.getElementById('event-video');
+                const ytWrapper = document.getElementById('youtube-wrapper');
+                const ytEl = document.getElementById('event-youtube');
+
+                if (imgUrl.includes("youtube.com") || imgUrl.includes("youtu.be")) {
+                    let ytId = "";
+                    if (imgUrl.includes("youtu.be/")) ytId = imgUrl.split("youtu.be/")[1].split("?")[0];
+                    else if (imgUrl.includes("watch?v=")) ytId = imgUrl.split("watch?v=")[1].split("&")[0];
+                    ytEl.src = `https://www.youtube.com/embed/${ytId}`;
+                    ytWrapper.classList.remove('hidden');
+                } else if (imgUrl.endsWith(".mp4")) {
+                    videoEl.src = imgUrl;
+                    videoEl.classList.remove('hidden');
+                } else if (imgUrl) {
+                    imgEl.src = imgUrl;
+                    imgEl.classList.remove('hidden');
+                } else {
+                    document.getElementById('media-container').classList.add('hidden');
+                }
+
+                if (clientData.date) {
+                    const eventTime = new Date(clientData.date).getTime();
+                    setInterval(() => {
+                        const now = new Date().getTime();
+                        const diff = eventTime - now;
+                        if (diff > 0) {
+                            const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+                            const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                            const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+                            const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+                            document.getElementById('time-left').innerText = `${days} يوم و ${hours} ساعة و ${minutes} دقيقة و ${seconds} ثانية`;
+                        } else {
+                            document.getElementById('countdown-timer').innerText = "لقد حان موعد المناسبة السعيدة! 🎉";
+                        }
+                    }, 1000);
+                } else {
+                    document.getElementById('countdown-timer').classList.add('hidden');
+                }
+
+                document.getElementById('btn-map').onclick = () => { window.open(clientData.map, '_blank'); };
+                document.getElementById('btn-calendar').onclick = () => {
+                    const title = encodeURIComponent(clientData.event);
+                    const details = encodeURIComponent(`دعوة حفل من ${clientData.host}`);
+                    const location = encodeURIComponent(clientData.map || "");
+                    window.open(`https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&details=${details}&location=${location}`, '_blank');
+                };
+            }
+
+            const maxComps = parseInt(guestData.maxCompanions || 0);
+            if (maxComps > 0) {
+                const compArea = document.getElementById('companions-area');
+                const compSelect = document.getElementById('guest-companions');
+                compArea.classList.remove('hidden');
+                
+                let optionsHtml = `<option value="0">بدون مرافقين (أنا لوحدي)</option>`;
+                for (let i = 1; i <= maxComps; i++) {
+                    optionsHtml += `<option value="${i}">${i} مرافقين</option>`;
+                }
+                compSelect.innerHTML = optionsHtml;
+
+                compSelect.onchange = (e) => {
+                    const val = parseInt(e.target.value);
+                    const container = document.getElementById('companion-names-container');
+                    let namesHtml = "";
+                    for (let i = 1; i <= val; i++) {
+                        namesHtml += `<input class="companion-name-input" placeholder="اسم المرافق رقم ${i}" data-index="${i}">`;
+                    }
+                    container.innerHTML = namesHtml;
+                };
+            }
+
+            if (guestData.status === 'مؤكد' || guestData.status === 'تم-الدخول') {
+                document.getElementById('guest-actions').classList.add('hidden');
+                document.getElementById('companions-area').classList.add('hidden');
+                document.getElementById('after-confirm-area').classList.remove('hidden');
+                renderQRCodes(guestIdParam, guestData);
+            } else if (guestData.status === 'اعتذار') {
+                document.getElementById('guest-actions').classList.add('hidden');
+                document.getElementById('companions-area').classList.add('hidden');
+                document.getElementById('decline-msg').classList.remove('hidden');
+            }
+
+            document.getElementById('btn-confirm').onclick = async () => {
+                let compsCount = 0;
+                let companionNames = [];
+                if (maxComps > 0) {
+                    compsCount = parseInt(document.getElementById('guest-companions').value);
+                    const inputs = document.querySelectorAll('.companion-name-input');
+                    inputs.forEach(inp => {
+                        if (inp.value.trim()) companionNames.push(inp.value.trim());
+                    });
+                }
+
+                await updateDoc(guestDocRef, {
+                    status: "مؤكد",
+                    companions: compsCount,
+                    companionNames: companionNames
+                });
+
+                if (typeof confetti === 'function') {
+                    confetti({ particleCount: 150, spread: 80, origin: { y: 0.6 } });
+                }
+
+                showToast("تم تأكيد حضورك بنجاح ننتظر لقاءكم بفارغ الصبر ✨");
+                document.getElementById('guest-actions').classList.add('hidden');
+                document.getElementById('companions-area').classList.add('hidden');
+                document.getElementById('after-confirm-area').classList.remove('hidden');
+                renderQRCodes(guestIdParam, { ...guestData, companions: compsCount, companionNames });
+            };
+
+            document.getElementById('btn-decline').onclick = async () => {
+                await updateDoc(guestDocRef, { status: "اعتذار" });
+                showToast("تم تسجيل اعتذارك، شكراً لإبلاغنا.");
+                document.getElementById('guest-actions').classList.add('hidden');
+                document.getElementById('companions-area').classList.add('hidden');
+                document.getElementById('decline-msg').classList.remove('hidden');
+            };
+        }
+    } else if (role && user) {
         document.getElementById('dashboard-section').classList.remove('hidden');
-        document.getElementById('admin-area').classList.remove('hidden');
-        document.getElementById('welcome-msg').innerText = "لوحة تحكم الإدارة العليا ⚜️";
-        loadClientsList();
-        loadClientsDropdown();
-    } else if (role === 'client') {
-        document.getElementById('splash-screen').style.display = "none";
-        document.getElementById('dashboard-section').classList.remove('hidden');
-        document.getElementById('welcome-msg').innerText = `أهلاً بك يا ${user} ⚜️`;
-        document.getElementById('guest-add-card').classList.add('hidden');
-        listenToData(user);
+        if (role === 'admin') {
+            document.getElementById('admin-area').classList.remove('hidden');
+            document.getElementById('welcome-msg').innerText = "مرحباً بك يا مدير النظام ⚜️";
+            loadClientsList();
+            
+            const clientSelect = document.getElementById('client-select');
+            const snap = await getDocs(collection(db, "v30_data"));
+            let opts = `<option value="">اختر الحفل لإضافة الضيوف</option>`;
+            snap.forEach(d => {
+                const c = d.data();
+                opts += `<option value="${c.name}">${c.event} (${c.name})</option>`;
+            });
+            clientSelect.innerHTML = opts;
+
+            listenToData(user);
+            clientSelect.onchange = (e) => {
+                if (e.target.value) listenToData(e.target.value);
+            };
+        } else {
+            document.getElementById('welcome-msg').innerText = `مرحباً بك، لوحة تحكم حفل: ${user} ⚜️`;
+            document.getElementById('guest-add-card').classList.add('hidden');
+            listenToData(user);
+        }
     } else {
-        document.getElementById('splash-screen').style.display = "none";
         document.getElementById('login-section').classList.remove('hidden');
     }
 
-    async function loadClientsDropdown() {
-        const snap = await getDocs(collection(db, "v30_data"));
-        const sel = document.getElementById('client-select');
-        sel.innerHTML = `<option value="">-- اختر الحفل (العميل) --</option>`;
-        snap.forEach(d => {
-            const c = d.data();
-            sel.innerHTML += `<option value="${c.name}">${c.name} (${c.event})</option>`;
-        });
-        sel.onchange = () => listenToData(sel.value);
+    function renderQRCodes(baseId, data) {
+        const container = document.getElementById('multicard-qrcode-container');
+        container.innerHTML = "";
+
+        const totalPasses = 1 + parseInt(data.companions || 0);
+        const namesList = [data.name, ...(data.companionNames || [])];
+
+        for (let i = 0; i < totalPasses; i++) {
+            const passTitle = (i === 0) ? "بطاقة الضيف الرئيسي 🎫" : `بطاقة المرافق رقم ${i} (${namesList[i] || 'مرافق'})`;
+            const uniqueCodeText = `${baseId}_pass_${i}`;
+
+            const cardBox = document.createElement('div');
+            cardBox.className = "entry-code-box";
+            cardBox.innerHTML = `
+                <p style="font-weight:bold; color:var(--black); margin-bottom:5px; font-size:14px;">${passTitle}</p>
+                <div class="qrcode-container-div" id="qrcode-${i}"></div>
+                <p style="font-size:11px; color:var(--dark-gold); margin-top:5px;">أبرز هذا الكود عند بوابة القاعة للدخول</p>
+            `;
+            container.appendChild(cardBox);
+
+            new QRCode(document.getElementById(`qrcode-${i}`), {
+                text: uniqueCodeText,
+                width: 150,
+                height: 150,
+                colorDark: "#1a1a1a",
+                colorLight: "#ffffff",
+                correctLevel: QRCode.CorrectLevel.H
+            });
+        }
     }
 
-    async function loadGuestView(id) {
-        const docRef = doc(db, "v30_guests", id);
-        const docSnap = await getDoc(docRef);
-
-        if (!docSnap.exists()) {
-            document.getElementById('guest-welcome').innerText = "عذراً، بطاقة الدعوة غير موجودة ❌";
-            return;
-        }
-
-        const g = docSnap.data();
-        const clientSnap = await getDocs(query(collection(db, "v30_data"), where("name", "==", g.belongsTo)));
-        let clientData = {};
-        clientSnap.forEach(cd => clientData = cd.data());
-
-        document.getElementById('guest-welcome').innerText = `أهلاً بك يا ${g.name} ✨`;
-        document.getElementById('event-details').innerText = `نتشرف بدعوتكم لحضور (${clientData.event}) الداعي: ${clientData.host}`;
-
-        if (clientData.date) {
-            const eventTime = new Date(clientData.date).getTime();
-            setInterval(() => {
-                const now = new Date().getTime();
-                const distance = eventTime - now;
-                if (distance < 0) {
-                    document.getElementById('time-left').innerText = "لقد بدأت المناسبة أو انتهت!";
-                    return;
-                }
-                const days = Math.floor(distance / (1000 * 60 * 60 * 24));
-                const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-                const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
-                const seconds = Math.floor((distance % (```html
-<!DOCTYPE html>
-<html lang="ar" dir="rtl">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>نظام رونق للدعوات ⚜️</title>
-    <!-- Favicon -->
-    <link rel="icon" type="image/jpeg" href="logo.jpg">
-    <link href="[https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap](https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap)" rel="stylesheet">
-    <script src="[https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js](https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js)"></script>
-
-    <!-- مكتبات مضافة للميزات الجديدة -->
-    <script src="[https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js](https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js)"></script>
-    <script src="[https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js](https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js)"></script>
-    <script src="[https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js](https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js)"></script>
-
-<style>
-    :root { --pink: #fdf2f2; --gold: #c5a059; --dark-gold: #b38b7d; --black: #1a1a1a; }
-    
-    body { font-family: 'Cairo', sans-serif; background-color: var(--pink); background-image: url('[https://www.transparenttextures.com/patterns/islamic-art.png](https://www.transparenttextures.com/patterns/islamic-art.png)'); margin: 0; padding: 0; direction: rtl; animation: bgPan 20s linear infinite alternate; }
-    .container { width: 95%; max-width: 900px; margin: auto; padding: 20px; }
-    .brand-header { text-align: center; margin-bottom: 40px; }
-    .main-logo { width: 180px; height: 180px; border-radius: 50%; border: 5px double var(--gold); background: #ffffff; box-shadow: 0 10px 30px rgba(0,0,0,0.2); padding: 8px; object-fit: contain; display: block; margin: 0 auto; }
-    .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 25px; }
-    .stat-card { background: linear-gradient(145deg, var(--black), #333); color: var(--gold); padding: 15px 5px; border-radius: 15px; text-align: center; border: 1px solid var(--gold); }
-    .stat-card h4 { font-size: 11px; margin: 0; }
-    .stat-card p { margin: 5px 0 0; font-size: 18px; font-weight: bold; }
-    .admin-quick-actions { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 20px; }
-    .btn-nav { background: #2c3e50; color: white; padding: 10px; border-radius: 10px; font-size: 12px; text-decoration: none; border: 1px solid var(--gold); cursor: pointer; text-align: center; }
-    .card { background: white; border-radius: 20px; padding: 25px; margin-bottom: 20px; box-shadow: 0 10px 30px rgba(197, 160, 89, 0.1); text-align: center; border-top: 5px solid var(--gold); }
-    .hidden { display: none !important; }
-    input, select, textarea { width: 100%; padding: 12px; margin: 8px 0; border-radius: 10px; border: 1px solid #ddd; font-family: 'Cairo'; box-sizing: border-box; }
-    button { cursor: pointer; padding: 12px; border-radius: 10px; border: none; font-weight: bold; transition: 0.3s; font-family: 'Cairo'; width: 100%; }
-    .btn-gold { background: var(--gold); color: white; }
-    .btn-wa { background: #25D366 !important; color: white !important; padding: 6px 10px; border-radius: 8px; font-size: 11px; margin: 2px; }
-    .btn-edit { background: #3498db !important; color: white !important; padding: 6px 10px; border-radius: 8px; font-size: 11px; margin: 2px; }
-    .btn-delete { background: #e74c3c !important; color: white !important; padding: 6px 10px; border-radius: 8px; font-size: 11px; margin: 2px; }
-    table { width: 100%; border-collapse: collapse; margin-top: 15px; background: white; border-radius: 15px; overflow: hidden; }
-    th { background: var(--black); color: var(--gold); padding: 15px; font-size: 14px; }
-    td { padding: 12px; border-bottom: 1px solid #eee; text-align: center; font-size: 13px; }
-    .status-pill { padding: 5px 12px; border-radius: 20px; font-size: 11px; font-weight: bold; }
-    .status-مؤكد { background: #e3f2fd; color: #1976d2; }
-    .status-تم-الدخول { background: #e8f5e9; color: #2e7d32; }
-    .status-اعتذار { background: #ffebee; color: #c62828; }
-    .status-انتظار { background: #fff8e1; color: #f9a825; }
-    .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: flex; align-items: center; justify-content: center; z-index: 9999; }
-    
-    .entry-code-box { background: #f9f9f9; border: 2px dashed var(--gold); padding: 15px; margin-top: 15px; border-radius: 10px; }
-    .qrcode-container-div { display: flex; justify-content: center; margin: 10px auto; }
-    
-    #splash-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--pink); z-index: 99999; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: opacity 0.8s ease, visibility 0.8s; }
-    .logo-glow { filter: drop-shadow(0 0 15px rgba(197, 160, 89, 0.6)); animation: pulseLogo 2s infinite; }
-    
-    @keyframes pulseLogo { 0% { transform: scale(1); filter: drop-shadow(0 0 15px rgba(197, 160, 89, 0.4)); } 50% { transform: scale(1.05); filter: drop-shadow(0 0 25px rgba(197, 160, 89, 0.8)); } 100% { transform: scale(1); filter: drop-shadow(0 0 15px rgba(197, 160, 89, 0.4)); } }
-    .fade-in { animation: fadeIn 0.6s ease-out; }
-    @keyframes fadeIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
-    @keyframes bgPan { from { background-position: 0 0; } to { background-position: 100px 100px; } }
-    button:hover { transform: translateY(-3px); box-shadow: 0 5px 15px rgba(0,0,0,0.15); filter: brightness(1.05); }
-    button:active { transform: translateY(0); }
-    tr:hover { background-color: #fdfaf5; transition: background-color 0.3s; }
-    .toolbar { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 15px; padding: 10px; background: #fafafa; border-radius: 12px; border: 1px solid #eee; }
-    .toolbar input, .toolbar select { margin: 0; flex: 1; min-width: 150px; }
-    .toolbar button { flex: 1; min-width: 100px; padding: 10px; font-size: 12px; }
-    #toast-container { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); z-index: 100000; display: flex; flex-direction: column; gap: 10px; }
-    .toast-msg { background: var(--black); color: var(--gold); padding: 12px 25px; border-radius: 30px; box-shadow: 0 5px 15px rgba(0,0,0,0.2); font-size: 14px; opacity: 0; transform: translateY(20px); transition: all 0.4s; border: 1px solid var(--gold); }
-    .toast-msg.show { opacity: 1; transform: translateY(0); }
-    .ronaq-footer { text-align: center; padding: 20px; font-size: 12px; color: var(--dark-gold); margin-top: 30px; font-weight: bold; }
-    .modal-label { display: block; text-align: right; font-size: 13px; font-weight: bold; color: var(--black); margin-top: 10px; margin-bottom: 2px; }
-    .companion-name-input { margin: 5px 0; border: 1px solid var(--gold); }
-</style>
-
-</head>
-<body>
-
-<div id="splash-screen">
-    <img src="logo.jpg" class="main-logo logo-glow" loading="lazy">
-    <h3 style="color: var(--gold); margin-top: 20px; font-weight: bold;">نظام رونق للدعوات</h3>
-</div>
-
-<div id="toast-container"></div>
-
-<div class="container fade-in">
-    <div id="guest-section" class="hidden">
-        <div class="card">
-            <div class="brand-header"><img src="logo.jpg" class="main-logo" loading="lazy"></div>
-            <h2 id="guest-welcome" style="color:var(--gold); transition: all 0.3s;"></h2>
-
-            <div id="countdown-timer" style="background: var(--pink); border-radius: 10px; padding: 10px; margin-bottom: 15px; color: var(--dark-gold); font-weight: bold; font-size: 14px; border: 1px solid var(--gold);">
-                ⏳ يتبقى على موعدنا: <span id="time-left">جاري الحساب...</span>
-            </div>
-
-            <div id="media-container" style="width:100%; border-radius:15px; border:2px solid var(--gold); margin-bottom:20px; overflow:hidden; background:#000; position:relative;">     
-                <img id="event-image" loading="lazy" class="hidden" style="width:100%; display:block; object-fit:contain;">         
-                <video id="event-video" controls class="hidden" style="width:100%; display:block;" playsinline>         
-                    Your browser does not support the video tag.     
-                </video>         
-                <div id="youtube-wrapper" class="hidden" style="position:relative; padding-bottom:56.25%; height:0;">         
-                    <iframe id="event-youtube" style="position:absolute; top:0; left:0; width:100%; height:100%; border:0;" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>     
-                </div> 
-            </div>
-            <p id="event-details" style="font-weight: bold; font-size: 16px;"></p>
-            
-            <div id="companions-area" class="hidden" style="margin-bottom: 15px; text-align: right;">
-                <label for="guest-companions" style="font-weight: bold; color: var(--dark-gold); font-size: 14px;">👥 تحديد الحضور والمرافقين:</label>
-                <select id="guest-companions" style="margin-top: 5px;"></select>
-                <div id="companion-names-container" style="margin-top: 10px;"></div>
-            </div>
-
-            <div id="guest-actions" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-                <button class="btn-gold" style="background:#27ae60" id="btn-confirm">تأكيد حضور</button>
-                <button class="btn-gold" style="background:#e74c3c" id="btn-decline">اعتذار</button>
-            </div>
-            
-            <div id="after-confirm-area" class="hidden fade-in">
-                <p id="pass-title" style="margin:15px 0 5px; color:var(--dark-gold); font-weight:bold; font-size:16px;">بطاقات الدخول المعتمدة 🎫</p>
-                <div id="multicard-qrcode-container"></div>
-                <button class="btn-gold" style="margin-top:15px; background:#2c3e50" id="btn-map">📍 موقع المناسبة</button>
-                <button class="btn-gold" style="margin-top:10px; background:#f39c12; color: #fff;" id="btn-calendar">📅 أضف إلى التقويم</button>
-            </div>
-            <div id="decline-msg" class="hidden fade-in" style="color: #c62828; margin-top: 20px; font-weight: bold; padding: 10px; background: #ffebee; border-radius: 10px;">نشكرك على إبلاغنا، تمنينا تواجدك معنا.</div>
-        </div>
-    </div>
-
-    <div id="login-section" class="hidden">
-        <div class="card fade-in" style="max-width: 400px; margin: auto;">
-            <div class="brand-header"><img src="logo.jpg" class="main-logo" loading="lazy"></div>
-            <h2 style="color:var(--gold)">دخول النظام ⚜️</h2>
-            <input id="user-input" placeholder="اسم المستخدم">
-            <input id="pass-input" type="password" placeholder="كلمة المرور">
-            <div style="text-align:left;margin:8px 0;"><a href="#" id="forgot-password" style="color:#c5a059;text-decoration:none;font-size:14px;">نسيت كلمة المرور؟</a></div>
-            <button class="btn-gold" id="login-btn">دخول</button>
-        </div>
-    </div>
-
-    <div id="dashboard-section" class="hidden">
-        <div class="brand-header fade-in"><img src="logo.jpg" class="main-logo" loading="lazy"><h3 id="welcome-msg"></h3></div>
-        
-        <div class="stats-grid fade-in">
-            <div class="stat-card"><h4>إجمالي البطاقات</h4><p id="stat-total">0</p></div>
-            <div class="stat-card"><h4>إجمالي الحضور الفعلي</h4><p id="stat-yes">0</p></div>
-            <div class="stat-card"><h4>دخلوا القاعة فعلياً</h4><p id="stat-entered">0</p></div>
-            <div class="stat-card"><h4>إجمالي الاعتذارات</h4><p id="stat-no">0</p></div>
-        </div>
-
-        <div id="admin-area" class="hidden fade-in">
-            <div class="card">
-                <h3>⚙️ إعدادات الإدارة السريعة</h3>
-                <div class="admin-quick-actions">
-                    <button class="btn-nav" onclick="window.open('scan.html', '_blank')">🔍 ماسح الكود</button>
-                    <button class="btn-nav" onclick="window.open('orders.html', '_blank')">📥 طلبات العملاء</button>
-                    <button class="btn-nav" style="background:#8e44ad" onclick="copyDashboardLink()">🔗 نسخ الرابط</button>
-                </div>
-            </div>
-
-            <div class="card">
-                <h3>🎀 تأسيس حفل جديد</h3>
-                <input id="c-name" placeholder="اسم المستخدم">
-                <input id="c-pass" type="password" placeholder="كلمة المرور">
-                <input id="c-phone" placeholder="رقم جوال العميل (9665XXXXXXXX)">
-                <input id="c-event" placeholder="اسم المناسبة">
-                <input id="c-host" placeholder="اسم الداعي">
-                <input id="c-img" placeholder="رابط صورة أو فيديو الدعوة (MP4 / YouTube)">
-                <input id="c-map" placeholder="رابط الموقع">
-                <input id="c-date" type="datetime-local" placeholder="تاريخ ووقت المناسبة">
-                <button class="btn-gold" id="save-client">إنشاء الحساب</button>
-            </div>
-
-            <div class="card">
-                <h3>👥 تعديل بيانات العملاء (الحفلات)</h3>
-                <div id="clients-list-table"></div>
-            </div>
-
-            <div class="card" id="guest-add-card">
-                <h3>📝 إضافة ضيوف</h3>
-                <select id="client-select"></select>
-                <input id="g-name" placeholder="اسم الضيف">
-                <input id="g-phone" placeholder="الجوال (966...)">
-                <input type="number" id="g-max-companions" placeholder="الحد الأقصى للمرافقين المسموح به (0 = بدون)" min="0" max="10" value="0">
-                <button class="btn-gold" id="save-guest" style="background:#27ae60">إضافة للجدول</button>
-                <input type="file" id="excel-file" accept=".xlsx,.xls" style="margin-top:10px;">
-                <button class="btn-gold" id="import-excel" style="background:#8e44ad;margin-top:10px;">📥 استيراد الضيوف من Excel</button>
-            </div>
-        </div>
-
-        <div class="card fade-in" style="overflow-x:auto;" id="export-section">
-            <h3 id="table-title">قائمة الضيوف 📜</h3>
-            <div class="toolbar" id="table-tools" style="display:none;">
-                <input type="text" id="search-guest" placeholder="🔍 ابحث بالاسم أو الجوال..." onkeyup="filterTable()">
-                <select id="filter-status" onchange="filterTable()">
-                    <option value="all">عرض جميع الحالات</option>
-                    <option value="مؤكد">مؤكد</option>
-                    <option value="انتظار">انتظار</option>
-                    <option value="تم-الدخول">تم الدخول</option>
-                    <option value="اعتذار">اعتذار</option>
-                </select>
-                <button class="btn-gold" style="background: #27ae60;" onclick="exportExcel()">📊 تصدير Excel</button>
-                <button class="btn-gold" style="background: #e74c3c;" onclick="exportPDF()">📄 تصدير PDF</button>
-            </div>
-            <div id="data-table"></div>
-            <button id="change-password-btn" class="btn-gold" style="margin-top:20px;background:#3498db;"> 🔒 تغيير كلمة المرور </button> 
-            <button onclick="window.logout()" style="margin-top:10px;background:#eee;color:#666;"> خروج </button>
-        </div>
-    </div>
-    <div class="ronaq-footer">تم التطوير بكل حب 🤍 بواسطة رونق للدعوات © 2026</div>
-</div>
-
-<!-- مودال تعديل الضيف -->
-<div id="edit-modal" class="modal-overlay hidden">
-    <div class="card fade-in" style="width: 90%; max-width: 400px;">
-        <h3>تعديل بيانات الضيف 📝</h3>
-        <label class="modal-label">👤 اسم الضيف:</label>
-        <input id="edit-name" placeholder="اسم الضيف">
-        <label class="modal-label">📱 رقم الجوال:</label>
-        <input id="edit-phone" placeholder="رقم الجوال">
-        <label class="modal-label">📌 حالة الضيف:</label>
-        <select id="edit-status">
-            <option value="انتظار">انتظار</option>
-            <option value="مؤكد">مؤكد</option>
-            <option value="تم-الدخول">تم الدخول</option>
-            <option value="اعتذار">اعتذار</option>
-        </select>
-        <label class="modal-label">👥 الحد الأقصى للمرافقين المسموح به له:</label>
-        <input type="number" id="edit-max-companions" min="0" max="10">
-        
-        <input type="hidden" id="edit-companions">
-        <button class="btn-gold" id="confirm-edit" style="margin-top:15px;">تحديث</button>
-        <button onclick="document.getElementById('edit-modal').classList.add('hidden')" style="background:none; color:red; margin-top:5px;">إلغاء</button>
-    </div>
-</div>
-
-<!-- مودال تعديل بيانات الحفل والعميل -->
-<div id="edit-client-modal" class="modal-overlay hidden">
-    <div class="card fade-in" style="width: 90%; max-width: 450px;">
-        <h3>تعديل بيانات الحفل ⚙️</h3>
-        <label class="modal-label">🎀 اسم المناسبة:</label>
-        <input id="ec-event" placeholder="اسم المناسبة">
-        <label class="modal-label">👑 اسم الداعي:</label>
-        <input id="ec-host" placeholder="اسم الداعي">
-        <label class="modal-label">🖼️ رابط صورة الدعوة:</label>
-        <input id="ec-img" placeholder="رابط صورة أو فيديو الدعوة (MP4 / YouTube)">
-        <label class="modal-label">📍 رابط موقع القاعة:</label>
-        <input id="ec-map" placeholder="رابط الموقع">
-        <label class="modal-label">📅 تاريخ ووقت المناسبة:</label>
-        <input id="ec-date" type="datetime-local">
-        <label class="modal-label">🔒 كلمة مرور العميل الجديدة:</label>
-        <input id="ec-pass" type="password">
-        <input type="hidden" id="ec-phone"><input type="hidden" id="ec-doc-id">
-        <button class="btn-gold" id="confirm-client-update" style="margin-top:15px;">حفظ التغييرات</button>
-        <button onclick="document.getElementById('edit-client-modal').classList.add('hidden')" style="background:none; color:red; margin-top:5px;">إلغاء</button>
-    </div>
-</div>
-
-<div id="wa-modal" class="modal-overlay hidden">
-    <div class="card fade-in" style="width: 90%; max-width: 450px;">
-        <h3>رسالة الواتساب 📱</h3>
-        <textarea id="wa-text-area" rows="8"></textarea>
-        <input type="hidden" id="wa-target-phone">
-        <button class="btn-gold" onclick="window.finalSendWA()" style="background:#25D366">إرسال ✅</button>
-        <button onclick="document.getElementById('wa-modal').classList.add('hidden')" style="background:none; color:red; margin-top:10px;">إلغاء</button>
-    </div>
-</div>
-
-<script type="module">
-    import { initializeApp } from "[https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js](https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js)";
-    import { getFirestore, collection, addDoc, getDocs, doc, updateDoc, deleteDoc, query, where, getDoc, onSnapshot } from "[https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js](https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js)";
-
-    const firebaseConfig = { apiKey: "AIzaSyBycODn3kTe7uRIBYifDogSPmv2towU6lA", projectId: "wedding-system-6fadd", appId: "1:902051092170:web:e228d3138a5b091b974633" };
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
-    const BASE_URL = "[https://ronaq-inv.github.io/wedding-system1/](https://ronaq-inv.github.io/wedding-system1/)"; 
-
-    const role = sessionStorage.getItem('role');
-    const user = sessionStorage.getItem('user');
-    let editingGuestId = "";
-    let unsubGuests = null;
-
-    window.logout = () => { 
-        if (unsubGuests) unsubGuests();
-        sessionStorage.clear(); 
-        localStorage.removeItem("last_guest_id"); 
-        window.location.href = window.location.origin + window.location.pathname; 
+    window.showToast = (msg) => {
+        const container = document.getElementById('toast-container');
+        const toast = document.createElement('div');
+        toast.className = "toast-msg";
+        toast.innerText = msg;
+        container.appendChild(toast);
+        setTimeout(() => toast.classList.add('show'), 100);
+        setTimeout(() => {
+            toast.classList.remove('show');
+            setTimeout(() => toast.remove(), 400);
+        }, 3000);
     };
 
-    window.openEditClient = (id, ev, host, img, map, pass, date, phone = "") => {
-        document.getElementById('ec-doc-id').value = id;
-        document.getElementById('ec-event').value = ev;
-        document.getElementById('ec-host').value = host;
-        document.getElementById('ec-img').value = img;
-        document.getElementById('ec-map').value = map;
-        document.getElementById('ec-pass').value = pass;
-        document.getElementById('ec-date').value = date || "";
-        document.getElementById('ec-phone').value = phone;
-        document.getElementById('edit-client-modal').classList.remove('hidden');
-    };
-
-    document.getElementById('confirm-client-update').onclick = async () => {
-        const id = document.getElementById('ec-doc-id').value;
-        const btn = document.getElementById('confirm-client-update');
-        btn.disabled = true; btn.innerText = "جاري الحفظ...";
-        await updateDoc(doc(db, "v30_data", id), {
-            event: document.getElementById('ec-event').value, host: document.getElementById('ec-host').value, img: document.getElementById('ec-img').value, map: document.getElementById('ec-map').value, phone: document.getElementById('ec-phone').value, password: document.getElementById('ec-pass').value, date: document.getElementById('ec-date').value || null
-        });
-        showToast("تم تحديث بيانات الحفل بنجاح ✅");
-        setTimeout
+    const changePassBtn = document.getElementById('change-password-btn');
+    if (changePassBtn) {
+        changePassBtn.onclick = async () => {
+            const newPass = prompt("الرجاء إدخال كلمة المرور الجديدة:");
+            if (!newPass) return;
+            const snap = await getDocs(query(collection(db, "v30_data"), where("name", "==", user)));
+            snap.forEach(async (d) => {
+                await updateDoc(doc(db, "v30_data", d.id), { password: newPass });
+                showToast("تم تحديث كلمة المرور بنجاح 🔒");
+            });
+        };
+    }
+</script>
+</body>
+</html>
