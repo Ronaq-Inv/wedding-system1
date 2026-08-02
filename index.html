@@ -6,7 +6,7 @@
     <title>نظام رونق للدعوات ⚜️</title>
     <!-- Favicon -->
     <link rel="icon" type="image/jpeg" href="logo.jpg">
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght=400;700&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 
     <!-- مكتبات مضافة للميزات الجديدة -->
@@ -45,9 +45,9 @@
     .status-انتظار { background: #fff8e1; color: #f9a825; }
     .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: flex; align-items: center; justify-content: center; z-index: 9999; }
     
+    /* تصاميم كروت الباركود المتعددة */
     .entry-code-box { background: #f9f9f9; border: 2px dashed var(--gold); padding: 15px; margin-top: 15px; border-radius: 10px; }
     .qrcode-container-div { display: flex; justify-content: center; margin: 10px auto; }
-    .code-text-display { font-family: monospace; font-size: 12px; font-weight: bold; background: #eee; padding: 4px 10px; border-radius: 6px; display: inline-block; margin-top: 5px; color: #333; letter-spacing: 0.5px; }
     
     #splash-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--pink); z-index: 99999; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: opacity 0.8s ease, visibility 0.8s; }
     .logo-glow { filter: drop-shadow(0 0 15px rgba(197, 160, 89, 0.6)); animation: pulseLogo 2s infinite; }
@@ -90,11 +90,15 @@
                 ⏳ يتبقى على موعدنا: <span id="time-left">جاري الحساب...</span>
             </div>
 
+            <!-- حاوية الوسائط التفاعلية --> 
             <div id="media-container" style="width:100%; border-radius:15px; border:2px solid var(--gold); margin-bottom:20px; overflow:hidden; background:#000; position:relative;">     
-                <img id="event-image" loading="lazy" class="hidden" style="width:100%; display:block; object-fit:contain;">         
-                <video id="event-video" controls class="hidden" style="width:100%; display:block;" playsinline>         
+                <!-- خيار 1: الصورة -->     
+                <img id="event-image" loading="lazy" class="hidden" style="width:100%; display:block; object-fit:contain;">          
+                <!-- خيار 2: فيديو MP4 مباشر -->     
+                <video id="event-video" controls class="hidden" style="width:100%; display:block;" playsinline>          
                     Your browser does not support the video tag.     
-                </video>         
+                </video>          
+                <!-- خيار 3: فيديو يوتيوب -->     
                 <div id="youtube-wrapper" class="hidden" style="position:relative; padding-bottom:56.25%; height:0;">         
                     <iframe id="event-youtube" style="position:absolute; top:0; left:0; width:100%; height:100%; border:0;" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>     
                 </div> 
@@ -128,6 +132,7 @@
             <h2 style="color:var(--gold)">دخول النظام ⚜️</h2>
             <input id="user-input" placeholder="اسم المستخدم">
             <input id="pass-input" type="password" placeholder="كلمة المرور">
+            <div style="text-align:left;margin:8px 0;"><a href="#" id="forgot-password" style="color:#c5a059;text-decoration:none;font-size:14px;">نسيت كلمة المرور؟</a></div>
             <button class="btn-gold" id="login-btn">دخول</button>
         </div>
     </div>
@@ -250,15 +255,9 @@
     </div>
 </div>
 
-<!-- مودال الواتساب -->
 <div id="wa-modal" class="modal-overlay hidden">
     <div class="card fade-in" style="width: 90%; max-width: 450px;">
-        <h3>رسالة الواتساب وتنسيق الدعوة 📱</h3>
-        <label class="modal-label">📌 نوع إرسال الدعوة عبر الواتساب:</label>
-        <select id="wa-invite-type" onchange="updateWAMessageTemplate()" style="margin-bottom: 12px;">
-            <option value="barcode">دعوة مع باركود دخول (تأكيد مسبق)</option>
-            <option value="nobarcode">دعوة عادية بدون باركود دخول</option>
-        </select>
+        <h3>رسالة الواتساب 📱</h3>
         <textarea id="wa-text-area" rows="8"></textarea>
         <input type="hidden" id="wa-target-phone">
         <button class="btn-gold" onclick="window.finalSendWA()" style="background:#25D366">إرسال ✅</button>
@@ -278,7 +277,7 @@
     const role = sessionStorage.getItem('role');
     const user = sessionStorage.getItem('user');
     let editingGuestId = "";
-    let unsubGuests = null;
+    let unsubGuests = null; // للمزامنة الحية وعمل Unsubscribe عند الخروج
 
     window.logout = () => { 
         if (unsubGuests) unsubGuests();
@@ -287,6 +286,7 @@
         window.location.href = window.location.origin + window.location.pathname; 
     };
 
+    // --- وظائف الأدمن لتعديل العملاء وحذفهم ---
     window.openEditClient = (id, ev, host, img, map, pass, date, phone = "") => {
         document.getElementById('ec-doc-id').value = id;
         document.getElementById('ec-event').value = ev;
@@ -334,45 +334,23 @@
         document.getElementById('clients-list-table').innerHTML = h + "</table>";
     }
 
-    let currentWAData = {};
+    // --- وظائف الضيوف ---
     window.prepareWA = (phone, name, evName, guestId, host) => {
-        currentWAData = { phone, name, evName, guestId, host };
+        const msg = `⚜️ *دعوة حضور* ⚜️\n\nأهلاً بك يا ${name} ✨\nنتشرف بدعوتكم لحضور: ${evName}..\n\nبانتظار تأكيد حضوركم عبر الرابط التالي:\n${BASE_URL}?id=${guestId}\n\nالداعي: ${host}`;
         document.getElementById('wa-target-phone').value = phone;
-        document.getElementById('wa-invite-type').value = "barcode";
-        updateWAMessageTemplate();
+        document.getElementById('wa-text-area').value = msg;
         document.getElementById('wa-modal').classList.remove('hidden');
     };
 
-    window.updateWAMessageTemplate = () => {
-        const type = document.getElementById('wa-invite-type').value;
-        const { name, evName, guestId, host } = currentWAData;
-        let msg = "";
-
-        if (type === "barcode") {
-            msg = `⚜️ *بطاقة دعوة رسمية مع باركود* ⚜️\n\nأهلاً بك يا ${name} ✨\nيسعدنا جداً حضوركم حفل: ${evName}..\n\nللاطلاع على بطاقات الدخول الخاصة بك ومرافقيك عبر الرابط:\n${BASE_URL}?id=${guestId}\n\nالداعي: ${host}`;
-        } else {
-            msg = `⚜️ *دعوة حضور مباركة* ⚜️\n\nأهلاً بك يا ${name} ✨\nنتشرف بدعوتكم لحضور حفل: ${evName}..\n\nلتأكيد حضوركم ورؤية تفاصيل الدعوة والموقع عبر الرابط التالي:\n${BASE_URL}?id=${guestId}\n\nننتظر تواجدكم وتشريفكم لنا.\n\nالداعي: ${host}`;
-        }
-        document.getElementById('wa-text-area').value = msg;
-    };
-
-    window.finalSendWA = async () => {
+    window.finalSendWA = () => {
         const phone = document.getElementById('wa-target-phone').value.replace(/\D/g, '');
-        const type = document.getElementById('wa-invite-type').value;
         const text = encodeURIComponent(document.getElementById('wa-text-area').value);
-
-        if (currentWAData.guestId) {
-            await updateDoc(doc(db, "v30_guests", currentWAData.guestId), {
-                inviteType: type
-            });
-        }
-
         window.open(`https://api.whatsapp.com/send?phone=${phone}&text=${text}`, '_blank');
         document.getElementById('wa-modal').classList.add('hidden');
-        showToast("تم حفظ الخيار وتحويلك للواتساب بنجاح 📱");
+        showToast("تم تحويلك للواتساب بنجاح 📱");
     };
 
-    window.deleteGuest = async (id) => {
+    window.deleteGuest = async (id, clientName) => {
         if (!confirm("⚠️ هل أنت متأكد من حذف هذا الضيف?")) return;
         await deleteDoc(doc(db, "v30_guests", id));
         showToast("تم حذف الضيف بنجاح 🗑️");
@@ -391,7 +369,7 @@
 
     async function listenToData(cl) {
         if (!cl) return;
-        if (unsubGuests) unsubGuests();
+        if (unsubGuests) unsubGuests(); // إلغاء المراقبة السابقة لتفادي استهلاك الشبكة
 
         const cSnap = await getDocs(query(collection(db, "v30_data"), where("name", "==", cl)));
         let evName = ""; let host = ""; let evDateStr = "غير محدد";
@@ -436,7 +414,7 @@
                         <button onclick="window.prepareWA('${g.phone}', '${g.name}', '${evName}', '${d.id}', '${host}')" class="btn-wa">إرسال</button>
                         <button onclick="window.copyInviteLink('${d.id}')" style="background:#8e44ad;color:white;padding:6px 10px;border:none;border-radius:8px;font-size:11px;margin:2px;">🔗 نسخ</button>
                         <button onclick="window.openEdit('${d.id}', '${g.name}', '${g.phone}', '${g.status}', '${cl}', ${comps}, ${maxComps})" class="btn-edit">تعديل</button>
-                        <button onclick="window.deleteGuest('${d.id}')" style="background:#e74c3c;color:white;padding:6px 10px;border:none;border-radius:8px;font-size:11px;margin:2px;">🗑️ حذف</button>
+                        <button onclick="window.deleteGuest('${d.id}','${cl}')" style="background:#e74c3c;color:white;padding:6px 10px;border:none;border-radius:8px;font-size:11px;margin:2px;">🗑️ حذف</button>
                     </td><td class="guest-phone">${g.phone}</td>`;
                 }
                 h += `</tr>`;
@@ -455,10 +433,11 @@
         });
     }
 
+    // --- المعالجات الأساسية ---
     document.getElementById('login-btn').onclick = async () => {
         const btn = document.getElementById('login-btn');
         btn.disabled = true; btn.innerText = "جاري التحقق...";
-        const u = document.getElementById('user-input').value.trim(), p = document.getElementById('pass-input').value.trim();
+        const u = document.getElementById('user-input').value, p = document.getElementById('pass-input').value;
         
         if(u === "admin" && p === "Aa0532956835") { 
             sessionStorage.setItem('role','admin'); 
@@ -467,15 +446,8 @@
             return;
         } else {
             const snap = await getDocs(query(collection(db, "v30_data"), where("name","==",u), where("password","==",p)));
-            if(!snap.empty) { 
-                sessionStorage.setItem('role','client'); 
-                sessionStorage.setItem('user',u); 
-                location.reload(); 
-            } else { 
-                showToast("بيانات الدخول غير صحيحة ❌"); 
-                btn.disabled = false; 
-                btn.innerText = "دخول"; 
-            }
+            if(!snap.empty) { sessionStorage.setItem('role','client'); sessionStorage.setItem('user',u); location.reload(); } 
+            else { showToast("بيانات الدخول غير صحيحة ❌"); btn.disabled = false; btn.innerText = "دخول"; }
         }
     };
 
@@ -488,7 +460,7 @@
         const check = await getDocs(query(collection(db, "v30_data"), where("phone", "==", phone)));
         if (!check.empty) { showToast("❌ رقم الجوال مستخدم مسبقًا"); btn.disabled = false; btn.innerText = "إنشاء الحساب"; return; }
         await addDoc(collection(db, "v30_data"), { 
-            name: document.getElementById('c-name').value.trim(), phone: phone, password: document.getElementById('c-pass').value.trim(), event: document.getElementById('c-event').value, host: document.getElementById('c-host').value, img: document.getElementById('c-img').value, map: document.getElementById('c-map').value, date: evDate
+            name: document.getElementById('c-name').value, phone: phone, password: document.getElementById('c-pass').value, event: document.getElementById('c-event').value, host: document.getElementById('c-host').value, img: document.getElementById('c-img').value, map: document.getElementById('c-map').value, date: evDate
         });
         showToast("تم إنشاء الحفل بنجاح 🎉");
         setTimeout(() => location.reload(), 1500);
@@ -508,7 +480,7 @@
         
         btn.innerText = "جاري الإضافة...";
         await addDoc(collection(db, "v30_guests"), {
-            belongsTo: sel, name: document.getElementById('g-name').value, phone: p, status: "انتظار", invites: 1, companions: 0, maxCompanions: maxComps, inviteType: "barcode"
+            belongsTo: sel, name: document.getElementById('g-name').value, phone: p, status: "انتظار", invites: 1, companions: 0, maxCompanions: maxComps
         });
         showToast(`تم إضافة الضيف ${document.getElementById('g-name').value} بنجاح ✅`);
         document.getElementById('g-name').value = ""; document.getElementById('g-phone').value = ""; document.getElementById('g-max-companions').value = "0";
@@ -529,40 +501,32 @@
             try {
                 const data = new Uint8Array(e.target.result);
                 const workbook = XLSX.read(data, { type: 'array' });
-                const firstSheet = workbook.SheetNames[0];
-                const rows = XLSX.utils.sheet_to_json(workbook.Sheets[firstSheet]);
+                const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+                const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
                 
-                let count = 0;
-                for (let row of rows) {
-                    let name = row['الاسم'] || row['Name'] || row['اسم الضيف'];
-                    let phone = row['الجوال'] || row['Phone'] || row['رقم الجوال'] || row['رقم'];
-                    let maxComps = row['المرافقين'] || row['maxCompanions'] || row['الحد الأقصى'] || 0;
+                let importedCount = 0;
+                for(let i = 1; i < jsonData.length; i++) {
+                    const row = jsonData[i];
+                    if(!row[0]) continue;
+                    let name = String(row[0]).trim();
+                    let phone = row[1] ? String(row[1]).replace(/\D/g, '') : "";
+                    let allowedComps = row[2] ? parseInt(row[2]) || 0 : 0;
                     
-                    if (name && phone) {
-                        phone = String(phone).trim();
-                        if (phone.startsWith('0')) phone = '966' + phone.substring(1);
-                        
+                    if(phone.startsWith('0')) phone = '966' + phone.substring(1);
+                    if(!phone.startsWith('966')) phone = '966' + phone;
+                    
+                    const checkPhone = await getDocs(query(collection(db, "v30_guests"), where("belongsTo", "==", sel), where("phone", "==", phone)));
+                    if(checkPhone.empty) {
                         await addDoc(collection(db, "v30_guests"), {
-                            belongsTo: sel,
-                            name: String(name).trim(),
-                            phone: phone,
-                            status: "انتظار",
-                            invites: 1,
-                            companions: 0,
-                            maxCompanions: parseInt(maxComps) || 0,
-                            inviteType: "barcode"
+                            belongsTo: sel, name: name, phone: phone, status: "انتظار", invites: 1, companions: 0, maxCompanions: allowedComps
                         });
-                        count++;
+                        importedCount++;
                     }
                 }
-                showToast(`تم استيراد ${count} ضيف بنجاح 🎉`);
+                showToast(`تم استيراد ${importedCount} ضيف بنجاح! 🎉`);
                 fileInput.value = "";
-            } catch (err) {
-                showToast("حدث خطأ أثناء قراءة الملف ❌");
-            } finally {
-                btn.disabled = false;
-                btn.innerText = "📥 استيراد الضيوف من Excel";
-            }
+            } catch (err) { showToast("حدث خطأ أثناء قراءة الملف ❌"); }
+            btn.disabled = false; btn.innerText = "📥 استيراد الضيوف من Excel";
         };
         reader.readAsArrayBuffer(file);
     };
@@ -570,364 +534,277 @@
     document.getElementById('confirm-edit').onclick = async () => {
         const btn = document.getElementById('confirm-edit');
         btn.disabled = true; btn.innerText = "جاري التحديث...";
+        const maxCompVal = parseInt(document.getElementById('edit-max-companions').value) || 0;
         await updateDoc(doc(db, "v30_guests", editingGuestId), {
-            name: document.getElementById('edit-name').value,
-            phone: document.getElementById('edit-phone').value,
-            status: document.getElementById('edit-status').value,
-            maxCompanions: parseInt(document.getElementById('edit-max-companions').value) || 0
+            name: document.getElementById('edit-name').value, phone: document.getElementById('edit-phone').value, status: document.getElementById('edit-status').value, maxCompanions: maxCompVal
         });
-        showToast("تم تحديث بيانات الضيف بنجاح ✅");
         document.getElementById('edit-modal').classList.add('hidden');
+        showToast("تم التحديث بنجاح ✅");
         btn.disabled = false; btn.innerText = "تحديث";
     };
 
-    window.filterTable = () => {
-        const queryText = document.getElementById('search-guest').value.toLowerCase();
-        const selectedStatus = document.getElementById('filter-status').value;
-        const rows = document.querySelectorAll('.guest-row');
+    // --- عرض الضيف وإدارة كروت الدعوة والباركدات المتعددة للمرافقين ---
+    async function handleGuestView(guestId) {
+        const gDoc = await getDoc(doc(db, "v30_guests", guestId));
+        if (gDoc.exists()) {
+            const gData = gDoc.data();
+            const cSnap = await getDocs(query(collection(db, "v30_data"), where("name", "==", gData.belongsTo)));
+            let cData = {}; cSnap.forEach(d => cData = d.data());
+            
+            document.getElementById('guest-section').classList.remove('hidden');
+            document.getElementById('guest-welcome').innerText = `أهلاً بك يا ${gData.name}`;
+            document.getElementById('event-details').innerText = `${cData.event} - الداعي: ${cData.host}`;
 
-        rows.forEach(row => {
-            const name = row.querySelector('.guest-name').innerText.toLowerCase();
-            const phoneEl = row.querySelector('.guest-phone');
-            const phone = phoneEl ? phoneEl.innerText.toLowerCase() : "";
-            const status = row.getAttribute('data-status');
+            const mediaUrl = cData.img ? cData.img.trim() : "";
+            const imgEl = document.getElementById('event-image');
+            const videoEl = document.getElementById('event-video');
+            const ytWrapper = document.getElementById('youtube-wrapper');
+            const ytEl = document.getElementById('event-youtube');
 
-            const matchesSearch = name.includes(queryText) || phone.includes(queryText);
-            const matchesStatus = (selectedStatus === 'all' || status === selectedStatus);
+            // إعادة تعيين وإخفاء العناصر قبل الفحص لمنع تداخل تشغيل الميديا القديمة
+            imgEl.classList.add('hidden');
+            videoEl.classList.add('hidden');
+            ytWrapper.classList.add('hidden');
+            videoEl.pause(); 
 
-            if (matchesSearch && matchesStatus) {
-                row.style.display = "";
-            } else {
-                row.style.display = "none";
-            }
-        });
-    };
-
-    window.exportExcel = () => {
-        const table = document.getElementById('main-data-table');
-        if (!table) return showToast("لا توجد بيانات للتصدير ⚠️");
-        const wb = XLSX.utils.table_to_book(table, { sheet: "الضيوف" });
-        XLSX.writeFile(wb, "ronaq_guests_report.xlsx");
-        showToast("تم تصدير ملف Excel بنجاح 📊");
-    };
-
-    window.exportPDF = () => {
-        const element = document.getElementById('data-table');
-        if (!element) return showToast("لا توجد بيانات للتصدير ⚠️");
-        const opt = {
-            margin: 10,
-            filename: 'ronaq_guests_report.pdf',
-            image: { type: 'jpeg', quality: 0.98 },
-            html2canvas: { scale: 2 },
-            jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' }
-        };
-        html2pdf().from(element).set(opt).save();
-        showToast("جاري تجهيز وتنزيل ملف PDF 📄");
-    };
-
-    window.copyInviteLink = (id) => {
-        const link = `${BASE_URL}?id=${id}`;
-        navigator.clipboard.writeText(link);
-        showToast("تم نسخ رابط الدعوة بنجاح 🔗");
-    };
-
-    window.copyDashboardLink = () => {
-        navigator.clipboard.writeText(BASE_URL);
-        showToast("تم نسخ رابط النظام الأساسي بنجاح 🔗");
-    };
-
-    const urlParams = new URLSearchParams(window.location.search);
-    const guestIdParam = urlParams.get('id');
-
-    setTimeout(() => {
-        const splash = document.getElementById('splash-screen');
-        if (splash) {
-            splash.style.opacity = '0';
-            setTimeout(() => splash.remove(), 800);
-        }
-    }, 1000);
-
-    if (guestIdParam) {
-        document.getElementById('guest-section').classList.remove('hidden');
-        
-        const guestDocRef = doc(db, "v30_guests", guestIdParam);
-        const guestSnap = await getDoc(guestDocRef);
-
-        if (!guestSnap.exists()) {
-            document.getElementById('guest-welcome').innerText = "عذراً، بطاقة الدعوة غير صالحة أو تم حذفها ❌";
-            document.getElementById('guest-actions').classList.add('hidden');
-        } else {
-            const guestData = guestSnap.data();
-            document.getElementById('guest-welcome').innerText = `أهلاً بك يا ${guestData.name} ✨`;
-
-            const clientSnap = await getDocs(query(collection(db, "v30_data"), where("name", "==", guestData.belongsTo)));
-            let clientData = {};
-            clientSnap.forEach(cd => { clientData = cd.data(); });
-
-            if (clientData.event) {
-                document.getElementById('event-details').innerText = `نتشرف بدعوتكم لحضور (${clientData.event})\nالداعي: ${clientData.host}`;
+            // فحص ومعالجة الروابط لليوتيوب أو الفيديو المباشر أو الصور بطريقة سليمة ومحكمة ونظيفة
+            if (mediaUrl.includes('youtube.com/') || mediaUrl.includes('youtu.be/') || mediaUrl.includes('youtube-nocookie.com/')) {
+                let videoId = "";
                 
-                const imgUrl = clientData.img || "";
-                const imgEl = document.getElementById('event-image');
-                const videoEl = document.getElementById('event-video');
-                const ytWrapper = document.getElementById('youtube-wrapper');
-                const ytEl = document.getElementById('event-youtube');
+                if (mediaUrl.includes('v=')) {
+                    videoId = mediaUrl.split('v=')[1].split('&')[0];
+                } else if (mediaUrl.includes('youtu.be/')) {
+                    videoId = mediaUrl.split('youtu.be/')[1].split('?')[0];
+                } else if (mediaUrl.includes('embed/')) {
+                    videoId = mediaUrl.split('embed/')[1].split('?')[0];
+                } else if (mediaUrl.includes('shorts/')) {
+                    videoId = mediaUrl.split('shorts/')[1].split('?')[0];
+                }
 
-                if (imgUrl.includes("youtube.com") || imgUrl.includes("youtu.be")) {
-                    let ytId = "";
-                    if (imgUrl.includes("youtu.be/")) ytId = imgUrl.split("youtu.be/")[1].split("?")[0];
-                    else if (imgUrl.includes("watch?v=")) ytId = imgUrl.split("watch?v=")[1].split("&")[0];
-                    ytEl.src = `https://www.youtube.com/embed/${ytId}`;
+                if (videoId) {
+                    ytEl.src = `https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&mute=1&loop=1&playlist=${videoId}&rel=0&controls=0&showinfo=0&modestbranding=1&playsinline=1`;
                     ytWrapper.classList.remove('hidden');
-                } else if (imgUrl.endsWith(".mp4")) {
-                    videoEl.src = imgUrl;
-                    videoEl.classList.remove('hidden');
-                } else if (imgUrl) {
-                    imgEl.src = imgUrl;
+                } else {
+                    imgEl.src = 'logo.jpg';
                     imgEl.classList.remove('hidden');
-                } else {
-                    document.getElementById('media-container').classList.add('hidden');
                 }
-
-                if (clientData.date) {
-                    const eventTime = new Date(clientData.date).getTime();
-                    setInterval(() => {
-                        const now = new Date().getTime();
-                        const diff = eventTime - now;
-                        if (diff > 0) {
-                            const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-                            const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-                            const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-                            const seconds = Math.floor((diff % (1000 * 60)) / 1000);
-                            document.getElementById('time-left').innerText = `${days} يوم و ${hours} ساعة و ${minutes} دقيقة و ${seconds} ثانية`;
-                        } else {
-                            document.getElementById('countdown-timer').innerText = "لقد حان موعد المناسبة السعيدة! 🎉";
-                        }
-                    }, 1000);
-                } else {
-                    document.getElementById('countdown-timer').classList.add('hidden');
-                }
-
-                document.getElementById('btn-map').onclick = () => { window.open(clientData.map, '_blank'); };
-                document.getElementById('btn-calendar').onclick = () => {
-                    const title = encodeURIComponent(clientData.event);
-                    const details = encodeURIComponent(`دعوة حفل من ${clientData.host}`);
-                    const location = encodeURIComponent(clientData.map || "");
-                    window.open(`https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&details=${details}&location=${location}`, '_blank');
-                };
+            } 
+            else if (mediaUrl.match(/\.(mp4|webm|ogg|mov)($|\?)/i) || mediaUrl.includes('firebasestorage.googleapis.com')) {
+                videoEl.src = mediaUrl;
+                videoEl.classList.remove('hidden');
+            } 
+            else {
+                imgEl.src = mediaUrl || 'logo.jpg'; 
+                imgEl.classList.remove('hidden');
             }
+            
+            if(cData.date) startCountdown(cData.date); else document.getElementById('countdown-timer').style.display = 'none';
 
-            const maxComps = parseInt(guestData.maxCompanions || 0);
-            if (maxComps > 0) {
-                const compArea = document.getElementById('companions-area');
-                const compSelect = document.getElementById('guest-companions');
+            const maxAllowed = gData.maxCompanions || 0;
+            const compArea = document.getElementById('companions-area');
+            const compSelect = document.getElementById('guest-companions');
+            
+            if (maxAllowed > 0 && gData.status === "انتظار") {
                 compArea.classList.remove('hidden');
-                
-                let optionsHtml = `<option value="0">بدون مرافقين (أنا لوحدي)</option>`;
-                for (let i = 1; i <= maxComps; i++) {
-                    optionsHtml += `<option value="${i}">${i} مرافقين</option>`;
+                compSelect.innerHTML = `<option value="0">سأحضر بمفردي (بدون مرافقين)</option>`;
+                for (let i = 1; i <= maxAllowed; i++) {
+                    compSelect.innerHTML += `<option value="${i}">سأحضر برفقة (${i}) من المرافقين</option>`;
                 }
-                compSelect.innerHTML = optionsHtml;
-
-                compSelect.onchange = (e) => {
-                    const val = parseInt(e.target.value);
+                
+                compSelect.onchange = () => {
+                    const count = parseInt(compSelect.value);
                     const container = document.getElementById('companion-names-container');
-                    let namesHtml = "";
-                    for (let i = 1; i <= val; i++) {
-                        namesHtml += `<input class="companion-name-input" placeholder="اسم المرافق رقم ${i}" data-index="${i}">`;
+                    container.innerHTML = "";
+                    if(count > 0) {
+                        container.innerHTML = `<p style="font-size:12px; font-weight:bold; color:var(--dark-gold);">الرجاء كتابة أسماء المرافقين لتوليد بطاقات الدخول لهم:</p>`;
+                        for(let j = 1; j <= count; j++) {
+                            container.innerHTML += `<input type="text" class="companion-name-input" id="comp-name-${j}" placeholder="اسم المرافق رقم ${j}..">`;
+                        }
                     }
-                    container.innerHTML = namesHtml;
                 };
             }
 
-            const inviteType = guestData.inviteType || "barcode";
-
-            if (guestData.status === 'مؤكد' || guestData.status === 'تم-الدخول') {
-                document.getElementById('guest-actions').classList.add('hidden');
-                document.getElementById('companions-area').classList.add('hidden');
-                document.getElementById('after-confirm-area').classList.remove('hidden');
-                
-                if (inviteType === "barcode") {
-                    await renderQRCodes(guestIdParam, guestData);
-                } else {
-                    document.getElementById('pass-title').classList.add('hidden');
-                    document.getElementById('multicard-qrcode-container').innerHTML = `
-                        <div style="background: #e8f5e9; color: #2e7d32; padding: 15px; border-radius: 10px; font-weight: bold; font-size: 14px;">
-                            تم تسجيل تأكيد حضورك بنجاح ✅<br>نشكرك لتأكيد تواجدك معنا في الحفل.
-                        </div>
-                    `;
-                }
-            } else if (guestData.status === 'اعتذار') {
-                document.getElementById('guest-actions').classList.add('hidden');
-                document.getElementById('companions-area').classList.add('hidden');
-                document.getElementById('decline-msg').classList.remove('hidden');
+            if (gData.status === "مؤكد" || gData.status === "تم-الدخول") {
+                compArea.classList.add('hidden');
+                showMultiPass(guestId, gData.name, gData.companionNames || [], cData.map);
+            } else if (gData.status === "اعتذار") { 
+                compArea.classList.add('hidden');
+                document.getElementById('guest-actions').classList.add('hidden'); 
+                document.getElementById('decline-msg').classList.remove('hidden'); 
             }
-
-            document.getElementById('btn-confirm').onclick = async () => {
-                let compsCount = 0;
-                let companionNames = [];
-                if (maxComps > 0) {
-                    compsCount = parseInt(document.getElementById('guest-companions').value);
-                    const inputs = document.querySelectorAll('.companion-name-input');
-                    inputs.forEach(inp => {
-                        if (inp.value.trim()) companionNames.push(inp.value.trim());
-                    });
+            
+            document.getElementById('btn-confirm').onclick = async () => { 
+                const btn = document.getElementById('btn-confirm');
+                const selectedCompanions = parseInt(compSelect.value) || 0;
+                
+                let namesArr = [];
+                for(let k = 1; k <= selectedCompanions; k++) {
+                    const nameField = document.getElementById(`comp-name-${k}`);
+                    const val = nameField ? nameField.value.trim() : "";
+                    namesArr.push(val || `مرافق ${k}`);
                 }
+
+                btn.disabled = true; btn.innerText = "جاري التأكيد...";
 
                 let companionIds = [];
-                // حذف أي مرافقين مسبقين وإعادة إنشائهم ببطاقات مستقلا لـ Scan
-                const oldComps = await getDocs(query(collection(db, "v30_guests"), where("mainGuestId", "==", guestIdParam)));
-                oldComps.forEach(async (cdoc) => {
-                    await deleteDoc(doc(db, "v30_guests", cdoc.id));
-                });
-
-                for (let i = 0; i < compsCount; i++) {
-                    const compName = companionNames[i] || `مرافق ${i + 1} (${guestData.name})`;
-                    const cRef = await addDoc(collection(db, "v30_guests"), {
-                        belongsTo: guestData.belongsTo,
-                        name: compName,
-                        phone: guestData.phone,
+                for (let i = 0; i < namesArr.length; i++) {
+                    const companionDoc = await addDoc(collection(db, "v30_guests"), {
+                        belongsTo: gData.belongsTo,
+                        name: namesArr[i],
+                        phone: gData.phone,
                         status: "مؤكد",
+                        companions: 0,
+                        maxCompanions: 0,
                         isCompanion: true,
-                        mainGuestId: guestIdParam
+                        parentGuest: guestId,
+                        companionNumber: i + 1,
+                        invites: 1
                     });
-                    companionIds.push(cRef.id);
+                    companionIds.push(companionDoc.id);
                 }
 
-                await updateDoc(guestDocRef, {
+                await updateDoc(doc(db, "v30_guests", guestId), { 
                     status: "مؤكد",
-                    companions: compsCount,
-                    companionNames: companionNames,
-                    companionIds: companionIds
+                    companions: selectedCompanions,
+                    companionNames: companionIds
                 });
-
-                if (typeof confetti === 'function') {
-                    confetti({ particleCount: 150, spread: 80, origin: { y: 0.6 } });
-                }
-
-                showToast("تم تأكيد حضورك بنجاح ننتظر لقاءكم بفارغ الصبر ✨");
-                document.getElementById('guest-actions').classList.add('hidden');
-                document.getElementById('companions-area').classList.add('hidden');
-                document.getElementById('after-confirm-area').classList.remove('hidden');
                 
-                if (inviteType === "barcode") {
-                    await renderQRCodes(guestIdParam, { ...guestData, companions: compsCount, companionNames, companionIds });
-                } else {
-                    document.getElementById('pass-title').classList.add('hidden');
-                    document.getElementById('multicard-qrcode-container').innerHTML = `
-                        <div style="background: #e8f5e9; color: #2e7d32; padding: 15px; border-radius: 10px; font-weight: bold; font-size: 14px;">
-                            تم تسجيل تأكيد حضورك بنجاح ✅<br>نشكرك لتأكيد تواجدك معنا في الحفل.
-                        </div>
-                    `;
+                compArea.classList.add('hidden');
+                triggerConfetti();
+                showToast("تم تأكيد حضورك وحجز المقاعد بنجاح! 🎉");
+                showMultiPass(guestId, gData.name, companionIds, cData.map); 
+            };
+            
+            document.getElementById('btn-decline').onclick = async () => { 
+                await updateDoc(doc(db, "v30_guests", guestId), { status: "اعتذار", companions: 0, companionNames: [] }); 
+                compArea.classList.add('hidden');
+                document.getElementById('guest-actions').classList.add('hidden'); 
+                document.getElementById('decline-msg').classList.remove('hidden'); 
+                showToast("تم تسجيل اعتذارك 🤍");
+            };
+        }
+    }
+
+    // دالة عرض الكروت بصورة ديناميكية كاملة وبأسماء واضحة تمنع غموض المنظم
+    async function showMultiPass(guestId, mainGuestName, companionIdsArray, mapUrl) {
+        document.getElementById('guest-actions').classList.add('hidden');
+        document.getElementById('after-confirm-area').classList.remove('hidden');
+        
+        const targetContainer = document.getElementById('multicard-qrcode-container');
+        targetContainer.innerHTML = "<p style='color: var(--dark-gold);'>جاري تحميل وتوليد بطاقات الدخول... ⏳</p>";
+
+        const cardsWrapper = document.createElement('div');
+
+        // 1. كرت الضيف الأساسي
+        const mainCleanCode = guestId.substring(0, 10).toUpperCase();
+        createCardMarkup(cardsWrapper, guestId, mainCleanCode, mainGuestName, "الضيف الأساسي");
+
+        // 2. كروت المرافقين المستقلة مع جلب أسمائهم الفعلية بطريقة متزامنة (Async/Await)
+        if (companionIdsArray && companionIdsArray.length > 0) {
+            for (let i = 0; i < companionIdsArray.length; i++) {
+                const compDoc = await getDoc(doc(db, "v30_guests", companionIdsArray[i]));
+                if (compDoc.exists()) {
+                    const compData = compDoc.data();
+                    const companionDisplayCode = companionIdsArray[i].substring(0, 10).toUpperCase();
+                    createCardMarkup(cardsWrapper, companionIdsArray[i], companionDisplayCode, compData.name, `مرافق (كرت رقم ${i + 1})`);
                 }
-            };
-
-            document.getElementById('btn-decline').onclick = async () => {
-                await updateDoc(guestDocRef, { status: "اعتذار" });
-                showToast("تم تسجيل اعتذارك، شكراً لإبلاغنا.");
-                document.getElementById('guest-actions').classList.add('hidden');
-                document.getElementById('companions-area').classList.add('hidden');
-                document.getElementById('decline-msg').classList.remove('hidden');
-            };
+            }
         }
-    } else if (role && user) {
-        document.getElementById('dashboard-section').classList.remove('hidden');
-        if (role === 'admin') {
-            document.getElementById('admin-area').classList.remove('hidden');
-            document.getElementById('welcome-msg').innerText = "مرحباً بك يا مدير النظام ⚜️";
-            loadClientsList();
-            
-            const clientSelect = document.getElementById('client-select');
-            const snap = await getDocs(collection(db, "v30_data"));
-            let opts = `<option value="">اختر الحفل لإضافة الضيوف</option>`;
-            snap.forEach(d => {
-                const c = d.data();
-                opts += `<option value="${c.name}">${c.event} (${c.name})</option>`;
+
+        targetContainer.innerHTML = "";
+        targetContainer.appendChild(cardsWrapper);
+
+        // توليد أكواد الـ QR بعد إضافة العناصر بشكل كامل إلى الـ DOM
+        cardsWrapper.querySelectorAll('.qrcode-container-div').forEach(div => {
+            new QRCode(div, {
+                text: div.dataset.qrvalue, width: 140, height: 140, colorDark : "#1a1a1a", colorLight : "#ffffff"
             });
-            clientSelect.innerHTML = opts;
+        });
 
-            listenToData(user);
-            clientSelect.onchange = (e) => {
-                if (e.target.value) listenToData(e.target.value);
-            };
-        } else {
-            document.getElementById('welcome-msg').innerText = `مرحباً بك، لوحة تحكم حفل: ${user} ⚜️`;
-            document.getElementById('guest-add-card').classList.add('hidden');
-            listenToData(user);
-        }
-    } else {
-        document.getElementById('login-section').classList.remove('hidden');
+        document.getElementById('btn-map').onclick = () => window.open(mapUrl, '_blank');
     }
 
-    async function renderQRCodes(baseId, data) {
-        const container = document.getElementById('multicard-qrcode-container');
-        container.innerHTML = "";
-
-        const compsCount = parseInt(data.companions || 0);
-        const namesList = [data.name, ...(data.companionNames || [])];
-        let companionIds = data.companionIds || [];
-
-        // إذا لم تكن المعرفات موجودة بالفعل، يتم جلب البطاقات الفرعية المسجلة
-        if (compsCount > 0 && companionIds.length < compsCount) {
-            const cSnap = await getDocs(query(collection(db, "v30_guests"), where("mainGuestId", "==", baseId)));
-            companionIds = [];
-            cSnap.forEach(cdoc => companionIds.push(cdoc.id));
-        }
-
-        const totalPasses = 1 + compsCount;
-
-        for (let i = 0; i < totalPasses; i++) {
-            const passTitle = (i === 0) ? "بطاقة الضيف الرئيسي 🎫" : `بطاقة المرافق رقم ${i} (${namesList[i] || 'مرافق'})`;
-            
-            // كود الـ QR الخاص والفريد المسجل في قاعدة البيانات ليتعرف عليه scan.html
-            const uniqueCodeText = (i === 0) ? baseId : (companionIds[i - 1] || `${baseId}_companion_${i}`);
-
-            const cardBox = document.createElement('div');
-            cardBox.className = "entry-code-box";
-            cardBox.innerHTML = `
-                <p style="font-weight:bold; color:var(--black); margin-bottom:5px; font-size:14px;">${passTitle}</p>
-                <div class="qrcode-container-div" id="qrcode-${i}"></div>
-                <div class="code-text-display">كود البطاقة: ${uniqueCodeText}</div>
-                <p style="font-size:11px; color:var(--dark-gold); margin-top:5px;">أبرز هذا الكود عند بوابة القاعة للدخول</p>
-            `;
-            container.appendChild(cardBox);
-
-            new QRCode(document.getElementById(`qrcode-${i}`), {
-                text: uniqueCodeText,
-                width: 150,
-                height: 150,
-                colorDark: "#1a1a1a",
-                colorLight: "#ffffff",
-                correctLevel: QRCode.CorrectLevel.H
-            });
-        }
+    // دالة إنشاء الكروت ورسم الباركود الموحد بداخل معرف فرعي فريد
+    function createCardMarkup(parentContainer, qrCodeTextValue, codeLabelToDisplay, displayName, labelType) {
+        const uniqueBoxId = "qr-box-" + Math.random().toString(36).substring(2, 9);
+        const wrapper = document.createElement('div');
+        wrapper.className = "entry-code-box";
+        wrapper.style.marginBottom = "20px";
+        wrapper.innerHTML = `
+            <span style="font-size:11px; font-weight:bold; background:var(--gold); color:white; padding:2px 10px; border-radius:10px;">${labelType}</span>
+            <h4 style="margin:8px 0 2px 0; color:var(--black); font-weight: bold;">${displayName}</h4>
+            <div class="qrcode-container-div" id="${uniqueBoxId}" data-qrvalue="${qrCodeTextValue}"></div>
+            <p style="font-weight:bold; font-size:13px; letter-spacing:1px; margin:2px 0; color:#c5a059;">CODE: ${codeLabelToDisplay}</p>
+            <small style="color:#777; font-size:11px;">يرجى إبراز هذا الباركود للمنظم عند الباب 🎫</small>
+        `;
+        parentContainer.appendChild(wrapper);
     }
 
-    window.showToast = (msg) => {
+    // --- بقية الدوال المساعدة والنظام الأساسي ---
+    window.addEventListener('load', () => { setTimeout(() => { const splash = document.getElementById('splash-screen'); splash.style.opacity = '0'; splash.style.visibility = 'hidden'; }, 1500); });
+    window.showToast = (message) => {
         const container = document.getElementById('toast-container');
-        const toast = document.createElement('div');
-        toast.className = "toast-msg";
-        toast.innerText = msg;
-        container.appendChild(toast);
+        const toast = document.createElement('div'); toast.className = 'toast-msg'; toast.innerText = message; container.appendChild(toast);
         setTimeout(() => toast.classList.add('show'), 100);
-        setTimeout(() => {
-            toast.classList.remove('show');
-            setTimeout(() => toast.remove(), 400);
-        }, 3000);
+        setTimeout(() => { toast.classList.remove('show'); setTimeout(() => toast.remove(), 400); }, 3000);
     };
+    window.triggerConfetti = () => {
+        var duration = 3 * 1000, end = Date.now() + duration;
+        (function frame() {
+            confetti({ particleCount: 5, angle: 60, spread: 55, origin: { x: 0 }, colors: ['#c5a059', '#b38b7d', '#1a1a1a'] });
+            confetti({ particleCount: 5, angle: 120, spread: 55, origin: { x: 1 }, colors: ['#c5a059', '#b38b7d', '#1a1a1a'] });
+            if (Date.now() < end) requestAnimationFrame(frame);
+        }());
+    };
+    window.startCountdown = (targetDateStr) => {
+        const targetDate = new Date(targetDateStr).getTime(), timerElement = document.getElementById('time-left');
+        const updateTimer = setInterval(() => {
+            const distance = targetDate - new Date().getTime();
+            if (distance < 0) { clearInterval(updateTimer); timerElement.innerText = "بدأت المناسبة! 🎉"; return; }
+            const days = Math.floor(distance / (1000 * 60 * 60 * 24)), hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)), minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+            timerElement.innerText = `${days} يوم و ${hours} ساعة و ${minutes} دقيقة`;
+        }, 1000);
+    };
+    window.filterTable = () => {
+        const searchInput = document.getElementById('search-guest');
+        const filterSelect = document.getElementById('filter-status');
+        if (!searchInput || !filterSelect) return;
 
-    const changePassBtn = document.getElementById('change-password-btn');
-    if (changePassBtn) {
-        changePassBtn.onclick = async () => {
-            const newPass = prompt("الرجاء إدخال كلمة المرور الجديدة:");
-            if (!newPass) return;
-            const snap = await getDocs(query(collection(db, "v30_data"), where("name", "==", user)));
-            snap.forEach(async (d) => {
-                await updateDoc(doc(db, "v30_data", d.id), { password: newPass });
-                showToast("تم تحديث كلمة المرور بنجاح 🔒");
-            });
-        };
+        const searchText = searchInput.value.toLowerCase();
+        const statusFilter = filterSelect.value;
+
+        document.querySelectorAll('#main-data-table .guest-row').forEach(row => {
+            const name = row.querySelector('.guest-name').innerText.toLowerCase();
+            const phone = row.querySelector('.guest-phone') ? row.querySelector('.guest-phone').innerText : "";
+            const status = row.getAttribute('data-status');
+            if((name.includes(searchText) || phone.includes(searchText)) && (statusFilter === 'all' || status === statusFilter)) row.style.display = ""; else row.style.display = "none";
+        });
+    };
+    window.exportExcel = () => { const table = document.getElementById("main-data-table"); if(!table) return showToast("لا توجد بيانات ⚠️"); const wb = XLSX.utils.table_to_book(table, {sheet: "الضيوف"}); XLSX.writeFile(wb, "قائمة_الضيوف_رونق.xlsx"); showToast("تم تحميل ملف الإكسل 📊"); };
+    window.exportPDF = () => { html2pdf().set({ margin: 10, filename: 'قائمة_الضيوف.pdf', image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 2 }, jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' } }).from(document.getElementById('export-section')).save(); showToast("جاري تجهيز ملف الـ PDF 📄"); };
+    window.copyInviteLink = (guestId) => { navigator.clipboard.writeText(`${window.location.origin}${window.location.pathname}?id=${guestId}`); showToast("✅ تم نسخ رابط الدعوة"); };
+    window.copyDashboardLink = () => { navigator.clipboard.writeText(window.location.origin + window.location.pathname).then(() => showToast("تم نسخ الرابط للوحة الإدارة 🔗")); };
+
+    async function init() {
+        let guestId = new URLSearchParams(window.location.search).get('id');
+        if (guestId) { handleGuestView(guestId); } 
+        else if(sessionStorage.getItem('role')) {
+            document.getElementById('dashboard-section').classList.remove('hidden');
+            document.getElementById('welcome-msg').innerText = "لوحة: " + user;
+            if(role === 'admin') {
+                document.getElementById('admin-area').classList.remove('hidden'); document.getElementById('guest-add-card').style.display = "block"; loadClientsList();
+                const s = await getDocs(collection(db, "v30_data")), sel = document.getElementById('client-select');
+                sel.innerHTML = "<option value=''>اختر الحفل لعرض الضيوف...</option>";
+                s.forEach(d => sel.innerHTML += `<option value="${d.data().name}">${d.data().name}</option>`);
+                sel.onchange = () => listenToData(sel.value);
+            } else {
+                document.getElementById('guest-add-card').style.display = "none"; document.querySelector('#table-title').innerText = "قائمة ضيوفك 📜"; listenToData(user);
+            }
+        } else { document.getElementById('login-section').classList.remove('hidden'); }
     }
+    document.getElementById("forgot-password").onclick = async (e) => { e.preventDefault(); const username = prompt("أدخل اسم المستخدم"); if (!username) return; const snap = await getDocs(query(collection(db, "v30_data"), where("name", "==", username))); if (snap.empty) { showToast("اسم المستخدم غير موجود"); return; } alert("رقم جوال الدعم المساعد: " + snap.docs[0].data().phone); };
+    init();
 </script>
+
 </body>
 </html>
