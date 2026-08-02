@@ -334,7 +334,7 @@
         document.getElementById('clients-list-table').innerHTML = h + "</table>";
     }
 
-    // --- وظائف الواتساب (مع خيار باركود أو بدون وحفظ الخيار بقاعدة البيانات) ---
+    // --- وظائف الواتساب ---
     let currentWAData = {};
     window.prepareWA = (phone, name, evName, guestId, host) => {
         currentWAData = { phone, name, evName, guestId, host };
@@ -352,7 +352,7 @@
         if (type === "barcode") {
             msg = `⚜️ *بطاقة دعوة رسمية مع باركود* ⚜️\n\nأهلاً بك يا ${name} ✨\nيسعدنا جداً حضوركم حفل: ${evName}..\n\nللاطلاع على بطاقات الدخول الخاصة بك ومرافقيك عبر الرابط:\n${BASE_URL}?id=${guestId}\n\nالداعي: ${host}`;
         } else {
-            msg = `⚜️ *دعوة حضور مباركة* ⚜️\n\nأهلاً بك يا ${name} ✨\nنتشرف بدعوتكم لحضور حفل: ${evName}..\n\nننتظر تواجدكم وتشريفكم لنا.\n\nالداعي: ${host}`;
+            msg = `⚜️ *دعوة حضور مباركة* ⚜️\n\nأهلاً بك يا ${name} ✨\nنتشرف بدعوتكم لحضور حفل: ${evName}..\n\nلتأكيد حضوركم ورؤية تفاصيل الدعوة والموقع عبر الرابط التالي:\n${BASE_URL}?id=${guestId}\n\nننتظر تواجدكم وتشريفكم لنا.\n\nالداعي: ${host}`;
         }
         document.getElementById('wa-text-area').value = msg;
     };
@@ -362,7 +362,6 @@
         const type = document.getElementById('wa-invite-type').value;
         const text = encodeURIComponent(document.getElementById('wa-text-area').value);
 
-        // حفظ خيار نوع الدعوة للضيف لكي يتطابق سلوك التأكيد لاحقاً
         if (currentWAData.guestId) {
             await updateDoc(doc(db, "v30_guests", currentWAData.guestId), {
                 inviteType: type
@@ -745,7 +744,6 @@
                 if (inviteType === "barcode") {
                     renderQRCodes(guestIdParam, guestData);
                 } else {
-                    // إذا كان نوع الدعوة بدون باركود، لا نظهر بطاقات QR بل رسالة تأكيد فقط
                     document.getElementById('pass-title').classList.add('hidden');
                     document.getElementById('multicard-qrcode-container').innerHTML = `
                         <div style="background: #e8f5e9; color: #2e7d32; padding: 15px; border-radius: 10px; font-weight: bold; font-size: 14px;">
@@ -843,7 +841,7 @@
 
         for (let i = 0; i < totalPasses; i++) {
             const passTitle = (i === 0) ? "بطاقة الضيف الرئيسي 🎫" : `بطاقة المرافق رقم ${i} (${namesList[i] || 'مرافق'})`;
-            // إرجاع قيمة الباركود للنظام السابق تماماً ليقرأه الماسح (scan.html) بدقة
+            // صيغة الكود الفريدة لكل فرد (الضيف والمرافقين)
             const uniqueCodeText = `${baseId}_pass_${i}`;
 
             const cardBox = document.createElement('div');
