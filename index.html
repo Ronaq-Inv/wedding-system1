@@ -187,6 +187,22 @@
 
         <div class="card fade-in" style="overflow-x:auto;" id="export-section">
             <h3 id="table-title">قائمة الضيوف 📜</h3>
+
+            <!-- أدوات التعديل الجماعي الجديدة -->
+            <div id="bulk-edit-tools" style="background:#fcf8f2; border:1px solid var(--gold); border-radius:12px; padding:15px; margin-bottom:15px; text-align:right;">
+                <h4 style="margin:0 0 10px 0; color:var(--black);">⚙️ التحكم والتعديل الجماعي للرسائل والمرافقين:</h4>
+                <div style="margin-bottom: 10px;">
+                    <label style="font-size:12px; font-weight:bold; color:var(--dark-gold);">✉️ نص رسالة الواتساب الموحدة (المتغيرات المتاحة: {الاسم} {المناسبة} {الداعي} {الرابط}):</label>
+                    <textarea id="bulk-msg-template" rows="4" placeholder="اكتب نص الرسالة الموحدة هنا..."></textarea>
+                    <button class="btn-gold" style="background:#3498db; width:auto; padding:8px 15px; font-size:12px; margin-top:5px;" onclick="window.saveBulkMessageTemplate()">💾 حفظ النص لجميع الضيوف</button>
+                </div>
+                <hr style="border:0; border-top:1px dashed #ddd; margin:10px 0;">
+                <div style="display:flex; gap:10px; align-items:center;">
+                    <input type="number" id="bulk-max-companions-input" placeholder="عدد المرافقين للجميع..." min="0" max="10" style="margin:0; flex:1;">
+                    <button class="btn-gold" style="background:#e67e22; width:auto; padding:10px 15px; font-size:12px;" onclick="window.applyBulkMaxCompanions()">👥 تطبيق عدد المرافقين للكل</button>
+                </div>
+            </div>
+
             <div class="toolbar" id="table-tools" style="display:none;">
                 <input type="text" id="search-guest" placeholder="🔍 ابحث بالاسم أو الجوال..." onkeyup="filterTable()">
                 <select id="filter-status" onchange="filterTable()">
@@ -293,6 +309,8 @@
     let currentEventData = { evName: "", host: "" };
     let isBulkSendingCancelled = false;
     let currentSelectedClientName = "";
+    let currentClientDocId = "";
+    let customMessageTemplate = "";
 
     window.logout = () => { 
         if (unsubGuests) unsubGuests();
@@ -348,9 +366,69 @@
         document.getElementById('clients-list-table').innerHTML = h + "</table>";
     }
 
+    // --- حفظ قالب الرسالة الجماعي الموحد للحفل ---
+    window.saveBulkMessageTemplate = async () => {
+        const template = document.getElementById('bulk-msg-template').value;
+        if (!currentClientDocId) return showToast("يرجى اختيار الحفل أولاً ⚠️");
+        
+        try {
+            await updateDoc(doc(db, "v30_data", currentClientDocId), { messageTemplate: template });
+            customMessageTemplate = template;
+            showToast("تم حفظ نص الرسالة الموحد لجميع الضيوف بنجاح! 💾");
+        } catch (e) {
+            showToast("حدث خطأ أثناء حفظ القالب ❌");
+        }
+    };
+
+    // --- تطبيق عدد المرافقين للجميع دفعة واحدة ---
+    window.applyBulkMaxCompanions = async () => {
+        const targetClient = role === 'admin' ? currentSelectedClientName : user;
+        const countVal = parseInt(document.getElementById('bulk-max-companions-input').value);
+        if (isNaN(countVal) || countVal < 0) return showToast("الرجاء أدخال عدد مرافقين صحيح ⚠️");
+        if (!targetClient) return showToast("يرجى اختيار الحفل أولاً ⚠️");
+
+        if (!confirm(`هل أنت متأكد من تعيين الحد الأقصى للمرافقين (${countVal}) لجميع الضيوف دفعة واحدة؟`)) return;
+
+        try {
+            showToast("⏳ جاري تحديث عدد المرافقين لجميع الضيوف...");
+            const snap = await getDocs(query(collection(db, "v30_guests"), where("belongsTo", "==", targetClient)));
+            
+            const docsArr = snap.docs;
+            const BATCH_SIZE = 400;
+
+            for (let i = 0; i < docsArr.length; i += BATCH_SIZE) {
+                const batch = writeBatch(db);
+                const chunk = docsArr.slice(i, i + BATCH_SIZE);
+                chunk.forEach(d => {
+                    if (!d.data().isCompanion) {
+                        batch.update(d.ref, { maxCompanions: countVal });
+                    }
+                });
+                await batch.commit();
+            }
+
+            showToast("تم تطبيق عدد المرافقين لجميع الضيوف بنجاح! 🎉");
+        } catch (e) {
+            console.error(e);
+            showToast("حدث خطأ أثناء التحديث الجماعي ❌");
+        }
+    };
+
+    // --- توليد الرسالة الحرة للضيف ---
+    function buildGuestMessage(name, evName, guestId, host) {
+        if (customMessageTemplate && customMessageTemplate.trim() !== "") {
+            return customMessageTemplate
+                .replace(/{الاسم}/g, name)
+                .replace(/{المناسبة}/g, evName)
+                .replace(/{الداعي}/g, host)
+                .replace(/{الرابط}/g, `${BASE_URL}?id=${guestId}`);
+        }
+        return `⚜️ *دعوة حضور* ⚜️\n\nأهلاً بك يا ${name} ✨\nنتشرف بدعوتكم لحضور: ${evName}..\n\nبانتظار تأكيد حضوركم عبر الرابط التالي:\n${BASE_URL}?id=${guestId}\n\nالداعي: ${host}`;
+    }
+
     // --- وظائف الضيوف والإرسال ---
     window.prepareWA = (phone, name, evName, guestId, host) => {
-        const msg = `⚜️ *دعوة حضور* ⚜️\n\nأهلاً بك يا ${name} ✨\nنتشرف بدعوتكم لحضور: ${evName}..\n\nبانتظار تأكيد حضوركم عبر الرابط التالي:\n${BASE_URL}?id=${guestId}\n\nالداعي: ${host}`;
+        const msg = buildGuestMessage(name, evName, guestId, host);
         document.getElementById('wa-target-phone').value = phone;
         document.getElementById('wa-target-guest-id').value = guestId;
         document.getElementById('wa-text-area').value = msg;
@@ -445,7 +523,7 @@
                 if (rawPhone.startsWith('0')) rawPhone = '966' + rawPhone.substring(1);
                 if (!rawPhone.startsWith('966')) rawPhone = '966' + rawPhone;
 
-                const msg = `⚜️ *دعوة حضور* ⚜️\n\nأهلاً بك يا ${g.name} ✨\nنتشرف بدعوتكم لحضور: ${currentEventData.evName}..\n\nبانتظار تأكيد حضوركم عبر الرابط التالي:\n${BASE_URL}?id=${g.id}\n\nالداعي: ${currentEventData.host}`;
+                const msg = buildGuestMessage(g.name, currentEventData.evName, g.id, currentEventData.host);
                 const text = encodeURIComponent(msg);
 
                 // تحديث حالة الإرسال للضيف في Firebase
@@ -508,7 +586,11 @@
         let evName = ""; let host = ""; let evDateStr = "غير محدد";
         cSnap.forEach(cd => { 
             const clientInfo = cd.data();
+            currentClientDocId = cd.id;
             evName = clientInfo.event; host = clientInfo.host;
+            customMessageTemplate = clientInfo.messageTemplate || "";
+            document.getElementById('bulk-msg-template').value = customMessageTemplate || `⚜️ *دعوة حضور* ⚜️\n\nأهلاً بك يا {الاسم} ✨\nنتشرف بدعوتكم لحضور: {المناسبة}..\n\nبانتظار تأكيد حضوركم عبر الرابط التالي:\n{الرابط}\n\nالداعي: {الداعي}`;
+            
             if(clientInfo.date) {
                 const d = new Date(clientInfo.date);
                 evDateStr = d.toLocaleDateString('ar-SA', { year: 'numeric', month: 'numeric', day: 'numeric' }) + " " + d.toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' });
