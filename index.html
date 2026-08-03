@@ -201,6 +201,7 @@
                 <button class="btn-gold" style="background: #25D366;" onclick="window.sendBulkWA()">📲 إرسال جماعي آمن للواتساب</button>
                 <button class="btn-gold" style="background: #27ae60;" onclick="exportExcel()">📊 تصدير Excel</button>
                 <button class="btn-gold" style="background: #e74c3c;" onclick="exportPDF()">📄 تصدير PDF</button>
+                <button class="btn-gold" style="background: #c0392b;" onclick="window.deleteAllGuests()">🗑️ حذف كامل الضيوف</button>
             </div>
             
             <div id="bulk-report-area" class="hidden" style="margin: 15px 0; padding: 15px; border-radius: 10px; background: #fff8e1; border: 1px solid var(--gold); text-align: right;">
@@ -291,6 +292,7 @@
     let currentLoadedGuests = []; // لحفظ البيانات الجاهزة للإرسال الجماعي
     let currentEventData = { evName: "", host: "" };
     let isBulkSendingCancelled = false;
+    let currentSelectedClientName = "";
 
     window.logout = () => { 
         if (unsubGuests) unsubGuests();
@@ -372,6 +374,42 @@
     window.cancelBulkWA = () => {
         isBulkSendingCancelled = true;
         showToast("جاري إيقاف عملية الإرسال... ⏹️");
+    };
+
+    // --- ميزة حذف جميع الضيوف دفعة واحدة ---
+    window.deleteAllGuests = async () => {
+        const targetClient = role === 'admin' ? currentSelectedClientName : user;
+        if (!targetClient) return showToast("يرجى اختيار الحفل أولاً ⚠️");
+
+        const confirmInput = prompt(`⚠️ تحذير خطير جداً!\n\nأنت على وشك حذف كامل قائمة الضيوف للحفل (${targetClient}).\nهذا الإجراء لا يمكن التراجع عنه نهائياً.\n\nلتأكيد الحذف، اكتب كلمة "تأكيد" في الخانة التالية:`);
+
+        if (confirmInput !== "تأكيد") {
+            return showToast("تم إلغاء عملية الحذف 🛡️");
+        }
+
+        try {
+            showToast("⏳ جاري حذف جميع الضيوف...");
+            const snap = await getDocs(query(collection(db, "v30_guests"), where("belongsTo", "==", targetClient)));
+            
+            if (snap.empty) {
+                return showToast("القائمة فارغة بالفعل ⚠️");
+            }
+
+            const docsArr = snap.docs;
+            const BATCH_SIZE = 400;
+            
+            for (let i = 0; i < docsArr.length; i += BATCH_SIZE) {
+                const batch = writeBatch(db);
+                const chunk = docsArr.slice(i, i + BATCH_SIZE);
+                chunk.forEach(d => batch.delete(d.ref));
+                await batch.commit();
+            }
+
+            showToast("تم حذف كامل الضيوف بنجاح 🗑️");
+        } catch (error) {
+            console.error(error);
+            showToast("حدث خطأ أثناء عملية الحذف ❌");
+        }
     };
 
     // --- ميزة الإرسال الجماعي الآمنة والمحسنة مع تتبع حالة الإرسال ---
@@ -463,6 +501,7 @@
 
     async function listenToData(cl) {
         if (!cl) return;
+        currentSelectedClientName = cl;
         if (unsubGuests) unsubGuests(); 
 
         const cSnap = await getDocs(query(collection(db, "v30_data"), where("name", "==", cl)));
