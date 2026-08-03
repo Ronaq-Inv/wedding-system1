@@ -211,10 +211,10 @@
                     <option value="انتظار">انتظار</option>
                     <option value="تم-الدخول">تم الدخول</option>
                     <option value="اعتذار">اعتذار</option>
-                    <option value="sent">تم الإرسال (واتساب)</option>
-                    <option value="not_sent">لم يرسل (واتساب)</option>
+                    <option value="sent" class="admin-only-btn">تم الإرسال (واتساب)</option>
+                    <option value="not_sent" class="admin-only-btn">لم يرسل (واتساب)</option>
                 </select>
-                <button class="btn-gold" style="background: #25D366;" onclick="window.sendBulkWA()">📲 إرسال جماعي آمن للواتساب</button>
+                <button class="btn-gold admin-only-btn" style="background: #25D366;" onclick="window.sendBulkWA()">📲 إرسال جماعي آمن للواتساب</button>
                 <button class="btn-gold" style="background: #27ae60;" onclick="exportExcel()">📊 تصدير Excel</button>
                 <button class="btn-gold" style="background: #e74c3c;" onclick="exportPDF()">📄 تصدير PDF</button>
                 <button class="btn-gold admin-only-btn" style="background: #c0392b;" onclick="window.deleteAllGuests()">🗑️ حذف كامل الضيوف</button>
@@ -428,8 +428,9 @@
         return `⚜️ *دعوة حضور* ⚜️\n\nأهلاً بك يا ${name} ✨\nنتشرف بدعوتكم لحضور: ${evName}..\n\nبانتظار تأكيد حضوركم عبر الرابط التالي:\n${BASE_URL}?id=${guestId}\n\nالداعي: ${host}`;
     }
 
-    // --- وظائف الضيوف والإرسال ---
+    // --- وظائف الضيوف والإرسال (الأدمن فقط) ---
     window.prepareWA = (phone, name, evName, guestId, host) => {
+        if (role !== 'admin') return;
         const msg = buildGuestMessage(name, evName, guestId, host);
         document.getElementById('wa-target-phone').value = phone;
         document.getElementById('wa-target-guest-id').value = guestId;
@@ -438,6 +439,7 @@
     };
 
     window.finalSendWA = async () => {
+        if (role !== 'admin') return;
         const phone = document.getElementById('wa-target-phone').value.replace(/\D/g, '');
         const guestId = document.getElementById('wa-target-guest-id').value;
         const text = encodeURIComponent(document.getElementById('wa-text-area').value);
@@ -493,8 +495,9 @@
         }
     };
 
-    // --- ميزة الإرسال الجماعي الآمنة والمحسنة مع تتبع حالة الإرسال ---
+    // --- ميزة الإرسال الجماعي الآمنة والمحسنة مع تتبع حالة الإرسال (الأدمن فقط) ---
     window.sendBulkWA = async () => {
+        if (role !== 'admin') return showToast("هذه الخصائص متاحة للأدمن فقط ⚠️");
         if (!currentLoadedGuests || currentLoadedGuests.length === 0) {
             return showToast("لا يوجد ضيوف في القائمة للإرسال لهم ⚠️");
         }
@@ -564,12 +567,14 @@
     };
 
     window.deleteGuest = async (id, clientName) => {
+        if (role !== 'admin') return;
         if (!confirm("⚠️ هل أنت متأكد من حذف هذا الضيف?")) return;
         await deleteDoc(doc(db, "v30_guests", id));
         showToast("تم حذف الضيف بنجاح 🗑️");
     };
 
     window.openEdit = (id, name, phone, status, cl, companions = 0, maxCompanions = 0) => {
+        if (role !== 'admin') return;
         editingGuestId = id;
         document.getElementById('edit-name').value = name;
         document.getElementById('edit-phone').value = phone;
@@ -617,8 +622,10 @@
             // فرز الضيوف بحسب الترتيب الدقيق المستورد من Excel أولاً ثم باقي الضيوف
             guestsList.sort((a, b) => (a.orderIndex || 0) - (b.orderIndex || 0));
 
-            let h = `<table id="main-data-table"><tr><th>#</th><th>الاسم</th><th>إرسال الواتساب</th><th>الحالة</th><th>المرافقين المحجوزين</th><th>مسموح له بـ</th><th>🗓️ تاريخ الحفل</th>`;
-            if(role === 'admin') h += `<th>الإجراءات</th><th>رقم الجوال</th>`;
+            let h = `<table id="main-data-table"><tr><th>#</th><th>الاسم</th>`;
+            if (role === 'admin') h += `<th>إرسال الواتساب</th>`;
+            h += `<th>الحالة</th><th>المرافقين المحجوزين</th><th>مسموح له بـ</th><th>🗓️ تاريخ الحفل</th>`;
+            if (role === 'admin') h += `<th>الإجراءات</th><th>رقم الجوال</th>`;
             h += `</tr>`;
 
             let totalCards = 0, actualAttendees = 0, actualEntered = 0, totalDeclines = 0;
@@ -640,13 +647,15 @@
 
                 h += `<tr class="guest-row" data-status="${g.status}" data-wasent="${isSentVal}">
                         <td style="font-weight:bold; color:var(--gold);">${guestIndex++}</td>
-                        <td class="guest-name">${g.name}</td>
-                        <td>${waStatusBadge}</td>
-                        <td><span class="status-pill status-${g.status}">${g.status.replace('-',' ')}</span></td>
+                        <td class="guest-name">${g.name}</td>`;
+                if (role === 'admin') {
+                    h += `<td>${waStatusBadge}</td>`;
+                }
+                h += `<td><span class="status-pill status-${g.status}">${g.status.replace('-',' ')}</span></td>
                         <td>${comps} مرافقين</td>
                         <td style="font-weight: bold; color: #2980b9;">${maxComps} مرافقين</td>
                         <td style="color: var(--dark-gold); font-weight: bold;">${evDateStr}</td>`;
-                if(role === 'admin') {
+                if (role === 'admin') {
                     h += `<td>
                         <button onclick="window.prepareWA('${g.phone}', '${g.name}', '${evName}', '${g.id}', '${host}')" class="btn-wa">إرسال</button>
                         <button onclick="window.copyInviteLink('${g.id}')" style="background:#8e44ad;color:white;padding:6px 10px;border:none;border-radius:8px;font-size:11px;margin:2px;">🔗 نسخ</button>
