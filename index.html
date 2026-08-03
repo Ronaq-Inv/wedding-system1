@@ -188,9 +188,9 @@
         <div class="card fade-in" style="overflow-x:auto;" id="export-section">
             <h3 id="table-title">قائمة الضيوف 📜</h3>
 
-            <!-- أدوات التعديل الجماعي الجديدة -->
-            <div id="bulk-edit-tools" style="background:#fcf8f2; border:1px solid var(--gold); border-radius:12px; padding:15px; margin-bottom:15px; text-align:right;">
-                <h4 style="margin:0 0 10px 0; color:var(--black);">⚙️ التحكم والتعديل الجماعي للرسائل والمرافقين:</h4>
+            <!-- أدوات التعديل الجماعي الخاصة بالأدمن فقط -->
+            <div id="bulk-edit-tools" class="hidden" style="background:#fcf8f2; border:1px solid var(--gold); border-radius:12px; padding:15px; margin-bottom:15px; text-align:right;">
+                <h4 style="margin:0 0 10px 0; color:var(--black);">⚙️ التحكم والتعديل الجماعي للرسائل والمرافقين (للأدمن فقط):</h4>
                 <div style="margin-bottom: 10px;">
                     <label style="font-size:12px; font-weight:bold; color:var(--dark-gold);">✉️ نص رسالة الواتساب الموحدة (المتغيرات المتاحة: {الاسم} {المناسبة} {الداعي} {الرابط}):</label>
                     <textarea id="bulk-msg-template" rows="4" placeholder="اكتب نص الرسالة الموحدة هنا..."></textarea>
@@ -217,7 +217,7 @@
                 <button class="btn-gold" style="background: #25D366;" onclick="window.sendBulkWA()">📲 إرسال جماعي آمن للواتساب</button>
                 <button class="btn-gold" style="background: #27ae60;" onclick="exportExcel()">📊 تصدير Excel</button>
                 <button class="btn-gold" style="background: #e74c3c;" onclick="exportPDF()">📄 تصدير PDF</button>
-                <button class="btn-gold" style="background: #c0392b;" onclick="window.deleteAllGuests()">🗑️ حذف كامل الضيوف</button>
+                <button class="btn-gold admin-only-btn" style="background: #c0392b;" onclick="window.deleteAllGuests()">🗑️ حذف كامل الضيوف</button>
             </div>
             
             <div id="bulk-report-area" class="hidden" style="margin: 15px 0; padding: 15px; border-radius: 10px; background: #fff8e1; border: 1px solid var(--gold); text-align: right;">
@@ -366,8 +366,9 @@
         document.getElementById('clients-list-table').innerHTML = h + "</table>";
     }
 
-    // --- حفظ قالب الرسالة الجماعي الموحد للحفل ---
+    // --- حفظ قالب الرسالة الجماعي الموحد للحفل (الأدمن فقط) ---
     window.saveBulkMessageTemplate = async () => {
+        if (role !== 'admin') return showToast("هذه الخصائص متاحة للأدمن فقط ⚠️");
         const template = document.getElementById('bulk-msg-template').value;
         if (!currentClientDocId) return showToast("يرجى اختيار الحفل أولاً ⚠️");
         
@@ -380,9 +381,10 @@
         }
     };
 
-    // --- تطبيق عدد المرافقين للجميع دفعة واحدة ---
+    // --- تطبيق عدد المرافقين للجميع دفعة واحدة (الأدمن فقط) ---
     window.applyBulkMaxCompanions = async () => {
-        const targetClient = role === 'admin' ? currentSelectedClientName : user;
+        if (role !== 'admin') return showToast("هذه الخصائص متاحة للأدمن فقط ⚠️");
+        const targetClient = currentSelectedClientName;
         const countVal = parseInt(document.getElementById('bulk-max-companions-input').value);
         if (isNaN(countVal) || countVal < 0) return showToast("الرجاء أدخال عدد مرافقين صحيح ⚠️");
         if (!targetClient) return showToast("يرجى اختيار الحفل أولاً ⚠️");
@@ -454,9 +456,10 @@
         showToast("جاري إيقاف عملية الإرسال... ⏹️");
     };
 
-    // --- ميزة حذف جميع الضيوف دفعة واحدة ---
+    // --- ميزة حذف جميع الضيوف دفعة واحدة (الأدمن فقط) ---
     window.deleteAllGuests = async () => {
-        const targetClient = role === 'admin' ? currentSelectedClientName : user;
+        if (role !== 'admin') return showToast("هذه الخصائص متاحة للأدمن فقط ⚠️");
+        const targetClient = currentSelectedClientName;
         if (!targetClient) return showToast("يرجى اختيار الحفل أولاً ⚠️");
 
         const confirmInput = prompt(`⚠️ تحذير خطير جداً!\n\nأنت على وشك حذف كامل قائمة الضيوف للحفل (${targetClient}).\nهذا الإجراء لا يمكن التراجع عنه نهائياً.\n\nلتأكيد الحذف، اكتب كلمة "تأكيد" في الخانة التالية:`);
@@ -656,7 +659,15 @@
 
             document.getElementById('data-table').innerHTML = h + "</table>";
             
-            if (role === "admin") { document.getElementById('table-tools').style.display = "flex"; } else { document.getElementById('table-tools').style.display = "none"; }
+            // إظهار الأدوات والتحكم بحسب نوع المستخدم
+            document.getElementById('table-tools').style.display = "flex";
+            if (role === 'admin') {
+                document.getElementById('bulk-edit-tools').classList.remove('hidden');
+                document.querySelectorAll('.admin-only-btn').forEach(btn => btn.style.display = "inline-block");
+            } else {
+                document.getElementById('bulk-edit-tools').classList.add('hidden');
+                document.querySelectorAll('.admin-only-btn').forEach(btn => btn.style.display = "none");
+            }
 
             document.getElementById('stat-total').innerText = totalCards;
             document.getElementById('stat-yes').innerText = actualAttendees;
