@@ -195,6 +195,8 @@
                     <option value="انتظار">انتظار</option>
                     <option value="تم-الدخول">تم الدخول</option>
                     <option value="اعتذار">اعتذار</option>
+                    <option value="sent">تم الإرسال (واتساب)</option>
+                    <option value="not_sent">لم يرسل (واتساب)</option>
                 </select>
                 <button class="btn-gold" style="background: #25D366;" onclick="window.sendBulkWA()">📲 إرسال جماعي آمن للواتساب</button>
                 <button class="btn-gold" style="background: #27ae60;" onclick="exportExcel()">📊 تصدير Excel</button>
@@ -480,11 +482,12 @@
         
         unsubGuests = onSnapshot(q, (snapshot) => {
             currentLoadedGuests = [];
-            let h = `<table id="main-data-table"><tr><th>الاسم</th><th>إرسال الواتساب</th><th>الحالة</th><th>المرافقين المحجوزين</th><th>مسموح له بـ</th><th>🗓️ تاريخ الحفل</th>`;
+            let h = `<table id="main-data-table"><tr><th>#</th><th>الاسم</th><th>إرسال الواتساب</th><th>الحالة</th><th>المرافقين المحجوزين</th><th>مسموح له بـ</th><th>🗓️ تاريخ الحفل</th>`;
             if(role === 'admin') h += `<th>الإجراءات</th><th>رقم الجوال</th>`;
             h += `</tr>`;
 
             let totalCards = 0, actualAttendees = 0, actualEntered = 0, totalDeclines = 0;
+            let guestIndex = 1;
 
             snapshot.forEach(d => {
                 const g = d.data();
@@ -501,8 +504,10 @@
                 if (g.status === 'اعتذار') totalDeclines++;
 
                 const waStatusBadge = g.waSent ? `<span class="wa-sent">تم الإرسال 📲</span>` : `<span class="wa-not-sent">لم يرسل ⏳</span>`;
+                const isSentVal = g.waSent ? "sent" : "not_sent";
 
-                h += `<tr class="guest-row" data-status="${g.status}">
+                h += `<tr class="guest-row" data-status="${g.status}" data-wasent="${isSentVal}">
+                        <td style="font-weight:bold; color:var(--gold);">${guestIndex++}</td>
                         <td class="guest-name">${g.name}</td>
                         <td>${waStatusBadge}</td>
                         <td><span class="status-pill status-${g.status}">${g.status.replace('-',' ')}</span></td>
@@ -916,13 +921,32 @@
         if (!searchInput || !filterSelect) return;
 
         const searchText = searchInput.value.toLowerCase();
-        const statusFilter = filterSelect.value;
+        const selectedFilter = filterSelect.value;
 
         document.querySelectorAll('#main-data-table .guest-row').forEach(row => {
             const name = row.querySelector('.guest-name').innerText.toLowerCase();
             const phone = row.querySelector('.guest-phone') ? row.querySelector('.guest-phone').innerText : "";
             const status = row.getAttribute('data-status');
-            if((name.includes(searchText) || phone.includes(searchText)) && (statusFilter === 'all' || status === statusFilter)) row.style.display = ""; else row.style.display = "none";
+            const wasent = row.getAttribute('data-wasent');
+
+            const matchesSearch = name.includes(searchText) || phone.includes(searchText);
+            let matchesFilter = false;
+
+            if (selectedFilter === 'all') {
+                matchesFilter = true;
+            } else if (selectedFilter === 'sent') {
+                matchesFilter = (wasent === 'sent');
+            } else if (selectedFilter === 'not_sent') {
+                matchesFilter = (wasent === 'not_sent');
+            } else {
+                matchesFilter = (status === selectedFilter);
+            }
+
+            if (matchesSearch && matchesFilter) {
+                row.style.display = "";
+            } else {
+                row.style.display = "none";
+            }
         });
     };
     window.exportExcel = () => { const table = document.getElementById("main-data-table"); if(!table) return showToast("لا توجد بيانات ⚠️"); const wb = XLSX.utils.table_to_book(table, {sheet: "الضيوف"}); XLSX.writeFile(wb, "قائمة_الضيوف_رونق.xlsx"); showToast("تم تحميل ملف الإكسل 📊"); };
