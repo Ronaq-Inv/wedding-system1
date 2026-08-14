@@ -165,6 +165,12 @@
                 <input id="c-img" placeholder="رابط صورة أو فيديو الدعوة (MP4 / YouTube)">
                 <input id="c-map" placeholder="رابط الموقع">
                 <input id="c-date" type="datetime-local" placeholder="تاريخ ووقت المناسبة">
+                <!-- الإضافة الأولى: خيار تفعيل أو إلغاء الباركود للدعوة -->
+                <label style="display:block; text-align:right; font-size:13px; font-weight:bold; color:var(--dark-gold); margin-top:10px;">🎟️ هل تحتوي دعوات هذا الحفل على باركود؟</label>
+                <select id="c-use-barcode">
+                    <option value="yes">نعم، إظهار الباركود لضيوف الحفل</option>
+                    <option value="no">لا، بدون باركود في الدعوة</option>
+                </select>
                 <button class="btn-gold" id="save-client">إنشاء الحساب</button>
             </div>
 
@@ -273,6 +279,11 @@
         <input id="ec-map" placeholder="رابط الموقع">
         <label class="modal-label">📅 تاريخ ووقت المناسبة:</label>
         <input id="ec-date" type="datetime-local">
+        <label class="modal-label">🎟️ هل تحتوي دعوات هذا الحفل على باركود؟</label>
+        <select id="ec-use-barcode">
+            <option value="yes">نعم، إظهار الباركود لضيوف الحفل</option>
+            <option value="no">لا، بدون باركود في الدعوة</option>
+        </select>
         <label class="modal-label">🔒 كلمة مرور العميل الجديدة:</label>
         <input id="ec-pass" type="password">
         <input type="hidden" id="ec-phone"><input type="hidden" id="ec-doc-id">
@@ -319,7 +330,7 @@
         window.location.href = window.location.origin + window.location.pathname; 
     };
 
-    window.openEditClient = (id, ev, host, img, map, pass, date, phone = "") => {
+    window.openEditClient = (id, ev, host, img, map, pass, date, phone = "", useBarcode = "yes") => {
         document.getElementById('ec-doc-id').value = id;
         document.getElementById('ec-event').value = ev;
         document.getElementById('ec-host').value = host;
@@ -328,6 +339,7 @@
         document.getElementById('ec-pass').value = pass;
         document.getElementById('ec-date').value = date || "";
         document.getElementById('ec-phone').value = phone;
+        document.getElementById('ec-use-barcode').value = useBarcode || "yes";
         document.getElementById('edit-client-modal').classList.remove('hidden');
     };
 
@@ -336,7 +348,7 @@
         const btn = document.getElementById('confirm-client-update');
         btn.disabled = true; btn.innerText = "جاري الحفظ...";
         await updateDoc(doc(db, "v30_data", id), {
-            event: document.getElementById('ec-event').value, host: document.getElementById('ec-host').value, img: document.getElementById('ec-img').value, map: document.getElementById('ec-map').value, phone: document.getElementById('ec-phone').value, password: document.getElementById('ec-pass').value, date: document.getElementById('ec-date').value || null
+            event: document.getElementById('ec-event').value, host: document.getElementById('ec-host').value, img: document.getElementById('ec-img').value, map: document.getElementById('ec-map').value, phone: document.getElementById('ec-phone').value, password: document.getElementById('ec-pass').value, date: document.getElementById('ec-date').value || null, useBarcode: document.getElementById('ec-use-barcode').value
         });
         showToast("تم تحديث بيانات الحفل بنجاح ✅");
         setTimeout(() => location.reload(), 1500);
@@ -359,7 +371,7 @@
         snap.forEach(d => {
             const c = d.data();
             h += `<tr><td>${c.name}</td><td>${c.event}</td><td>
-                    <button class="btn-edit" onclick="window.openEditClient('${d.id}','${c.event}','${c.host}','${c.img}','${c.map}','${c.password}','${c.date || ""}','${c.phone || ""}')">تعديل</button>
+                    <button class="btn-edit" onclick="window.openEditClient('${d.id}','${c.event}','${c.host}','${c.img}','${c.map}','${c.password}','${c.date || ""}','${c.phone || ""}','${c.useBarcode || "yes"}')">تعديل</button>
                     <button class="btn-edit" style="background:#e74c3c !important;" onclick="window.deleteClient('${d.id}','${c.name}')">🗑️ حذف</button>
                 </td></tr>`;
         });
@@ -710,11 +722,12 @@
         btn.disabled = true; btn.innerText = "جاري الإنشاء...";
         const evDate = document.getElementById('c-date') ? document.getElementById('c-date').value : null;
         const phone = document.getElementById('c-phone').value.trim();
+        const useBarcode = document.getElementById('c-use-barcode').value;
 
         const check = await getDocs(query(collection(db, "v30_data"), where("phone", "==", phone)));
         if (!check.empty) { showToast("❌ رقم الجوال مستخدم مسبقًا"); btn.disabled = false; btn.innerText = "إنشاء الحساب"; return; }
         await addDoc(collection(db, "v30_data"), { 
-            name: document.getElementById('c-name').value, phone: phone, password: document.getElementById('c-pass').value, event: document.getElementById('c-event').value, host: document.getElementById('c-host').value, img: document.getElementById('c-img').value, map: document.getElementById('c-map').value, date: evDate
+            name: document.getElementById('c-name').value, phone: phone, password: document.getElementById('c-pass').value, event: document.getElementById('c-event').value, host: document.getElementById('c-host').value, img: document.getElementById('c-img').value, map: document.getElementById('c-map').value, date: evDate, useBarcode: useBarcode
         });
         showToast("تم إنشاء الحفل بنجاح 🎉");
         setTimeout(() => location.reload(), 1500);
@@ -928,7 +941,7 @@
 
             if (gData.status === "مؤكد" || gData.status === "تم-الدخول") {
                 compArea.classList.add('hidden');
-                showMultiPass(guestId, gData.name, gData.companionNames || [], cData.map);
+                showMultiPass(guestId, gData.name, gData.companionNames || [], cData.map, cData.useBarcode);
             } else if (gData.status === "اعتذار") { 
                 compArea.classList.add('hidden');
                 document.getElementById('guest-actions').classList.add('hidden'); 
@@ -974,7 +987,7 @@
                 compArea.classList.add('hidden');
                 triggerConfetti();
                 showToast("تم تأكيد حضورك وحجز المقاعد بنجاح! 🎉");
-                showMultiPass(guestId, gData.name, companionIds, cData.map); 
+                showMultiPass(guestId, gData.name, companionIds, cData.map, cData.useBarcode); 
             };
             
             document.getElementById('btn-decline').onclick = async () => { 
@@ -987,13 +1000,26 @@
         }
     }
 
-    async function showMultiPass(guestId, mainGuestName, companionIdsArray, mapUrl) {
+    async function showMultiPass(guestId, mainGuestName, companionIdsArray, mapUrl, useBarcodeSetting) {
         document.getElementById('guest-actions').classList.add('hidden');
         document.getElementById('after-confirm-area').classList.remove('hidden');
         
         const targetContainer = document.getElementById('multicard-qrcode-container');
-        targetContainer.innerHTML = "<p style='color: var(--dark-gold);'>جاري تحميل وتوليد بطاقات الدخول... ⏳</p>";
+        
+        // التعديل الثاني: التحقق من إعداد الباركود (إذا كان لا، يتم تعديل الكلام وإلغاء عرض الباركود داخل الرابط تماماً)
+        if (useBarcodeSetting === "no") {
+            document.getElementById('pass-title').innerText = "تم تأكيد حضورك بنجاح ✅";
+            targetContainer.innerHTML = `
+                <div style="background: #e8f5e9; border: 1px solid #2e7d32; padding: 15px; border-radius: 12px; margin-top: 10px; color: #2e7d32; font-weight: bold;">
+                    شكراً لتأكيد حضورك معنا، ننتظر لقاءكم بكل شوق 🤍
+                </div>
+            `;
+            document.getElementById('btn-map').onclick = () => window.open(mapUrl, '_blank');
+            return;
+        }
 
+        // في حال كان الخيار "نعم" للباركود يتم العرض الطبيعي مع التسميات
+        targetContainer.innerHTML = "<p style='color: var(--dark-gold);'>جاري تحميل وتوليد بطاقات الدخول... ⏳</p>";
         const cardsWrapper = document.createElement('div');
 
         // 1. كرت الضيف الأساسي
