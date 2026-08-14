@@ -171,6 +171,9 @@
                 <!-- خيارات التحكم في صفحة الرابط -->
                 <div style="background: #faf6f0; padding: 15px; border-radius: 12px; border: 1px solid var(--gold); margin-top: 10px; text-align: right;">
                     <h4 style="margin: 0 0 10px 0; color: var(--black); font-size: 13px;">🎛️ تخصيص صفحة الرابط للضيوف:</h4>
+
+                    <label style="display:block; font-size:12px; font-weight:bold; color:var(--dark-gold); margin-top:5px;">💬 صيغة جملة الترحيب العلوية (مثال: أهلاً بك يا المكرمه):</label>
+                    <input id="c-greeting-prefix" value="أهلاً بك يا المكرمه" placeholder="أهلاً بك يا المكرمه">
                     
                     <label style="display:block; font-size:12px; font-weight:bold; color:var(--dark-gold); margin-top:5px;">🎟️ إظهار الباركود في صفحة الضيف؟</label>
                     <select id="c-use-barcode">
@@ -292,6 +295,9 @@
         
         <label class="modal-label">👑 اسم الداعي:</label>
         <input id="ec-host" placeholder="اسم الداعي">
+
+        <label class="modal-label">💬 صيغة جملة الترحيب العلوية:</label>
+        <input id="ec-greeting-prefix" placeholder="أهلاً بك يا المكرمه">
         
         <label class="modal-label">🖼️ رابط صورة أو فيديو الدعوة:</label>
         <input id="ec-img" placeholder="رابط صورة أو فيديو (MP4 / YouTube)">
@@ -365,7 +371,7 @@
         window.location.href = window.location.origin + window.location.pathname; 
     };
 
-    window.openEditClient = (id, ev, host, img, map, pass, date, phone = "", useBarcode = "yes", showHost = "yes", customDesc = "") => {
+    window.openEditClient = (id, ev, host, img, map, pass, date, phone = "", useBarcode = "yes", showHost = "yes", customDesc = "", greetingPrefix = "أهلاً بك يا المكرمه") => {
         document.getElementById('ec-doc-id').value = id;
         document.getElementById('ec-event').value = ev;
         document.getElementById('ec-host').value = host;
@@ -377,6 +383,7 @@
         document.getElementById('ec-use-barcode').value = useBarcode || "yes";
         document.getElementById('ec-show-host').value = showHost || "yes";
         document.getElementById('ec-custom-desc').value = customDesc || "";
+        document.getElementById('ec-greeting-prefix').value = greetingPrefix || "أهلاً بك يا المكرمه";
         document.getElementById('edit-client-modal').classList.remove('hidden');
     };
 
@@ -394,7 +401,8 @@
             date: document.getElementById('ec-date').value || null, 
             useBarcode: document.getElementById('ec-use-barcode').value,
             showHost: document.getElementById('ec-show-host').value,
-            customDesc: document.getElementById('ec-custom-desc').value
+            customDesc: document.getElementById('ec-custom-desc').value,
+            greetingPrefix: document.getElementById('ec-greeting-prefix').value
         });
         showToast("تم تحديث بيانات الحفل بنجاح ✅");
         setTimeout(() => location.reload(), 1500);
@@ -417,7 +425,7 @@
         snap.forEach(d => {
             const c = d.data();
             h += `<tr><td>${c.name}</td><td>${c.event}</td><td>
-                    <button class="btn-edit" onclick="window.openEditClient('${d.id}','${c.event}','${c.host}','${c.img}','${c.map}','${c.password}','${c.date || ""}','${c.phone || ""}','${c.useBarcode || "yes"}','${c.showHost || "yes"}','${c.customDesc || ""}')">تعديل</button>
+                    <button class="btn-edit" onclick="window.openEditClient('${d.id}','${c.event}','${c.host}','${c.img}','${c.map}','${c.password}','${c.date || ""}','${c.phone || ""}','${c.useBarcode || "yes"}','${c.showHost || "yes"}','${c.customDesc || ""}','${c.greetingPrefix || "أهلاً بك يا المكرمه"}')">تعديل</button>
                     <button class="btn-edit" style="background:#e74c3c !important;" onclick="window.deleteClient('${d.id}','${c.name}')">🗑️ حذف</button>
                 </td></tr>`;
         });
@@ -752,6 +760,7 @@
         const useBarcode = document.getElementById('c-use-barcode').value;
         const showHost = document.getElementById('c-show-host').value;
         const customDesc = document.getElementById('c-custom-desc').value;
+        const greetingPrefix = document.getElementById('c-greeting-prefix').value || "أهلاً بك يا المكرمه";
 
         const check = await getDocs(query(collection(db, "v30_data"), where("phone", "==", phone)));
         if (!check.empty) { showToast("❌ رقم الجوال مستخدم مسبقًا"); btn.disabled = false; btn.innerText = "إنشاء الحساب"; return; }
@@ -767,7 +776,8 @@
             date: evDate, 
             useBarcode: useBarcode,
             showHost: showHost,
-            customDesc: customDesc
+            customDesc: customDesc,
+            greetingPrefix: greetingPrefix
         });
         showToast("تم إنشاء الحفل بنجاح 🎉");
         setTimeout(() => location.reload(), 1500);
@@ -905,7 +915,10 @@
             let cData = {}; cSnap.forEach(d => cData = d.data());
             
             document.getElementById('guest-section').classList.remove('hidden');
-            document.getElementById('guest-welcome').innerText = `أهلاً بك يا ${gData.name}`;
+            
+            // تخصيص صيغة الترحيب العلوية من إعدادات الحفل
+            const greetingPrefix = cData.greetingPrefix || "أهلاً بك يا المكرمه";
+            document.getElementById('guest-welcome').innerText = `${greetingPrefix} : ${gData.name}`;
 
             // معالجة عرض أو إخفاء اسم الداعي والتفاصيل المخصصة
             const showHostOption = cData.showHost !== undefined ? cData.showHost : "yes";
