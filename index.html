@@ -101,7 +101,9 @@
                     <iframe id="event-youtube" style="position:absolute; top:0; left:0; width:100%; height:100%; border:0;" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>     
                 </div> 
             </div>
-            <p id="event-details" style="font-weight: bold; font-size: 16px;"></p>
+            
+            <!-- وصف تفاصيل المناسبة القابل للتخصيص الكامل -->
+            <p id="event-details" style="font-weight: bold; font-size: 16px; line-height: 1.8;"></p>
             
             <div id="companions-area" class="hidden" style="margin-bottom: 15px; text-align: right;">
                 <label for="guest-companions" style="font-weight: bold; color: var(--dark-gold); font-size: 14px;">👥 تحديد الحضور والمرافقين:</label>
@@ -165,13 +167,28 @@
                 <input id="c-img" placeholder="رابط صورة أو فيديو الدعوة (MP4 / YouTube)">
                 <input id="c-map" placeholder="رابط الموقع">
                 <input id="c-date" type="datetime-local" placeholder="تاريخ ووقت المناسبة">
-                <!-- الإضافة الأولى: خيار تفعيل أو إلغاء الباركود للدعوة -->
-                <label style="display:block; text-align:right; font-size:13px; font-weight:bold; color:var(--dark-gold); margin-top:10px;">🎟️ هل تحتوي دعوات هذا الحفل على باركود؟</label>
-                <select id="c-use-barcode">
-                    <option value="yes">نعم، إظهار الباركود لضيوف الحفل</option>
-                    <option value="no">لا، بدون باركود في الدعوة</option>
-                </select>
-                <button class="btn-gold" id="save-client">إنشاء الحساب</button>
+                
+                <!-- خيارات التحكم في صفحة الرابط -->
+                <div style="background: #faf6f0; padding: 15px; border-radius: 12px; border: 1px solid var(--gold); margin-top: 10px; text-align: right;">
+                    <h4 style="margin: 0 0 10px 0; color: var(--black); font-size: 13px;">🎛️ تخصيص صفحة الرابط للضيوف:</h4>
+                    
+                    <label style="display:block; font-size:12px; font-weight:bold; color:var(--dark-gold); margin-top:5px;">🎟️ إظهار الباركود في صفحة الضيف؟</label>
+                    <select id="c-use-barcode">
+                        <option value="yes">نعم، إظهار الباركود</option>
+                        <option value="no">لا، بدون باركود</option>
+                    </select>
+
+                    <label style="display:block; font-size:12px; font-weight:bold; color:var(--dark-gold); margin-top:8px;">👑 إظهار اسم الداعي في صفحة الضيف؟</label>
+                    <select id="c-show-host">
+                        <option value="yes">نعم، إظهار اسم الداعي</option>
+                        <option value="no">لا، إخفاء اسم الداعي</option>
+                    </select>
+
+                    <label style="display:block; font-size:12px; font-weight:bold; color:var(--dark-gold); margin-top:8px;">📝 نص وصف تفاصيل الدعوة المخصص في صفحة الضيف:</label>
+                    <textarea id="c-custom-desc" rows="3" placeholder="مثال: يسرنا حضوركم لتشريفنا في حفلة... (اتركه فارغاً للافتراضي)"></textarea>
+                </div>
+
+                <button class="btn-gold" id="save-client" style="margin-top: 15px;">إنشاء الحساب</button>
             </div>
 
             <div class="card">
@@ -196,9 +213,9 @@
 
             <!-- أدوات التعديل الجماعي الخاصة بالأدمن فقط -->
             <div id="bulk-edit-tools" class="hidden" style="background:#fcf8f2; border:1px solid var(--gold); border-radius:12px; padding:15px; margin-bottom:15px; text-align:right;">
-                <h4 style="margin:0 0 10px 0; color:var(--black);">⚙️ التحكم والتعديل الجماعي للرسائل والمرافقين (للأدمن فقط):</h4>
+                <h4 style="margin:0 0 10px 0; color:var(--black);">⚙️ التحكم والتعديل الجماعي للرسائل والمرافقين:</h4>
                 <div style="margin-bottom: 10px;">
-                    <label style="font-size:12px; font-weight:bold; color:var(--dark-gold);">✉️ نص رسالة الواتساب الموحدة (المتغيرات المتاحة: {الاسم} {المناسبة} {الداعي} {الرابط}):</label>
+                    <label style="font-size:12px; font-weight:bold; color:var(--dark-gold);">✉️ نص رسالة الواتساب الموحدة (المتغيرات: {الاسم} {المناسبة} {الداعي} {الرابط}):</label>
                     <textarea id="bulk-msg-template" rows="4" placeholder="اكتب نص الرسالة الموحدة هنا..."></textarea>
                     <button class="btn-gold" style="background:#3498db; width:auto; padding:8px 15px; font-size:12px; margin-top:5px;" onclick="window.saveBulkMessageTemplate()">💾 حفظ النص لجميع الضيوف</button>
                 </div>
@@ -227,7 +244,7 @@
             </div>
             
             <div id="bulk-report-area" class="hidden" style="margin: 15px 0; padding: 15px; border-radius: 10px; background: #fff8e1; border: 1px solid var(--gold); text-align: right;">
-                <h4 style="margin: 0 0 10px 0; color: var(--black);">📑 تقرير الإرسال الجماعي الحمي:</h4>
+                <h4 style="margin: 0 0 10px 0; color: var(--black);">📑 تقرير الإرسال الجماعي الآمن:</h4>
                 <div id="bulk-stats" style="font-size: 13px; font-weight: bold; margin-bottom: 5px;"></div>
                 <button id="btn-stop-bulk" onclick="window.cancelBulkWA()" style="background:#e74c3c; color:white; width:auto; padding:5px 15px; margin-top:5px; font-size:12px; display:none;">⏹️ إيقاف الإرسال</button>
                 <div id="bulk-failed-list" style="font-size: 12px; color: #c62828; margin-top:5px;"></div>
@@ -267,28 +284,46 @@
 
 <!-- مودال تعديل بيانات الحفل والعميل -->
 <div id="edit-client-modal" class="modal-overlay hidden">
-    <div class="card fade-in" style="width: 90%; max-width: 450px;">
-        <h3>تعديل بيانات الحفل ⚙️</h3>
+    <div class="card fade-in" style="width: 90%; max-width: 480px; text-align: right;">
+        <h3 style="text-align: center; color: var(--gold);">تعديل إعدادات وتفاصيل الحفل ⚙️</h3>
+        
         <label class="modal-label">🎀 اسم المناسبة:</label>
         <input id="ec-event" placeholder="اسم المناسبة">
+        
         <label class="modal-label">👑 اسم الداعي:</label>
         <input id="ec-host" placeholder="اسم الداعي">
-        <label class="modal-label">🖼️ رابط صورة الدعوة:</label>
-        <input id="ec-img" placeholder="رابط صورة أو فيديو الدعوة (MP4 / YouTube)">
+        
+        <label class="modal-label">🖼️ رابط صورة أو فيديو الدعوة:</label>
+        <input id="ec-img" placeholder="رابط صورة أو فيديو (MP4 / YouTube)">
+        
         <label class="modal-label">📍 رابط موقع القاعة:</label>
         <input id="ec-map" placeholder="رابط الموقع">
+        
         <label class="modal-label">📅 تاريخ ووقت المناسبة:</label>
         <input id="ec-date" type="datetime-local">
-        <label class="modal-label">🎟️ هل تحتوي دعوات هذا الحفل على باركود؟</label>
+
+        <label class="modal-label">🎟️ إظهار الباركود في صفحة الضيف؟</label>
         <select id="ec-use-barcode">
-            <option value="yes">نعم، إظهار الباركود لضيوف الحفل</option>
-            <option value="no">لا، بدون باركود في الدعوة</option>
+            <option value="yes">نعم، إظهار الباركود</option>
+            <option value="no">لا، بدون باركود</option>
         </select>
+
+        <label class="modal-label">👑 إظهار اسم الداعي في صفحة الضيف؟</label>
+        <select id="ec-show-host">
+            <option value="yes">نعم، إظهار اسم الداعي</option>
+            <option value="no">لا، إخفاء اسم الداعي</option>
+        </select>
+
+        <label class="modal-label">📝 نص وصف تفاصيل الدعوة المخصص في صفحة الضيف:</label>
+        <textarea id="ec-custom-desc" rows="3" placeholder="نص الوصف في صفحة الرابط..."></textarea>
+
         <label class="modal-label">🔒 كلمة مرور العميل الجديدة:</label>
         <input id="ec-pass" type="password">
+
         <input type="hidden" id="ec-phone"><input type="hidden" id="ec-doc-id">
+        
         <button class="btn-gold" id="confirm-client-update" style="margin-top:15px;">حفظ التغييرات</button>
-        <button onclick="document.getElementById('edit-client-modal').classList.add('hidden')" style="background:none; color:red; margin-top:5px;">إلغاء</button>
+        <button onclick="document.getElementById('edit-client-modal').classList.add('hidden')" style="background:none; color:red; margin-top:5px; width:100%;">إلغاء</button>
     </div>
 </div>
 
@@ -316,7 +351,7 @@
     const user = sessionStorage.getItem('user');
     let editingGuestId = "";
     let unsubGuests = null;
-    let currentLoadedGuests = []; // لحفظ البيانات الجاهزة للإرسال الجماعي
+    let currentLoadedGuests = [];
     let currentEventData = { evName: "", host: "" };
     let isBulkSendingCancelled = false;
     let currentSelectedClientName = "";
@@ -330,7 +365,7 @@
         window.location.href = window.location.origin + window.location.pathname; 
     };
 
-    window.openEditClient = (id, ev, host, img, map, pass, date, phone = "", useBarcode = "yes") => {
+    window.openEditClient = (id, ev, host, img, map, pass, date, phone = "", useBarcode = "yes", showHost = "yes", customDesc = "") => {
         document.getElementById('ec-doc-id').value = id;
         document.getElementById('ec-event').value = ev;
         document.getElementById('ec-host').value = host;
@@ -340,6 +375,8 @@
         document.getElementById('ec-date').value = date || "";
         document.getElementById('ec-phone').value = phone;
         document.getElementById('ec-use-barcode').value = useBarcode || "yes";
+        document.getElementById('ec-show-host').value = showHost || "yes";
+        document.getElementById('ec-custom-desc').value = customDesc || "";
         document.getElementById('edit-client-modal').classList.remove('hidden');
     };
 
@@ -348,14 +385,23 @@
         const btn = document.getElementById('confirm-client-update');
         btn.disabled = true; btn.innerText = "جاري الحفظ...";
         await updateDoc(doc(db, "v30_data", id), {
-            event: document.getElementById('ec-event').value, host: document.getElementById('ec-host').value, img: document.getElementById('ec-img').value, map: document.getElementById('ec-map').value, phone: document.getElementById('ec-phone').value, password: document.getElementById('ec-pass').value, date: document.getElementById('ec-date').value || null, useBarcode: document.getElementById('ec-use-barcode').value
+            event: document.getElementById('ec-event').value, 
+            host: document.getElementById('ec-host').value, 
+            img: document.getElementById('ec-img').value, 
+            map: document.getElementById('ec-map').value, 
+            phone: document.getElementById('ec-phone').value, 
+            password: document.getElementById('ec-pass').value, 
+            date: document.getElementById('ec-date').value || null, 
+            useBarcode: document.getElementById('ec-use-barcode').value,
+            showHost: document.getElementById('ec-show-host').value,
+            customDesc: document.getElementById('ec-custom-desc').value
         });
         showToast("تم تحديث بيانات الحفل بنجاح ✅");
         setTimeout(() => location.reload(), 1500);
     };
 
     window.deleteClient = async (id, clientName) => {
-        if (!confirm(`⚠️ تنبيه هام!\n\nهل أنت متأكد من حذف حساب العميل والمسؤل عن حفل (${clientName})؟`)) return;
+        if (!confirm(`⚠️ تنبيه هام!\n\nهل أنت متأكد من حذف حساب العميل لحفل (${clientName})؟`)) return;
         try {
             await deleteDoc(doc(db, "v30_data", id));
             showToast(`تم حذف حفل العميل ${clientName} بنجاح 🗑️`);
@@ -371,14 +417,13 @@
         snap.forEach(d => {
             const c = d.data();
             h += `<tr><td>${c.name}</td><td>${c.event}</td><td>
-                    <button class="btn-edit" onclick="window.openEditClient('${d.id}','${c.event}','${c.host}','${c.img}','${c.map}','${c.password}','${c.date || ""}','${c.phone || ""}','${c.useBarcode || "yes"}')">تعديل</button>
+                    <button class="btn-edit" onclick="window.openEditClient('${d.id}','${c.event}','${c.host}','${c.img}','${c.map}','${c.password}','${c.date || ""}','${c.phone || ""}','${c.useBarcode || "yes"}','${c.showHost || "yes"}','${c.customDesc || ""}')">تعديل</button>
                     <button class="btn-edit" style="background:#e74c3c !important;" onclick="window.deleteClient('${d.id}','${c.name}')">🗑️ حذف</button>
                 </td></tr>`;
         });
         document.getElementById('clients-list-table').innerHTML = h + "</table>";
     }
 
-    // --- حفظ قالب الرسالة الجماعي الموحد للحفل (الأدمن فقط) ---
     window.saveBulkMessageTemplate = async () => {
         if (role !== 'admin') return showToast("هذه الخصائص متاحة للأدمن فقط ⚠️");
         const template = document.getElementById('bulk-msg-template').value;
@@ -393,7 +438,6 @@
         }
     };
 
-    // --- تطبيق عدد المرافقين للجميع دفعة واحدة (الأدمن فقط) ---
     window.applyBulkMaxCompanions = async () => {
         if (role !== 'admin') return showToast("هذه الخصائص متاحة للأدمن فقط ⚠️");
         const targetClient = currentSelectedClientName;
@@ -428,7 +472,6 @@
         }
     };
 
-    // --- توليد الرسالة الحرة للضيف ---
     function buildGuestMessage(name, evName, guestId, host) {
         if (customMessageTemplate && customMessageTemplate.trim() !== "") {
             return customMessageTemplate
@@ -440,7 +483,6 @@
         return `⚜️ *دعوة حضور* ⚜️\n\nأهلاً بك يا ${name} ✨\nنتشرف بدعوتكم لحضور: ${evName}..\n\nبانتظار تأكيد حضوركم عبر الرابط التالي:\n${BASE_URL}?id=${guestId}\n\nالداعي: ${host}`;
     }
 
-    // --- وظائف الضيوف والإرسال (الأدمن فقط) ---
     window.prepareWA = (phone, name, evName, guestId, host) => {
         if (role !== 'admin') return;
         const msg = buildGuestMessage(name, evName, guestId, host);
@@ -470,25 +512,19 @@
         showToast("جاري إيقاف عملية الإرسال... ⏹️");
     };
 
-    // --- ميزة حذف جميع الضيوف دفعة واحدة (الأدمن فقط) ---
     window.deleteAllGuests = async () => {
         if (role !== 'admin') return showToast("هذه الخصائص متاحة للأدمن فقط ⚠️");
         const targetClient = currentSelectedClientName;
         if (!targetClient) return showToast("يرجى اختيار الحفل أولاً ⚠️");
 
-        const confirmInput = prompt(`⚠️ تحذير خطير جداً!\n\nأنت على وشك حذف كامل قائمة الضيوف للحفل (${targetClient}).\nهذا الإجراء لا يمكن التراجع عنه نهائياً.\n\nلتأكيد الحذف، اكتب كلمة "تأكيد" في الخانة التالية:`);
+        const confirmInput = prompt(`⚠️ تحذير خطير جداً!\n\nأنت على وشك حذف كامل قائمة الضيوف للحفل (${targetClient}).\nلتأكيد الحذف، اكتب كلمة "تأكيد" في الخانة التالية:`);
 
-        if (confirmInput !== "تأكيد") {
-            return showToast("تم إلغاء عملية الحذف 🛡️");
-        }
+        if (confirmInput !== "تأكيد") return showToast("تم إلغاء عملية الحذف 🛡️");
 
         try {
             showToast("⏳ جاري حذف جميع الضيوف...");
             const snap = await getDocs(query(collection(db, "v30_guests"), where("belongsTo", "==", targetClient)));
-            
-            if (snap.empty) {
-                return showToast("القائمة فارغة بالفعل ⚠️");
-            }
+            if (snap.empty) return showToast("القائمة فارغة بالفعل ⚠️");
 
             const docsArr = snap.docs;
             const BATCH_SIZE = 400;
@@ -507,14 +543,11 @@
         }
     };
 
-    // --- ميزة الإرسال الجماعي الآمنة والمحسنة مع تتبع حالة الإرسال (الأدمن فقط) ---
     window.sendBulkWA = async () => {
         if (role !== 'admin') return showToast("هذه الخصائص متاحة للأدمن فقط ⚠️");
-        if (!currentLoadedGuests || currentLoadedGuests.length === 0) {
-            return showToast("لا يوجد ضيوف في القائمة للإرسال لهم ⚠️");
-        }
+        if (!currentLoadedGuests || currentLoadedGuests.length === 0) return showToast("لا يوجد ضيوف في القائمة للإرسال لهم ⚠️");
 
-        if (!confirm(`سيتم فتح نافذة الواتساب آلياً بنظام الحماية ضد الباند وحفظ حالة الإرسال.\nإجمالي الضيوف: ${currentLoadedGuests.length}\nملاحظة: سيتم عمل فواصل زمنية عشوائية واستراحات حماية لمنع حظر حسابك.\nهل ترغب بالبدء؟`)) return;
+        if (!confirm(`سيتم فتح نافذة الواتساب آلياً بنظام الحماية ضد الباند وحفظ حالة الإرسال.\nإجمالي الضيوف: ${currentLoadedGuests.length}\nهل ترغب بالبدء؟`)) return;
 
         isBulkSendingCancelled = false;
         let successCount = 0;
@@ -544,23 +577,20 @@
                 const msg = buildGuestMessage(g.name, currentEventData.evName, g.id, currentEventData.host);
                 const text = encodeURIComponent(msg);
 
-                // تحديث حالة الإرسال للضيف في Firebase
                 await updateDoc(doc(db, "v30_guests", g.id), { waSent: true });
 
                 window.open(`https://api.whatsapp.com/send?phone=${rawPhone}&text=${text}`, '_blank');
                 successCount++;
             } else {
-                failedList.push(`${g.name} (رقم غير صحيح أو مفقود: "${g.phone || 'بدون'}")`);
+                failedList.push(`${g.name} (رقم غير صحيح أو مفقود)`);
             }
 
-            statsEl.innerText = `⏳ جاري الإرسال الحمي: ${i + 1} من أصل ${currentLoadedGuests.length} | الناجحة: ${successCount} | المتعثرة: ${failedList.length}`;
+            statsEl.innerText = `⏳ جاري الإرسال: ${i + 1} من أصل ${currentLoadedGuests.length} | الناجحة: ${successCount} | المتعثرة: ${failedList.length}`;
 
-            // نظام الحماية من الباند (Anti-Ban Protection):
             if (i < currentLoadedGuests.length - 1) {
                 const randomDelay = Math.floor(Math.random() * (8000 - 4000 + 1)) + 4000;
-                
                 if ((i + 1) % 15 === 0) {
-                    statsEl.innerText = `🛡️ استراحة حماية للواتساب لمنع الحظر (20 ثانية)... | المرسل: ${i + 1}/${currentLoadedGuests.length}`;
+                    statsEl.innerText = `🛡️ استراحة حماية للواتساب (20 ثانية)... | المرسل: ${i + 1}/${currentLoadedGuests.length}`;
                     await new Promise(res => setTimeout(res, 20000));
                 } else {
                     await new Promise(res => setTimeout(res, randomDelay));
@@ -571,9 +601,9 @@
         stopBtn.style.display = "none";
         statsEl.innerText = `✅ اكتملت العملية الآمنة! إجمالي المرسل لهم: ${successCount} من أصل ${currentLoadedGuests.length}`;
         if (failedList.length > 0) {
-            failedEl.innerHTML = `⚠️ قائمة الأسماء التي لم يصلها الرسالة لخطأ بالرقم:<br>• ` + failedList.join('<br>• ');
+            failedEl.innerHTML = `⚠️ أسماء لم يصلها الرسالة لخطأ بالرقم:<br>• ` + failedList.join('<br>• ');
         } else {
-            failedEl.innerHTML = `<span style="color: green;">🎉 تم الإرسال لجميع الضيوف بنجاح وآمان!</span>`;
+            failedEl.innerHTML = `<span style="color: green;">🎉 تم الإرسال لجميع الضيوف بنجاح!</span>`;
         }
         showToast("اكتملت عملية الإرسال الجماعي الآمنة 📱");
     };
@@ -631,7 +661,6 @@
                 guestsList.push({ id: d.id, ...g });
             });
 
-            // فرز الضيوف بحسب الترتيب الدقيق المستورد من Excel أولاً ثم باقي الضيوف
             guestsList.sort((a, b) => (a.orderIndex || 0) - (b.orderIndex || 0));
 
             let h = `<table id="main-data-table"><tr><th>#</th><th>الاسم</th>`;
@@ -680,7 +709,6 @@
 
             document.getElementById('data-table').innerHTML = h + "</table>";
             
-            // إظهار الأدوات والتحكم بحسب نوع المستخدم
             document.getElementById('table-tools').style.display = "flex";
             if (role === 'admin') {
                 document.getElementById('bulk-edit-tools').classList.remove('hidden');
@@ -699,7 +727,6 @@
         });
     }
 
-    // --- المعالجات الأساسية ---
     document.getElementById('login-btn').onclick = async () => {
         const btn = document.getElementById('login-btn');
         btn.disabled = true; btn.innerText = "جاري التحقق...";
@@ -723,11 +750,24 @@
         const evDate = document.getElementById('c-date') ? document.getElementById('c-date').value : null;
         const phone = document.getElementById('c-phone').value.trim();
         const useBarcode = document.getElementById('c-use-barcode').value;
+        const showHost = document.getElementById('c-show-host').value;
+        const customDesc = document.getElementById('c-custom-desc').value;
 
         const check = await getDocs(query(collection(db, "v30_data"), where("phone", "==", phone)));
         if (!check.empty) { showToast("❌ رقم الجوال مستخدم مسبقًا"); btn.disabled = false; btn.innerText = "إنشاء الحساب"; return; }
+        
         await addDoc(collection(db, "v30_data"), { 
-            name: document.getElementById('c-name').value, phone: phone, password: document.getElementById('c-pass').value, event: document.getElementById('c-event').value, host: document.getElementById('c-host').value, img: document.getElementById('c-img').value, map: document.getElementById('c-map').value, date: evDate, useBarcode: useBarcode
+            name: document.getElementById('c-name').value, 
+            phone: phone, 
+            password: document.getElementById('c-pass').value, 
+            event: document.getElementById('c-event').value, 
+            host: document.getElementById('c-host').value, 
+            img: document.getElementById('c-img').value, 
+            map: document.getElementById('c-map').value, 
+            date: evDate, 
+            useBarcode: useBarcode,
+            showHost: showHost,
+            customDesc: customDesc
         });
         showToast("تم إنشاء الحفل بنجاح 🎉");
         setTimeout(() => location.reload(), 1500);
@@ -745,7 +785,6 @@
 
         if (!checkPhone.empty) { showToast("⚠️ هذا الرقم مسجل مسبقاً"); btn.disabled = false; btn.innerText = "إضافة للجدول"; return; }
         
-        btn.innerText = "جاري الإضافة...";
         await addDoc(collection(db, "v30_guests"), {
             belongsTo: sel, name: document.getElementById('g-name').value, phone: p, status: "انتظار", invites: 1, companions: 0, maxCompanions: maxComps, waSent: false, orderIndex: Date.now()
         });
@@ -754,7 +793,6 @@
         btn.disabled = false; btn.innerText = "إضافة للجدول";
     };
 
-    // --- معالجة فائقة السرعة وملائمة لملفات Excel الضخمة مع المحافظة التامة على الترتيب الأصلي ---
     document.getElementById('import-excel').onclick = () => {
         const sel = document.getElementById('client-select').value;
         if(!sel) return showToast("الرجاء اختيار الحفل أولاً ⚠️");
@@ -777,7 +815,6 @@
                     return showToast("الملف فارغ أو لا يحتوي بيانات ⚠️");
                 }
 
-                // التعرف الذكي على الترويسات
                 const headerRow = jsonData[0].map(cell => String(cell).toLowerCase().trim());
                 let nameIdx = headerRow.findIndex(h => h.includes('اسم') || h.includes('name'));
                 let phoneIdx = headerRow.findIndex(h => h.includes('جوال') || h.includes('موبايل') || h.includes('phone') || h.includes('رقم'));
@@ -833,10 +870,10 @@
 
                     await currentBatch.commit();
                     totalImported += chunk.length;
-                    btn.innerText = `⏳ جاري رفع الضيوف بالترتيب: ${totalImported} / ${preparedGuests.length}`;
+                    btn.innerText = `⏳ جاري رفع الضيوف: ${totalImported} / ${preparedGuests.length}`;
                 }
 
-                showToast(`تم استيراد ${totalImported} ضيف بنجاح ونفس الترتيب! 🎉`);
+                showToast(`تم استيراد ${totalImported} ضيف بنجاح! 🎉`);
                 fileInput.value = "";
             } catch (err) { 
                 showToast("حدث خطأ أثناء رفع ملف Excel ❌"); 
@@ -860,7 +897,6 @@
         btn.disabled = false; btn.innerText = "تحديث";
     };
 
-    // --- عرض الضيف وإدارة كروت الدعوة والباركدات المتعددة للمرافقين ---
     async function handleGuestView(guestId) {
         const gDoc = await getDoc(doc(db, "v30_guests", guestId));
         if (gDoc.exists()) {
@@ -870,7 +906,19 @@
             
             document.getElementById('guest-section').classList.remove('hidden');
             document.getElementById('guest-welcome').innerText = `أهلاً بك يا ${gData.name}`;
-            document.getElementById('event-details').innerText = `${cData.event} - الداعي: ${cData.host}`;
+
+            // معالجة عرض أو إخفاء اسم الداعي والتفاصيل المخصصة
+            const showHostOption = cData.showHost !== undefined ? cData.showHost : "yes";
+            let detailsText = `${cData.event}`;
+            if (showHostOption === "yes") {
+                detailsText += ` - الداعي: ${cData.host}`;
+            }
+
+            if (cData.customDesc && cData.customDesc.trim() !== "") {
+                detailsText = cData.customDesc + `<br><br>` + detailsText;
+            }
+
+            document.getElementById('event-details').innerHTML = detailsText;
 
             const mediaUrl = cData.img ? cData.img.trim() : "";
             const imgEl = document.getElementById('event-image');
@@ -885,7 +933,6 @@
 
             if (mediaUrl.includes('youtube.com/') || mediaUrl.includes('youtu.be/') || mediaUrl.includes('youtube-nocookie.com/')) {
                 let videoId = "";
-                
                 if (mediaUrl.includes('v=')) {
                     videoId = mediaUrl.split('v=')[1].split('&')[0];
                 } else if (mediaUrl.includes('youtu.be/')) {
@@ -1006,7 +1053,6 @@
         
         const targetContainer = document.getElementById('multicard-qrcode-container');
         
-        // التعديل الثاني: التحقق من إعداد الباركود (إذا كان لا، يتم تعديل الكلام وإلغاء عرض الباركود داخل الرابط تماماً)
         if (useBarcodeSetting === "no") {
             document.getElementById('pass-title').innerText = "تم تأكيد حضورك بنجاح ✅";
             targetContainer.innerHTML = `
@@ -1018,15 +1064,12 @@
             return;
         }
 
-        // في حال كان الخيار "نعم" للباركود يتم العرض الطبيعي مع التسميات
         targetContainer.innerHTML = "<p style='color: var(--dark-gold);'>جاري تحميل وتوليد بطاقات الدخول... ⏳</p>";
         const cardsWrapper = document.createElement('div');
 
-        // 1. كرت الضيف الأساسي
         const mainCleanCode = guestId.substring(0, 10).toUpperCase();
         createCardMarkup(cardsWrapper, guestId, mainCleanCode, mainGuestName, "الضيف الأساسي");
 
-        // 2. كروت المرافقين المستقلة
         if (companionIdsArray && companionIdsArray.length > 0) {
             for (let i = 0; i < companionIdsArray.length; i++) {
                 const compDoc = await getDoc(doc(db, "v30_guests", companionIdsArray[i]));
@@ -1065,7 +1108,6 @@
         parentContainer.appendChild(wrapper);
     }
 
-    // --- الدوال المساعدة والنظام الأساسي ---
     window.addEventListener('load', () => { setTimeout(() => { const splash = document.getElementById('splash-screen'); splash.style.opacity = '0'; splash.style.visibility = 'hidden'; }, 1500); });
     window.showToast = (message) => {
         const container = document.getElementById('toast-container');
@@ -1107,21 +1149,13 @@
             const matchesSearch = name.includes(searchText) || phone.includes(searchText);
             let matchesFilter = false;
 
-            if (selectedFilter === 'all') {
-                matchesFilter = true;
-            } else if (selectedFilter === 'sent') {
-                matchesFilter = (wasent === 'sent');
-            } else if (selectedFilter === 'not_sent') {
-                matchesFilter = (wasent === 'not_sent');
-            } else {
-                matchesFilter = (status === selectedFilter);
-            }
+            if (selectedFilter === 'all') matchesFilter = true;
+            else if (selectedFilter === 'sent') matchesFilter = (wasent === 'sent');
+            else if (selectedFilter === 'not_sent') matchesFilter = (wasent === 'not_sent');
+            else matchesFilter = (status === selectedFilter);
 
-            if (matchesSearch && matchesFilter) {
-                row.style.display = "";
-            } else {
-                row.style.display = "none";
-            }
+            if (matchesSearch && matchesFilter) row.style.display = "";
+            else row.style.display = "none";
         });
     };
     window.exportExcel = () => { const table = document.getElementById("main-data-table"); if(!table) return showToast("لا توجد بيانات ⚠️"); const wb = XLSX.utils.table_to_book(table, {sheet: "الضيوف"}); XLSX.writeFile(wb, "قائمة_الضيوف_رونق.xlsx"); showToast("تم تحميل ملف الإكسل 📊"); };
